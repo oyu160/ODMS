@@ -1,0 +1,12 @@
+#!/bin/sh
+# ФБШ-05: өгөгдлийн сангийн өдөр тутмын нөөцлөлт (сүүлийн 30 хоногийнхыг хадгална)
+# Docker-д `backup` сервис өдөр бүр автоматаар ажиллуулна. Гараар: sh scripts/backup.sh
+# Сэргээх: gunzip -c backups/dms_2026-11-16.sql.gz | psql "$DATABASE_URL"
+set -eu
+DIR="${BACKUP_DIR:-./backups}"
+KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
+mkdir -p "$DIR"
+FILE="$DIR/dms_$(date +%F_%H%M).sql.gz"
+pg_dump --no-owner --clean --if-exists "${DATABASE_URL:?DATABASE_URL тохируулаагүй}" | gzip > "$FILE"
+find "$DIR" -name 'dms_*.sql.gz' -mtime +"$KEEP_DAYS" -delete
+echo "Нөөц үүслээ: $FILE ($(du -h "$FILE" | cut -f1))"

@@ -1,0 +1,659 @@
+{
+  "departments": [
+    {
+      "code": "MGMT",
+      "name": "Удирдлага",
+      "parentCode": null
+    },
+    {
+      "code": "ADM",
+      "name": "Захиргааны хэлтэс",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "FIN",
+      "name": "Санхүү, эдийн засгийн хэлтэс",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "HR",
+      "name": "Хүний нөөцийн алба",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "IT",
+      "name": "Мэдээллийн технологийн хэлтэс",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "LEGAL",
+      "name": "Хууль, эрх зүйн хэлтэс",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "PLAN",
+      "name": "Төлөвлөлт, бодлогын хэлтэс",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "AUDIT",
+      "name": "Дотоод аудитын алба",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "PR",
+      "name": "Олон нийттэй харилцах алба",
+      "parentCode": "MGMT"
+    },
+    {
+      "code": "PROC",
+      "name": "Худалдан авах ажиллагааны алба",
+      "parentCode": "MGMT"
+    }
+  ],
+  "employees": [
+    {
+      "code": "E001",
+      "lastName": "Төмөр",
+      "firstName": "Ганбат",
+      "position": "Системийн администратор",
+      "departmentCode": "IT",
+      "email": "admin@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E002",
+      "lastName": "Нямдорж",
+      "firstName": "Номин",
+      "position": "Архив, бичиг хэргийн ажилтан",
+      "departmentCode": "ADM",
+      "email": "records@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E003",
+      "lastName": "Сүхбаатар",
+      "firstName": "Энхтуяа",
+      "position": "Захиргааны хэлтсийн дарга",
+      "departmentCode": "ADM",
+      "email": "manager@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E004",
+      "lastName": "Батсүх",
+      "firstName": "Бат-Эрдэнэ",
+      "position": "Хүний нөөцийн мэргэжилтэн",
+      "departmentCode": "HR",
+      "email": "unit@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E005",
+      "lastName": "Дорж",
+      "firstName": "Төгөлдөр",
+      "position": "Програм хангамжийн инженер",
+      "departmentCode": "IT",
+      "email": "employee@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E006",
+      "lastName": "Баатар",
+      "firstName": "Сүхбат",
+      "position": "Хүний нөөцийн албаны дарга",
+      "departmentCode": "HR",
+      "email": "sukhbat@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E007",
+      "lastName": "Жаргал",
+      "firstName": "Оюун",
+      "position": "Санхүүгийн хэлтсийн дарга",
+      "departmentCode": "FIN",
+      "email": "oyun@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E008",
+      "lastName": "Очир",
+      "firstName": "Анужин",
+      "position": "Мэргэжилтэн",
+      "departmentCode": "ADM",
+      "email": "anujin@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E009",
+      "lastName": "Ганзориг",
+      "firstName": "Тэмүүлэн",
+      "position": "Бичиг хэргийн ажилтан",
+      "departmentCode": "ADM",
+      "email": "temuulen@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E010",
+      "lastName": "Гантулга",
+      "firstName": "Сарнай",
+      "position": "Нягтлан бодогч",
+      "departmentCode": "FIN",
+      "email": "sarnai@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E011",
+      "lastName": "Дашдорж",
+      "firstName": "Отгонбаяр",
+      "position": "Хуулийн зөвлөх",
+      "departmentCode": "LEGAL",
+      "email": "otgonbayar@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E012",
+      "lastName": "Лхагва",
+      "firstName": "Мөнхзул",
+      "position": "Бодлого төлөвлөлтийн мэргэжилтэн",
+      "departmentCode": "PLAN",
+      "email": "munkhzul@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E013",
+      "lastName": "Пүрэв",
+      "firstName": "Ариунаа",
+      "position": "Сүлжээний инженер",
+      "departmentCode": "IT",
+      "email": "ariunaa@org.mn",
+      "status": "LEFT"
+    },
+    {
+      "code": "E014",
+      "lastName": "Цэрэн",
+      "firstName": "Болормаа",
+      "position": "Ня-бо",
+      "departmentCode": "FIN",
+      "email": "bolormaa@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E015",
+      "lastName": "Энхбаяр",
+      "firstName": "Тэмүүжин",
+      "position": "Төлөвлөлт, бодлогын хэлтсийн дарга",
+      "departmentCode": "PLAN",
+      "email": "temuujin@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E016",
+      "lastName": "Батбаяр",
+      "firstName": "Хулан",
+      "position": "Хуулийн мэргэжилтэн",
+      "departmentCode": "LEGAL",
+      "email": "khulan@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E017",
+      "lastName": "Мягмар",
+      "firstName": "Золзаяа",
+      "position": "Захиргааны ажилтан",
+      "departmentCode": "ADM",
+      "email": "zolzaya@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E018",
+      "lastName": "Ганхуяг",
+      "firstName": "Билгүүн",
+      "position": "Мэдээллийн аюулгүй байдлын мэргэжилтэн",
+      "departmentCode": "IT",
+      "email": "bilguun@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E019",
+      "lastName": "Нямсүрэн",
+      "firstName": "Уянга",
+      "position": "Хүний нөөцийн ажилтан",
+      "departmentCode": "HR",
+      "email": "uyanga@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E020",
+      "lastName": "Баярсайхан",
+      "firstName": "Эрдэнэ",
+      "position": "Гүйцэтгэх захирал",
+      "departmentCode": "MGMT",
+      "email": "director@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E021",
+      "lastName": "Ширнэн",
+      "firstName": "Гэрэл",
+      "position": "Дадлагажигч",
+      "departmentCode": "PLAN",
+      "email": null,
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E022",
+      "lastName": "Алтанхуяг",
+      "firstName": "Мөнх-Очир",
+      "position": "Жолооч",
+      "departmentCode": "ADM",
+      "email": null,
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E023",
+      "lastName": "Ганболд",
+      "firstName": "Тэнүүн",
+      "position": "Мэргэжилтэн",
+      "departmentCode": "ADM",
+      "email": "tenuun@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E024",
+      "lastName": "Төмөрбаатар",
+      "firstName": "Тэмүүлэн",
+      "position": "Бичиг хэргийн ажилтан",
+      "departmentCode": "ADM",
+      "email": "temuulen70@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E025",
+      "lastName": "Лхагвасүрэн",
+      "firstName": "Зоригт",
+      "position": "Аж ахуйн ажилтан",
+      "departmentCode": "ADM",
+      "email": null,
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E026",
+      "lastName": "Энхбаатар",
+      "firstName": "Цэлмэг",
+      "position": "Нарийн бичиг",
+      "departmentCode": "ADM",
+      "email": "tselmeg@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E027",
+      "lastName": "Сэргэлэн",
+      "firstName": "Бямбаа",
+      "position": "Нарийн бичиг",
+      "departmentCode": "ADM",
+      "email": "byambaa@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E028",
+      "lastName": "Ганзул",
+      "firstName": "Марал",
+      "position": "Нарийн бичиг",
+      "departmentCode": "ADM",
+      "email": "maral@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E029",
+      "lastName": "Мөнхбат",
+      "firstName": "Ялалт",
+      "position": "Нарийн бичиг",
+      "departmentCode": "ADM",
+      "email": "yalalt@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E030",
+      "lastName": "Баярмагнай",
+      "firstName": "Анар",
+      "position": "Ахлах нягтлан бодогч",
+      "departmentCode": "FIN",
+      "email": "anar@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E031",
+      "lastName": "Эрдэнэбат",
+      "firstName": "Пагма",
+      "position": "Нягтлан бодогч",
+      "departmentCode": "FIN",
+      "email": "pagma@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E032",
+      "lastName": "Цогтбаяр",
+      "firstName": "Хангай",
+      "position": "Эдийн засагч",
+      "departmentCode": "FIN",
+      "email": "khangai@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E033",
+      "lastName": "Нарантуяа",
+      "firstName": "Есүй",
+      "position": "Кассир",
+      "departmentCode": "FIN",
+      "email": "esui@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E034",
+      "lastName": "Батжаргал",
+      "firstName": "Уянга",
+      "position": "Кассир",
+      "departmentCode": "FIN",
+      "email": "uyanga83@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E035",
+      "lastName": "Даваасүрэн",
+      "firstName": "Мөнхжин",
+      "position": "Кассир",
+      "departmentCode": "FIN",
+      "email": "munkhjin@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E036",
+      "lastName": "Отгонбаатар",
+      "firstName": "Ингэрэл",
+      "position": "Сургалтын мэргэжилтэн",
+      "departmentCode": "HR",
+      "email": "ingerel@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E037",
+      "lastName": "Цэцэгмаа",
+      "firstName": "Чимэг",
+      "position": "Хүний нөөцийн ажилтан",
+      "departmentCode": "HR",
+      "email": "chimeg@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E038",
+      "lastName": "Пүрэвдорж",
+      "firstName": "Гэрэлт",
+      "position": "Хүний нөөцийн ажилтан",
+      "departmentCode": "HR",
+      "email": "gerelt@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E039",
+      "lastName": "Алтангэрэл",
+      "firstName": "Наран",
+      "position": "Хүний нөөцийн ажилтан",
+      "departmentCode": "HR",
+      "email": "naran@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E040",
+      "lastName": "Батболд",
+      "firstName": "Мишээл",
+      "position": "Ахлах инженер",
+      "departmentCode": "IT",
+      "email": "misheel@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E041",
+      "lastName": "Оюунбилэг",
+      "firstName": "Билэгт",
+      "position": "Програм хангамжийн инженер",
+      "departmentCode": "IT",
+      "email": "bilegt@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E042",
+      "lastName": "Чинзориг",
+      "firstName": "Саруул",
+      "position": "Техник үйлчилгээний ажилтан",
+      "departmentCode": "IT",
+      "email": "saruul@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E043",
+      "lastName": "Ганболд",
+      "firstName": "Солонго",
+      "position": "Техник үйлчилгээний ажилтан",
+      "departmentCode": "IT",
+      "email": "solongo@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E044",
+      "lastName": "Төмөрбаатар",
+      "firstName": "Жавхлан",
+      "position": "Техник үйлчилгээний ажилтан",
+      "departmentCode": "IT",
+      "email": "javkhlan@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E045",
+      "lastName": "Лхагвасүрэн",
+      "firstName": "Халиун",
+      "position": "Техник үйлчилгээний ажилтан",
+      "departmentCode": "IT",
+      "email": "khaliun@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E046",
+      "lastName": "Энхбаатар",
+      "firstName": "Ариун",
+      "position": "Хуулийн мэргэжилтэн",
+      "departmentCode": "LEGAL",
+      "email": "ariun@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E047",
+      "lastName": "Сэргэлэн",
+      "firstName": "Лхамаа",
+      "position": "Гэрээний мэргэжилтэн",
+      "departmentCode": "LEGAL",
+      "email": "lkhamaa@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E048",
+      "lastName": "Ганзул",
+      "firstName": "Энхжин",
+      "position": "Гэрээний мэргэжилтэн",
+      "departmentCode": "LEGAL",
+      "email": "enkhjin@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E049",
+      "lastName": "Мөнхбат",
+      "firstName": "Дэлгэр",
+      "position": "Бодлогын шинжээч",
+      "departmentCode": "PLAN",
+      "email": "delger@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E050",
+      "lastName": "Баярмагнай",
+      "firstName": "Одгэрэл",
+      "position": "Статистикч",
+      "departmentCode": "PLAN",
+      "email": "odgerel@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E051",
+      "lastName": "Эрдэнэбат",
+      "firstName": "Номуун",
+      "position": "Төслийн менежер",
+      "departmentCode": "PLAN",
+      "email": "nomuun@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E052",
+      "lastName": "Цогтбаяр",
+      "firstName": "Дөлгөөн",
+      "position": "Төслийн менежер",
+      "departmentCode": "PLAN",
+      "email": "dulguun@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E053",
+      "lastName": "Нарантуяа",
+      "firstName": "Тэнүүн",
+      "position": "Төслийн менежер",
+      "departmentCode": "PLAN",
+      "email": "tenuun91@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E054",
+      "lastName": "Батжаргал",
+      "firstName": "Тэмүүлэн",
+      "position": "Аудитын албаны дарга",
+      "departmentCode": "AUDIT",
+      "email": "temuulen12@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E055",
+      "lastName": "Даваасүрэн",
+      "firstName": "Зоригт",
+      "position": "Дотоод аудитор",
+      "departmentCode": "AUDIT",
+      "email": "zorigt23@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E056",
+      "lastName": "Отгонбаатар",
+      "firstName": "Цэлмэг",
+      "position": "Аудитор",
+      "departmentCode": "AUDIT",
+      "email": "tselmeg34@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E057",
+      "lastName": "Цэцэгмаа",
+      "firstName": "Бямбаа",
+      "position": "Аудитор",
+      "departmentCode": "AUDIT",
+      "email": "byambaa45@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E058",
+      "lastName": "Пүрэвдорж",
+      "firstName": "Марал",
+      "position": "Олон нийттэй харилцах албаны дарга",
+      "departmentCode": "PR",
+      "email": "maral56@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E059",
+      "lastName": "Алтангэрэл",
+      "firstName": "Ялалт",
+      "position": "Хэвлэлийн төлөөлөгч",
+      "departmentCode": "PR",
+      "email": "yalalt60@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E060",
+      "lastName": "Батболд",
+      "firstName": "Анар",
+      "position": "Контент бүтээгч",
+      "departmentCode": "PR",
+      "email": "anar71@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E061",
+      "lastName": "Оюунбилэг",
+      "firstName": "Пагма",
+      "position": "Контент бүтээгч",
+      "departmentCode": "PR",
+      "email": "pagma82@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E062",
+      "lastName": "Чинзориг",
+      "firstName": "Хангай",
+      "position": "Худалдан авах албаны дарга",
+      "departmentCode": "PROC",
+      "email": "khangai93@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E063",
+      "lastName": "Ганболд",
+      "firstName": "Есүй",
+      "position": "Худалдан авалтын мэргэжилтэн",
+      "departmentCode": "PROC",
+      "email": "esui14@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E064",
+      "lastName": "Төмөрбаатар",
+      "firstName": "Уянга",
+      "position": "Нярав",
+      "departmentCode": "PROC",
+      "email": null,
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E065",
+      "lastName": "Лхагвасүрэн",
+      "firstName": "Мөнхжин",
+      "position": "Нярав",
+      "departmentCode": "PROC",
+      "email": null,
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E023",
+      "lastName": "Өлзий",
+      "firstName": "Сэлэнгэ",
+      "position": "Хүний нөөцийн ажилтан",
+      "departmentCode": "HR",
+      "email": "selenge@org.mn",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "E024",
+      "lastName": "Чулуун",
+      "firstName": "Батжаргал",
+      "position": "Мэргэжилтэн",
+      "departmentCode": "FIN",
+      "email": "batjargal@org.mn",
+      "status": "ACTIVE"
+    }
+  ]
+}

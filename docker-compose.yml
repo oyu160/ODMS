@@ -1,0 +1,73 @@
+# Хөгжүүлэлт: зөвхөн өгөгдлийн сан   → docker compose up -d db
+# Байгууллагын сервер: бүх систем     → docker compose up -d --build   (https://localhost эсвэл https://<DMS_DOMAIN>)
+# HTTPS: Caddy урвуу прокси TLS-ийг дуусгаж, програм руу дотоод сүлжээгээр дамжуулна.
+#        Програм (3000) болон өгөгдлийн сан гаднаас шууд хандагдахгүй.
+# Хавсралт файл өгөгдлийн сан дотор хадгалагдана (тусдаа файлын сан шаардлагагүй)
+services:
+  db:
+    image: postgres:17
+    container_name: dms-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dms
+      POSTGRES_PASSWORD: dms_password
+      POSTGRES_DB: dms
+    ports:
+      - "127.0.0.1:5433:5432" # зөвхөн серверийн өөрөөс; 5433 — компьютер дээрх PostgreSQL (5432)-тэй давхцахгүй
+    volumes:
+      - dms_pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: dms-app
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://dms:dms_password@db:5432/dms?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-change-me-to-a-long-random-string-32chars}
+      HR_API_URL: ${HR_API_URL:-}
+      HR_API_KEY: ${HR_API_KEY:-}
+    expose:
+      - "3000" # зөвхөн дотоод сүлжээнд — гаднаас Caddy-ээр (HTTPS) дамжина
+
+  backup:
+    # ФБШ-05: өгөгдлийн санг өдөр бүр нөөцөлж, сүүлийн 30 хоногийнхыг ./backups хавтсанд хадгална
+    image: postgres:17
+    container_name: dms-backup
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://dms:dms_password@db:5432/dms
+      BACKUP_DIR: /backups
+      BACKUP_KEEP_DAYS: "30"
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    entrypoint: ["/bin/sh", "-c", "sleep 60; while true; do sh /backup.sh || echo 'Нөөцлөлт амжилтгүй'; sleep 86400; done"]
+
+  proxy:
+    image: caddy:2
+    container_name: dms-proxy
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      # Домэйн нэр. Дотоод сүлжээнд: localhost эсвэл серверийн IP/нэр
+      DMS_DOMAIN: ${DMS_DOMAIN:-localhost}
+      # internal = байгууллагын дотоод гэрчилгээ (Caddy-ийн өөрийн CA).
+      # Интернэтэд нээлттэй домэйнд имэйл хаяг өгвөл Let's Encrypt гэрчилгээ автоматаар авна.
+      DMS_TLS: ${DMS_TLS:-internal}
+    ports:
+      - "80:80" # HTTP хүсэлтийг HTTPS руу автоматаар шилжүүлнэ
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  dms_pgdata:
+  caddy_data:
+  caddy_config:

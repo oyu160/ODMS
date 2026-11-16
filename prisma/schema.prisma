@@ -1,0 +1,559 @@
+// Байгууллагын баримт бичгийн удирдлагын систем — физик загвар
+// Дипломын ажлын Хүснэгт 3.3–3.30-ын дагуу (28 хүснэгт)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────── Байгууллага, хэрэглэгч, эрх ─────────────
+
+/// Хүснэгт 3.3. Нэгж
+model Department {
+  id             String       @id @default(uuid()) @map("department_id") @db.Uuid
+  parentId       String?      @map("parent_department_id") @db.Uuid
+  code           String       @unique @map("department_code") @db.VarChar(50)
+  name           String       @map("department_name") @db.VarChar(150)
+  hrRefId        String?      @map("hr_ref_id") @db.VarChar(50)
+  isActive       Boolean      @default(true) @map("is_active")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  parent         Department?  @relation("DepartmentTree", fields: [parentId], references: [id])
+  children       Department[] @relation("DepartmentTree")
+  employees      Employee[]
+  documents      Document[]
+  sequences      NumberSequence[]
+  assignments    Assignment[]
+  routingRules   RoutingRule[]
+
+  @@map("departments")
+}
+
+/// Хүснэгт 3.4. Ажилтан (HR системээс синхрончлогдоно)
+model Employee {
+  id               String     @id @default(uuid()) @map("employee_id") @db.Uuid
+  code             String     @unique @map("employee_code") @db.VarChar(50)
+  lastName         String     @map("last_name") @db.VarChar(100)
+  firstName        String     @map("first_name") @db.VarChar(100)
+  positionName     String?    @map("position_name") @db.VarChar(150)
+  departmentId     String     @map("department_id") @db.Uuid
+  email            String?    @db.VarChar(150)
+  employmentStatus String     @default("ACTIVE") @map("employment_status") @db.VarChar(30) // ACTIVE | LEFT
+  syncedAt         DateTime?  @map("synced_at")
+
+  department       Department @relation(fields: [departmentId], references: [id])
+  user             User?
+  documentLinks    DocumentEmployee[]
+
+  @@index([departmentId])
+  @@map("employees")
+}
+
+/// Хүснэгт 3.5. Хэрэглэгч
+model User {
+  id           String    @id @default(uuid()) @map("user_id") @db.Uuid
+  employeeId   String    @unique @map("employee_id") @db.Uuid
+  username     String    @unique @db.VarChar(100)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  failedLoginCount Int   @default(0) @map("failed_login_count") // ФБШ-01: дараалан буруу оролдлого
+  lockedUntil  DateTime? @map("locked_until") // ФБШ-01: түгжээ дуусах хугацаа
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  employee            Employee           @relation(fields: [employeeId], references: [id])
+  roles               UserRole[]
+  createdDocuments    Document[]         @relation("DocumentCreatedBy")
+  createdVersions     DocumentVersion[]
+  uploadedAttachments Attachment[]
+  createdRelations    DocumentRelation[]
+  approvals           Approval[]
+  signatures          Signature[]
+  assignmentsAsAssignee Assignment[]     @relation("AssignmentAssignee")
+  assignmentsAssigned   Assignment[]     @relation("AssignmentAssignedBy")
+  archives            Archive[]
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  routingRules        RoutingRule[]
+  signingKeys         SigningKey[]
+
+  @@map("users")
+}
+
+/// Хүснэгт 3.6. Үүрэг
+model Role {
+  id          String           @id @default(uuid()) @map("role_id") @db.Uuid
+  code        String           @unique @map("role_code") @db.VarChar(50)
+  name        String           @map("role_name") @db.VarChar(100)
+  isActive    Boolean          @default(true) @map("is_active")
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+/// Хүснэгт 3.7. Хэрэглэгч–үүрэг
+model UserRole {
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+/// Хүснэгт 3.8. Эрх
+model Permission {
+  id          String             @id @default(uuid()) @map("permission_id") @db.Uuid
+  code        String             @unique @map("permission_code") @db.VarChar(100)
+  name        String             @map("permission_name") @db.VarChar(100)
+
+  roles       RolePermission[]
+  transitions StatusTransition[]
+
+  @@map("permissions")
+}
+
+/// Хүснэгт 3.9. Үүрэг–эрх
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ───────────── Баримтын тохиргоо ─────────────
+
+/// Хүснэгт 3.10. Баримтын ангилал
+model DocumentCategory {
+  id       String         @id @default(uuid()) @map("category_id") @db.Uuid
+  code     String         @unique @map("category_code") @db.VarChar(50)
+  name     String         @map("category_name") @db.VarChar(150)
+  isActive Boolean        @default(true) @map("is_active")
+
+  types    DocumentType[]
+
+  @@map("document_categories")
+}
+
+/// Хүснэгт 3.11. Баримтын төрөл
+model DocumentType {
+  id                    String           @id @default(uuid()) @map("document_type_id") @db.Uuid
+  categoryId            String           @map("category_id") @db.Uuid
+  numberingRuleId       String?          @map("numbering_rule_id") @db.Uuid
+  code                  String           @unique @map("type_code") @db.VarChar(50)
+  name                  String           @map("type_name") @db.VarChar(150)
+  defaultRetentionYears Int?             @map("default_retention_years")
+  isActive              Boolean          @default(true) @map("is_active")
+
+  category      DocumentCategory   @relation(fields: [categoryId], references: [id])
+  numberingRule NumberingRule?     @relation(fields: [numberingRuleId], references: [id])
+  fields        FieldDefinition[]
+  transitions   StatusTransition[]
+  documents     Document[]
+  routingRules  RoutingRule[]
+
+  @@map("document_types")
+}
+
+/// Хүснэгт 3.12. Талбарын тодорхойлолт (төрлөөс хамаарах нэмэлт талбар)
+model FieldDefinition {
+  id             String   @id @default(uuid()) @map("field_id") @db.Uuid
+  documentTypeId String   @map("document_type_id") @db.Uuid
+  name           String   @map("field_name") @db.VarChar(100)
+  label          String   @map("field_label") @db.VarChar(150)
+  dataType       String   @map("data_type") @db.VarChar(30) // text | number | date | select | employee
+  options        Json?
+  isRequired     Boolean  @default(false) @map("is_required")
+  displayOrder   Int      @default(0) @map("display_order")
+  isActive       Boolean  @default(true) @map("is_active")
+
+  documentType DocumentType          @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  values       DocumentFieldValue[]
+  routingRules RoutingRule[]
+
+  @@unique([documentTypeId, name])
+  @@map("field_definitions")
+}
+
+/// Хүснэгт 3.13. Дугаарлалтын дүрэм
+model NumberingRule {
+  id            String           @id @default(uuid()) @map("numbering_rule_id") @db.Uuid
+  pattern       String           @db.VarChar(100) // жишээ: {TYPE}/{YYYY}-{SEQ:4}
+  resetPeriod   String           @default("YEARLY") @map("reset_period") @db.VarChar(20) // YEARLY | NEVER
+  perDepartment Boolean          @default(false) @map("per_department")
+
+  types         DocumentType[]
+  sequences     NumberSequence[]
+
+  @@map("numbering_rules")
+}
+
+/// Хүснэгт 3.14. Дугаарын тоологч
+model NumberSequence {
+  id              String         @id @default(uuid()) @map("sequence_id") @db.Uuid
+  numberingRuleId String?        @map("numbering_rule_id") @db.Uuid
+  departmentId    String?        @map("department_id") @db.Uuid
+  periodYear      Int            @map("period_year")
+  currentValue    Int            @default(0) @map("current_value")
+
+  numberingRule NumberingRule? @relation(fields: [numberingRuleId], references: [id])
+  department    Department?    @relation(fields: [departmentId], references: [id])
+
+  @@unique([numberingRuleId, departmentId, periodYear])
+  @@map("number_sequences")
+}
+
+/// Хүснэгт 3.15. Төлөв
+model DocumentStatus {
+  id           String  @id @default(uuid()) @map("status_id") @db.Uuid
+  code         String  @unique @map("status_code") @db.VarChar(50)
+  name         String  @map("status_name") @db.VarChar(50)
+  isFinal      Boolean @default(false) @map("is_final")
+  displayOrder Int     @default(0) @map("display_order")
+
+  documents       Document[]
+  transitionsFrom StatusTransition[] @relation("TransitionFrom")
+  transitionsTo   StatusTransition[] @relation("TransitionTo")
+  auditOld        AuditLog[]         @relation("AuditOldStatus")
+  auditNew        AuditLog[]         @relation("AuditNewStatus")
+
+  @@map("document_statuses")
+}
+
+/// Хүснэгт 3.16. Төлөвийн шилжилт
+model StatusTransition {
+  id             String  @id @default(uuid()) @map("transition_id") @db.Uuid
+  documentTypeId String? @map("document_type_id") @db.Uuid // NULL бол бүх төрөлд хамаарна
+  fromStatusId   String  @map("from_status_id") @db.Uuid
+  toStatusId     String  @map("to_status_id") @db.Uuid
+  actionCode     String  @map("action_code") @db.VarChar(50)
+  permissionId   String  @map("permission_id") @db.Uuid
+
+  documentType DocumentType?  @relation(fields: [documentTypeId], references: [id])
+  fromStatus   DocumentStatus @relation("TransitionFrom", fields: [fromStatusId], references: [id])
+  toStatus     DocumentStatus @relation("TransitionTo", fields: [toStatusId], references: [id])
+  permission   Permission     @relation(fields: [permissionId], references: [id])
+
+  @@index([fromStatusId, actionCode])
+  @@map("status_transitions")
+}
+
+// ───────────── Баримт бичиг ─────────────
+
+/// Хүснэгт 3.17. Баримт бичиг
+model Document {
+  id                String    @id @default(uuid()) @map("document_id") @db.Uuid
+  internalNumber    String    @unique @map("internal_number") @db.VarChar(30)
+  documentTypeId    String    @map("document_type_id") @db.Uuid
+  documentNumber    String?   @map("document_number") @db.VarChar(100) // БД-07: батлагдахаас өмнө NULL
+  title             String    @db.VarChar(255)
+  summary           String?   @db.Text
+  direction         String    @db.VarChar(20) // INCOMING | OUTGOING | INTERNAL
+  confidentiality   String    @default("NORMAL") @db.VarChar(20)
+  statusId          String    @map("status_id") @db.Uuid
+  ownerDepartmentId String    @map("owner_department_id") @db.Uuid
+  createdById       String    @map("created_by") @db.Uuid
+  currentVersionNo  Int       @default(1) @map("current_version_no")
+  documentDate      DateTime? @map("document_date") @db.Date
+  approvedAt        DateTime? @map("approved_at")
+  registeredAt      DateTime? @map("registered_at")
+  isDeleted         Boolean   @default(false) @map("is_deleted")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @updatedAt @map("updated_at")
+
+  documentType    DocumentType         @relation(fields: [documentTypeId], references: [id])
+  status          DocumentStatus       @relation(fields: [statusId], references: [id])
+  ownerDepartment Department           @relation(fields: [ownerDepartmentId], references: [id])
+  createdBy       User                 @relation("DocumentCreatedBy", fields: [createdById], references: [id])
+  fieldValues     DocumentFieldValue[]
+  versions        DocumentVersion[]
+  attachments     Attachment[]
+  employees       DocumentEmployee[]
+  relationsFrom   DocumentRelation[]   @relation("RelationSource")
+  relationsTo     DocumentRelation[]   @relation("RelationTarget")
+  approvals       Approval[]
+  signatures      Signature[]
+  assignments     Assignment[]
+  archive         Archive?
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+
+  @@index([statusId])
+  @@index([documentTypeId])
+  @@index([ownerDepartmentId])
+  @@index([createdAt])
+  @@map("documents")
+}
+
+/// Хүснэгт 3.18. Талбарын утга
+model DocumentFieldValue {
+  id         String @id @default(uuid()) @map("value_id") @db.Uuid
+  documentId String @map("document_id") @db.Uuid
+  fieldId    String @map("field_id") @db.Uuid
+  valueText  String @map("value_text") @db.Text
+
+  document Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  field    FieldDefinition @relation(fields: [fieldId], references: [id])
+
+  @@unique([documentId, fieldId])
+  @@map("document_field_values")
+}
+
+/// Хүснэгт 3.19. Баримтын хувилбар
+model DocumentVersion {
+  id          String   @id @default(uuid()) @map("version_id") @db.Uuid
+  documentId  String   @map("document_id") @db.Uuid
+  versionNo   Int      @map("version_no")
+  changeNote  String?  @map("change_note") @db.Text
+  snapshot    Json?
+  createdById String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  document    Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  attachments Attachment[]
+
+  @@unique([documentId, versionNo])
+  @@map("document_versions")
+}
+
+/// Хүснэгт 3.20. Хавсралт
+model Attachment {
+  id             String   @id @default(uuid()) @map("attachment_id") @db.Uuid
+  documentId     String   @map("document_id") @db.Uuid
+  versionId      String?  @map("version_id") @db.Uuid
+  fileName       String   @map("file_name") @db.VarChar(255)
+  storageKey     String   @map("storage_key") @db.Text
+  mimeType       String   @map("mime_type") @db.VarChar(100)
+  fileSize       BigInt   @map("file_size")
+  checksumSha256 String   @map("checksum_sha256") @db.Char(64)
+  content        Bytes?   @db.ByteA // файлын агуулга — өгөгдлийн сан дотор хадгална
+  isMain         Boolean  @default(false) @map("is_main")
+  uploadedById   String   @map("uploaded_by") @db.Uuid
+  uploadedAt     DateTime @default(now()) @map("uploaded_at")
+
+  document   Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version    DocumentVersion? @relation(fields: [versionId], references: [id])
+  uploadedBy User             @relation(fields: [uploadedById], references: [id])
+  signatures Signature[]
+
+  @@map("attachments")
+}
+
+/// Хүснэгт 3.21. Баримт–ажилтан (тушаал, гэрээнд хамаарах ажилтан)
+model DocumentEmployee {
+  documentId   String @map("document_id") @db.Uuid
+  employeeId   String @map("employee_id") @db.Uuid
+  relationRole String @map("relation_role") @db.VarChar(50)
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@id([documentId, employeeId, relationRole])
+  @@map("document_employees")
+}
+
+/// Хүснэгт 3.22. Баримт–баримт хамаарал
+model DocumentRelation {
+  id               String   @id @default(uuid()) @map("relation_id") @db.Uuid
+  sourceDocumentId String   @map("source_document_id") @db.Uuid
+  targetDocumentId String   @map("target_document_id") @db.Uuid
+  relationType     String   @map("relation_type") @db.VarChar(50)
+  createdById      String   @map("created_by") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  source    Document @relation("RelationSource", fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+  target    Document @relation("RelationTarget", fields: [targetDocumentId], references: [id], onDelete: Cascade)
+  createdBy User     @relation(fields: [createdById], references: [id])
+
+  @@map("document_relations")
+}
+
+// ───────────── Ажлын урсгал ─────────────
+
+/// Хүснэгт 3.23. Хяналт, батлалт
+model Approval {
+  id         String    @id @default(uuid()) @map("approval_id") @db.Uuid
+  documentId String    @map("document_id") @db.Uuid
+  stepOrder  Int       @default(1) @map("step_order")
+  reviewerId String    @map("reviewer_id") @db.Uuid
+  decision   ApprovalDecision @default(PENDING) // зөвхөн жагсаасан 5 утгын аль нэг (enum)
+  comment    String?   @db.Text
+  dueDate    DateTime? @map("due_date") @db.Date
+  decidedAt  DateTime? @map("decided_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  reviewer User     @relation(fields: [reviewerId], references: [id])
+
+  @@index([reviewerId, decision])
+  @@map("approvals")
+}
+
+/// Хүснэгт 3.24. Гарын үсэг
+model Signature {
+  id                String    @id @default(uuid()) @map("signature_id") @db.Uuid
+  documentId        String    @map("document_id") @db.Uuid
+  attachmentId      String?   @map("attachment_id") @db.Uuid
+  signedById        String    @map("signed_by") @db.Uuid
+  method            String    @db.VarChar(30) // SCAN | DIGITAL
+  certificateSerial String?   @map("certificate_serial") @db.VarChar(100) // DIGITAL: нийтийн түлхүүрийн хурууны хээ
+  keyId             String?   @map("key_id") @db.Uuid
+  contentHash       String?   @map("content_hash") @db.Char(64) // гарын үсэг зурах үеийн агуулгын SHA-256
+  signatureValue    String?   @map("signature_value") @db.Text // Ed25519 гарын үсэг (base64)
+  signedAt          DateTime  @default(now()) @map("signed_at")
+
+  document   Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  attachment Attachment? @relation(fields: [attachmentId], references: [id])
+  signedBy   User        @relation(fields: [signedById], references: [id])
+  key        SigningKey? @relation(fields: [keyId], references: [id])
+
+  @@index([documentId])
+  @@map("signatures")
+}
+
+/// Хүснэгт 3.25. Хуваарилалт (БД-09: нэг хэрэглэгч ЭСВЭЛ нэг нэгж)
+model Assignment {
+  id                   String    @id @default(uuid()) @map("assignment_id") @db.Uuid
+  documentId           String    @map("document_id") @db.Uuid
+  assigneeUserId       String?   @map("assignee_user_id") @db.Uuid
+  assigneeDepartmentId String?   @map("assignee_department_id") @db.Uuid
+  assignedById         String    @map("assigned_by") @db.Uuid
+  dueDate              DateTime  @map("due_date") @db.Date // БД-09: хугацааг заавал тогтооно
+  status               String    @default("ACTIVE") @db.VarChar(30) // ACTIVE | DONE | REASSIGNED
+  resultNote           String?   @map("result_note") @db.Text
+  assignedAt           DateTime  @default(now()) @map("assigned_at")
+  completedAt          DateTime? @map("completed_at")
+
+  document           Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  assigneeUser       User?       @relation("AssignmentAssignee", fields: [assigneeUserId], references: [id])
+  assigneeDepartment Department? @relation(fields: [assigneeDepartmentId], references: [id])
+  assignedBy         User        @relation("AssignmentAssignedBy", fields: [assignedById], references: [id])
+
+  @@index([assigneeUserId, status])
+  @@index([dueDate])
+  @@map("assignments")
+}
+
+/// Хүснэгт 3.26. Архив
+model Archive {
+  id              String    @id @default(uuid()) @map("archive_id") @db.Uuid
+  documentId      String    @unique @map("document_id") @db.Uuid
+  archivedById    String    @map("archived_by") @db.Uuid
+  archivedAt      DateTime  @default(now()) @map("archived_at")
+  archiveCategory String?   @map("archive_category") @db.VarChar(100)
+  retentionUntil  DateTime? @map("retention_until") @db.Date
+  disposalAction  String?   @map("disposal_action") @db.VarChar(30) // DESTROY | TRANSFER
+  storageLocation String?   @map("storage_location") @db.Text
+
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  archivedBy User     @relation(fields: [archivedById], references: [id])
+
+  @@map("archives")
+}
+
+/// Хүснэгт 3.27. Аудитын түүх
+model AuditLog {
+  id          String    @id @default(uuid()) @map("audit_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  documentId  String?   @map("document_id") @db.Uuid
+  entityType  String    @map("entity_type") @db.VarChar(50)
+  entityId    String?   @map("entity_id") @db.Uuid
+  action      String    @db.VarChar(50)
+  oldStatusId String?   @map("old_status_id") @db.Uuid
+  newStatusId String?   @map("new_status_id") @db.Uuid
+  oldValue    Json?     @map("old_value")
+  newValue    Json?     @map("new_value")
+  ipAddress   String?   @map("ip_address") @db.VarChar(45)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user      User            @relation(fields: [userId], references: [id])
+  document  Document?       @relation(fields: [documentId], references: [id])
+  oldStatus DocumentStatus? @relation("AuditOldStatus", fields: [oldStatusId], references: [id])
+  newStatus DocumentStatus? @relation("AuditNewStatus", fields: [newStatusId], references: [id])
+
+  @@index([documentId])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+/// Хүснэгт 3.28. Мэдэгдэл
+model Notification {
+  id         String   @id @default(uuid()) @map("notification_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  documentId String?  @map("document_id") @db.Uuid
+  type       String   @db.VarChar(50)
+  message    String   @db.Text
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+/// Мета өгөгдлөөр автоматаар чиглүүлэх дүрэм: нөхцөл бүрдвэл хянагчийг автоматаар сонгоно.
+/// Хоосон (NULL) нөхцөл нь «ямар ч» гэсэн утгатай. priority бага нь эхэлж шалгагдана.
+model RoutingRule {
+  id              String   @id @default(uuid()) @map("rule_id") @db.Uuid
+  name            String   @map("rule_name") @db.VarChar(150)
+  documentTypeId  String?  @map("document_type_id") @db.Uuid
+  confidentiality String?  @db.VarChar(20) // NORMAL | INTERNAL | CONFIDENTIAL
+  direction       String?  @db.VarChar(20) // OUTGOING | INTERNAL
+  departmentId    String?  @map("department_id") @db.Uuid // баримт эзэмшигч нэгж
+  fieldId         String?  @map("field_id") @db.Uuid
+  fieldValue      String?  @map("field_value") @db.VarChar(255)
+  reviewerId      String   @map("reviewer_id") @db.Uuid
+  priority        Int      @default(100)
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  documentType DocumentType?    @relation(fields: [documentTypeId], references: [id])
+  department   Department?      @relation(fields: [departmentId], references: [id])
+  field        FieldDefinition? @relation(fields: [fieldId], references: [id])
+  reviewer     User             @relation(fields: [reviewerId], references: [id])
+
+  @@index([isActive, priority])
+  @@map("routing_rules")
+}
+
+/// Цахим гарын үсгийн түлхүүр (Ed25519). Хувийн түлхүүрийг хэрэглэгчийн нууц үгээс
+/// scrypt-ээр гаргасан түлхүүрээр AES-256-GCM шифрлэж хадгална — сервер нууц үггүйгээр зурж чадахгүй.
+model SigningKey {
+  id                  String    @id @default(uuid()) @map("key_id") @db.Uuid
+  userId              String    @map("user_id") @db.Uuid
+  publicKey           String    @map("public_key") @db.Text // SPKI PEM
+  encryptedPrivateKey String    @map("encrypted_private_key") @db.Text
+  fingerprint         String    @db.Char(16)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  revokedAt           DateTime? @map("revoked_at")
+
+  user       User        @relation(fields: [userId], references: [id])
+  signatures Signature[]
+
+  @@index([userId])
+  @@map("signing_keys")
+}
+
+/// Хяналтын шийдвэр — өгөгдлийн сан зөвхөн эдгээр утгыг зөвшөөрнө
+enum ApprovalDecision {
+  PENDING   // хүлээгдэж буй
+  APPROVED  // баталсан
+  RETURNED  // засварт буцаасан
+  FORWARDED // дараагийн хянагч руу шилжүүлсэн
+  CANCELLED // цуцалсан
+}

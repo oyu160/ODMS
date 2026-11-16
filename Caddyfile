@@ -1,0 +1,21 @@
+# HTTPS урвуу прокси (ФБШ-03: өгөгдлийг сүлжээгээр шифрлэж дамжуулна)
+# Гэрчилгээ /data дотор хадгалагдаж, хугацаа дуусахаас өмнө автоматаар шинэчлэгдэнэ.
+{$DMS_DOMAIN:localhost} {
+	tls {$DMS_TLS:internal}
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Файлын дээд хэмжээ 20 МБ + маягтын өгөгдөл (ФБШ-07)
+	request_body {
+		max_size 25MB
+	}
+
+	reverse_proxy app:3000
+}
