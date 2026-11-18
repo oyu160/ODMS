@@ -31,6 +31,7 @@ body {
 /* Гараар (Tab) шилжихэд идэвхтэй элемент тод харагдана (хүртээмж) */
 @layer base {
   a:focus-visible,
+  button:focus-visible,
   summary:focus-visible,
   [role="button"]:focus-visible {
     outline: 2px solid var(--color-navy-600);

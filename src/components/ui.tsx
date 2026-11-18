@@ -1,6 +1,6 @@
 // Нийтлэг UI хэсгүүд (дипломын 3.2-ын зохиомжийн дагуу)
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react";
 
 export function PageHeader({
   crumbs,
@@ -67,38 +67,48 @@ const STATUS_STYLE: Record<string, string> = {
   DRAFT: "bg-slate-100 text-slate-700",
   IN_REVIEW: "bg-amber-100 text-amber-800",
   RETURNED: "bg-orange-100 text-orange-800",
-  APPROVED: "bg-sky-100 text-sky-800",
+  APPROVED: "bg-teal-100 text-teal-800",
   REGISTERED: "bg-blue-100 text-blue-800",
-  ASSIGNED: "bg-indigo-100 text-indigo-800",
+  ASSIGNED: "bg-violet-100 text-violet-800",
   RESOLVED: "bg-green-100 text-green-800",
   ARCHIVED: "bg-slate-200 text-slate-700",
   CANCELLED: "bg-red-100 text-red-700",
 };
+/** Төлөв бүрийн үндсэн өнгө — график, цэг, түүхэнд. Батлагдсан / Бүртгэгдсэн / Хуваарилагдсан нь teal / blue / violet тул тод ялгагдана */
 export const STATUS_COLOR: Record<string, string> = {
-  DRAFT: "#cbd5e1",
-  IN_REVIEW: "#f59e0b",
-  RETURNED: "#f97316",
-  APPROVED: "#60a5fa",
+  DRAFT: "#94a3b8",
+  IN_REVIEW: "#d97706",
+  RETURNED: "#ea580c",
+  APPROVED: "#0d9488",
   REGISTERED: "#2563eb",
-  ASSIGNED: "#6366f1",
+  ASSIGNED: "#7c3aed",
   RESOLVED: "#16a34a",
   ARCHIVED: "#475569",
   CANCELLED: "#dc2626",
 };
 
+/** Баримтын төлөв: өнгөт тэмдэг + цэг (өнгөнөөс гадна хэлбэрээр ч ялгагдана) */
 export function StatusBadge({ code, name }: { code: string; name: string }) {
-  return <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[code] ?? "bg-slate-100"}`}>{name}</span>;
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[code] ?? "bg-slate-100 text-slate-700"}`}>
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: STATUS_COLOR[code] ?? "#94a3b8" }} />
+      {name}
+    </span>
+  );
 }
 
-export function Pill({ children, tone = "slate" }: { children: React.ReactNode; tone?: "slate" | "red" | "amber" | "green" | "navy" }) {
-  const t = { slate: "bg-slate-100 text-slate-700", red: "bg-red-100 text-red-700", amber: "bg-amber-100 text-amber-800", green: "bg-green-100 text-green-800", navy: "bg-navy-50 text-navy-800" }[tone];
+export function Pill({ children, tone = "slate" }: { children: React.ReactNode; tone?: "slate" | "red" | "amber" | "orange" | "green" | "navy" | "violet" | "teal" }) {
+  const t = { slate: "bg-slate-100 text-slate-700", red: "bg-red-100 text-red-700", amber: "bg-amber-100 text-amber-800", orange: "bg-orange-100 text-orange-800", green: "bg-green-100 text-green-800", navy: "bg-navy-50 text-navy-800", violet: "bg-violet-100 text-violet-800", teal: "bg-teal-100 text-teal-800" }[tone];
   return <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${t}`}>{children}</span>;
 }
 
-export function EmptyRow({ cols, text }: { cols: number; text: string }) {
+export function EmptyRow({ cols, text, action }: { cols: number; text: string; action?: React.ReactNode }) {
   return (
     <tr>
-      <td colSpan={cols} className="px-4 py-12 text-center text-sm text-slate-500">{text}</td>
+      <td colSpan={cols} className="px-4 py-12 text-center text-sm text-slate-500">
+        {text}
+        {action && <div className="mt-3">{action}</div>}
+      </td>
     </tr>
   );
 }
@@ -106,17 +116,18 @@ export function EmptyRow({ cols, text }: { cols: number; text: string }) {
 /** Холбоос дээр суурилсан таб */
 export function Tabs({ tabs, active }: { tabs: { key: string; label: React.ReactNode; href: string }[]; active: string }) {
   return (
-    <div className="mb-5 flex gap-6 border-b border-slate-200">
+    <nav className="mb-5 flex gap-6 overflow-x-auto border-b border-slate-200">
       {tabs.map((t) => (
         <Link
           key={t.key}
           href={t.href}
-          className={`-mb-px border-b-2 pb-3 text-sm font-medium ${t.key === active ? "border-navy-800 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          aria-current={t.key === active ? "page" : undefined}
+          className={`-mb-px whitespace-nowrap border-b-2 pb-3 text-sm ${t.key === active ? "border-navy-700 font-semibold text-slate-900" : "border-transparent font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900"}`}
         >
           {t.label}
         </Link>
       ))}
-    </div>
+    </nav>
   );
 }
 
@@ -156,4 +167,27 @@ export function makeHref(base: string, params: Record<string, string | undefined
   const merged = { ...params, ...patch };
   const qs = new URLSearchParams(Object.entries(merged).filter(([, v]) => v) as [string, string][]).toString();
   return qs ? `${base}?${qs}` : base;
+}
+
+/** Эрэмбэлэх боломжтой баганын толгой: дарахад өсөх ↔ буурах дарааллаар солигдоно */
+export function SortTh({ label, active, dir, href, className = "" }: { label: string; active: boolean; dir: "asc" | "desc"; href: string; className?: string }) {
+  const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className={`th ${className}`} aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}>
+      <Link href={href} className={`inline-flex items-center gap-1 rounded hover:text-slate-900 ${active ? "text-slate-900" : ""}`}>
+        {label}
+        <Icon size={13} aria-hidden className={active ? "text-navy-700" : "text-slate-400"} />
+      </Link>
+    </th>
+  );
+}
+
+/** Идэвхтэй шүүлтүүрийн шошго — × дарахад тухайн шүүлтүүр арилна */
+export function FilterChip({ label, href }: { label: string; href: string }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-1.5 rounded-full bg-navy-50 py-1 pl-3 pr-2 text-xs font-semibold text-navy-800 hover:bg-navy-100" aria-label={`${label} — шүүлтүүрийг арилгах`}>
+      {label}
+      <X size={12} aria-hidden />
+    </Link>
+  );
 }

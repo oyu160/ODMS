@@ -56,7 +56,7 @@ export function NextStep({ text, mine }: { text: string | null; mine: boolean })
       <span>
         <b>{mine ? "Таны ээлж: " : "Дараагийн алхам: "}</b>
         {text}
-        {mine && " Баруун талын «Үйлдэл» хэсгээс сонгоно уу."}
+        {mine && " «Үйлдэл» хэсгээс сонгоно уу."}
       </span>
     </div>
   );
