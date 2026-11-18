@@ -28,11 +28,12 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
   const where = buildWhere(user, f);
 
   // Таб бүрийн тоо нь бусад шүүлтүүрийг (түлхүүр үг, төрөл, огноо) хадгална
-  const base: DocFilter = { q: f.q, type: f.type, direction: f.direction, from: f.from, to: f.to };
+  const base: DocFilter = { q: f.q, type: f.type, direction: f.direction, from: f.from, to: f.to, assignee: f.assignee };
   const views = VIEWS.filter((v) => !v.creatorOnly || can(user, "document.create"));
   const activeView = views.find((v) => v.status === f.status && v.mine === f.mine)?.key ?? "";
 
-  const [total, docs, statuses, types, viewCounts] = await Promise.all([
+  const manager = can(user, "document.assign");
+  const [total, docs, statuses, types, viewCounts, users, departments] = await Promise.all([
     prisma.document.count({ where }),
     prisma.document.findMany({
       where,
@@ -44,6 +45,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
     prisma.documentStatus.findMany({ orderBy: { displayOrder: "asc" } }),
     prisma.documentType.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     Promise.all(views.map((v) => prisma.document.count({ where: buildWhere(user, { ...base, status: v.status, mine: v.mine }) }))),
+    manager ? prisma.user.findMany({ where: { isActive: true }, include: { employee: true }, orderBy: { employee: { lastName: "asc" } } }) : [],
+    manager ? prisma.department.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }) : [],
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const href = (p: number) => makeHref("/documents", sp, { page: String(p) });
@@ -59,6 +62,12 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
   // Идэвхтэй шүүлтүүрийн chip-ууд
   const statusName = statuses.find((s) => s.code === f.status)?.name;
   const typeName = types.find((t) => t.id === f.type)?.name;
+  const assigneeName =
+    f.assignee === "me"
+      ? "Надад / миний нэгжид"
+      : f.assignee?.startsWith("u:")
+        ? (() => { const u = users.find((x) => x.id === f.assignee!.slice(2)); return u ? shortName(u.employee) : undefined; })()
+        : departments.find((d) => d.id === f.assignee?.slice(2))?.name;
   const chips: { label: string; href: string }[] = [
     ...(f.q ? [{ label: `Түлхүүр үг: ${f.q}`, href: without("q") }] : []),
     ...(typeName ? [{ label: `Төрөл: ${typeName}`, href: without("type") }] : []),
@@ -66,6 +75,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
     ...(f.direction ? [{ label: `Чиглэл: ${DIRECTION_LABELS[f.direction] ?? f.direction}`, href: without("direction") }] : []),
     ...(f.from || f.to ? [{ label: `Огноо: ${f.from ?? "…"} – ${f.to ?? "…"}`, href: without("from", "to") }] : []),
     ...(f.mine ? [{ label: "Зөвхөн миний үүсгэсэн", href: without("mine") }] : []),
+    ...(assigneeName ? [{ label: `Хариуцагч: ${assigneeName}`, href: without("assignee") }] : []),
   ];
 
   return (
@@ -97,7 +107,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
         {f.mine && <input type="hidden" name="mine" value={f.mine} />}
         {f.sort && <input type="hidden" name="sort" value={f.sort} />}
         {f.dir && <input type="hidden" name="dir" value={f.dir} />}
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_1.6fr_auto] xl:items-end">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr] xl:items-end">
           <div>
             <label className="label" htmlFor="f-q">Түлхүүр үг</label>
             <div className="relative">
@@ -124,6 +134,17 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
             <select id="f-dir" name="direction" defaultValue={f.direction ?? ""} className="input">
               <option value="">Бүгд</option>
               {Object.entries(DIRECTION_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.4fr_1.6fr_auto] xl:items-end">
+          <div>
+            <label className="label" htmlFor="f-who">Хариуцагч</label>
+            <select id="f-who" name="assignee" defaultValue={f.assignee ?? ""} className="input">
+              <option value="">Бүгд</option>
+              <option value="me">Надад / миний нэгжид</option>
+              {manager && <optgroup label="Ажилтан">{users.map((u) => <option key={u.id} value={`u:${u.id}`}>{shortName(u.employee)}</option>)}</optgroup>}
+              {manager && <optgroup label="Нэгж">{departments.map((d) => <option key={d.id} value={`d:${d.id}`}>{d.name}</option>)}</optgroup>}
             </select>
           </div>
           <fieldset>

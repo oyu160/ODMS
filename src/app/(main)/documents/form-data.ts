@@ -1,6 +1,7 @@
 // Маягтад шаардлагатай өгөгдлийг нэг дор ачаална (шинэ болон засах хуудас)
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { documentScope } from "@/lib/access";
 import type { CurrentUser } from "@/lib/auth";
 import { shortName, initials } from "@/lib/format";
 import type { FormType } from "./document-form";
@@ -18,7 +19,8 @@ export async function loadFormData(user: CurrentUser, typeId: string) {
       include: { employee: { include: { department: true } }, roles: { include: { role: true } } },
     }),
     prisma.document.findMany({
-      where: { isDeleted: false, documentNumber: { not: null } },
+      // Зөвхөн хэрэглэгчийн харах эрхтэй баримт (нууцлалын түвшин хамаарна)
+      where: { AND: [documentScope(user), { documentNumber: { not: null } }] },
       orderBy: { createdAt: "desc" },
       take: 200,
       select: { id: true, documentNumber: true, title: true },

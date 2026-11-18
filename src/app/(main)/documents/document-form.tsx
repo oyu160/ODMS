@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Upload, File as FileIcon, X, Info, Route, Undo2 } from "lucide-react";
 import { pickRule, type RuleLike } from "@/lib/routing";
+import { RELATION_TYPES } from "@/lib/format";
 import { saveDocument, type SaveState } from "./save-action";
 import { Toast, Spinner } from "@/components/feedback";
 
@@ -37,6 +38,34 @@ type Props = {
 export function DocumentForm({ type, employees, departments, reviewers, related, rules = [], me, initial }: Props) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveDocument, undefined);
   const [files, setFiles] = useState<File[]>([]);
+  // Сервэрээс ирсэн талбар бүрийн алдаа. Хэрэглэгч тухайн талбарыг засмагц алдаа нь арилна.
+  const [fixed, setFixed] = useState<string[]>([]);
+  const fieldErrors = state?.fieldErrors ?? {};
+  const errOf = (name: string) => (fixed.includes(name) ? undefined : fieldErrors[name]);
+  const markFixed = (name: string) => setFixed((p) => (p.includes(name) ? p : [...p, name]));
+  useEffect(() => {
+    setFixed([]);
+    if (state?.fieldErrors && Object.keys(state.fieldErrors).length) {
+      // Эхний алдаатай талбар руу шилжиж, фокуслана
+      const el = document.querySelector<HTMLElement>('[aria-invalid="true"]');
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
+      el?.focus({ preventScroll: true });
+    }
+  }, [state]);
+  /** Алдаатай талбарт өгөх a11y шинж ба улаан хүрээ */
+  const invalid = (name: string) => {
+    const e = errOf(name);
+    return {
+      id: `doc-${name}`,
+      "aria-invalid": e ? (true as const) : undefined,
+      "aria-describedby": e ? `doc-${name}-err` : undefined,
+      className: e ? "input border-red-500 bg-red-50/40 focus:ring-red-200" : "input",
+    };
+  };
+  const FieldError = ({ name }: { name: string }) => {
+    const e = errOf(name);
+    return e ? <p id={`doc-${name}-err`} className="mt-1 text-xs font-medium text-red-600">{e}</p> : null;
+  };
   // Хадгалсан хавсралтаас хасахаар тэмдэглэсэн файлууд (хадгалах үед устгагдана)
   const [removed, setRemoved] = useState<string[]>([]);
   const [values, setValues] = useState<Record<string, string>>(initial.values ?? {});
@@ -80,10 +109,14 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
   const fieldInput = (f: FormField) => {
     const name = `f_${f.id}`;
     const val = values[f.id] ?? "";
-    const set = (v: string) => setValues((p) => ({ ...p, [f.id]: v }));
+    const set = (v: string) => {
+      setValues((p) => ({ ...p, [f.id]: v }));
+      markFixed(name);
+    };
+    const a = invalid(name);
     if (f.dataType === "select")
       return (
-        <select name={name} value={val} onChange={(e) => set(e.target.value)} className="input">
+        <select name={name} value={val} onChange={(e) => set(e.target.value)} {...a}>
           <option value="">Сонгоно уу</option>
           {f.options.map((o) => <option key={o}>{o}</option>)}
         </select>
@@ -92,7 +125,7 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
       const emp = employees.find((e) => e.id === val);
       return (
         <div className="space-y-1">
-          <select name={name} value={val} onChange={(e) => set(e.target.value)} className="input">
+          <select name={name} value={val} onChange={(e) => set(e.target.value)} {...a}>
             <option value="">Ажилтан сонгох</option>
             {employees.map((e) => <option key={e.id} value={e.id}>{e.name} · {e.code}</option>)}
           </select>
@@ -102,13 +135,13 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
     }
     if (f.dataType === "department")
       return (
-        <select name={name} value={val} onChange={(e) => set(e.target.value)} className="input">
+        <select name={name} value={val} onChange={(e) => set(e.target.value)} {...a}>
           <option value="">Нэгж сонгох</option>
           {departments.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
         </select>
       );
-    if (f.dataType === "textarea") return <textarea name={name} rows={3} value={val} onChange={(e) => set(e.target.value)} className="input" />;
-    return <input name={name} value={val} onChange={(e) => set(e.target.value)} type={f.dataType === "number" ? "number" : f.dataType === "date" ? "date" : "text"} className="input" />;
+    if (f.dataType === "textarea") return <textarea name={name} rows={3} value={val} onChange={(e) => set(e.target.value)} {...a} />;
+    return <input name={name} value={val} onChange={(e) => set(e.target.value)} type={f.dataType === "number" ? "number" : f.dataType === "date" ? "date" : "text"} {...a} />;
   };
 
   return (
@@ -135,8 +168,9 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
             <h2 className="mb-4 text-base font-semibold">Ерөнхий мэдээлэл</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="label">Гарчиг <span className="text-red-600">*</span></label>
-                <input name="title" defaultValue={initial.title} required maxLength={255} className="input" />
+                <label className="label" htmlFor="doc-title">Гарчиг <span className="text-red-600">*</span></label>
+                <input name="title" defaultValue={initial.title} required maxLength={255} {...invalid("title")} onChange={() => markFixed("title")} />
+                <FieldError name="title" />
               </div>
               <div>
                 <label className="label">Албан ёсны дугаар</label>
@@ -144,8 +178,9 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
                 {type.pattern && <p className="mt-1 text-xs text-slate-500">Дугаарлалтын дүрэм: {type.pattern}</p>}
               </div>
               <div>
-                <label className="label">Баримтын огноо <span className="text-red-600">*</span></label>
-                <input type="date" name="documentDate" defaultValue={initial.documentDate ?? today} required className="input" />
+                <label className="label" htmlFor="doc-documentDate">Баримтын огноо <span className="text-red-600">*</span></label>
+                <input type="date" name="documentDate" defaultValue={initial.documentDate ?? today} required {...invalid("documentDate")} onChange={() => markFixed("documentDate")} />
+                <FieldError name="documentDate" />
               </div>
               <div>
                 <label className="label">Чиглэл</label>
@@ -163,12 +198,21 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
                   <option value="CONFIDENTIAL">Нууц</option>
                 </select>
               </div>
-              <div className="md:col-span-2">
-                <label className="label">Холбоотой баримт</label>
-                <select name="relatedId" defaultValue="" className="input">
-                  <option value="">— Сонгоогүй —</option>
-                  {related.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-                </select>
+              <div className="grid gap-4 md:col-span-2 md:grid-cols-[200px_1fr]">
+                <div>
+                  <label className="label" htmlFor="doc-reltype">Хамаарал</label>
+                  <select id="doc-reltype" name="relationType" defaultValue={incoming ? "Хариу" : "Үндэслэсэн"} className="input">
+                    {RELATION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label" htmlFor="doc-related">Холбоотой баримт</label>
+                  <select id="doc-related" name="relatedId" defaultValue="" className="input" aria-describedby="doc-related-help">
+                    <option value="">— Сонгоогүй —</option>
+                    {related.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+                  </select>
+                  <p id="doc-related-help" className="mt-1 text-xs text-slate-500">Жишээ: ирсэн бичгийн хариуг «Хариу», батлагдсан баримтыг өөрчилж буй бол «Өөрчилсөн»</p>
+                </div>
               </div>
             </div>
           </section>
@@ -180,8 +224,9 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
               <div className="grid gap-4 md:grid-cols-2">
                 {type.fields.map((f) => (
                   <div key={f.id} className={f.dataType === "textarea" ? "md:col-span-2" : ""}>
-                    <label className="label">{f.label} {f.isRequired && <span className="text-red-600">*</span>}</label>
+                    <label className="label" htmlFor={`doc-f_${f.id}`}>{f.label} {f.isRequired && <span className="text-red-600">*</span>}</label>
                     {fieldInput(f)}
+                    <FieldError name={`f_${f.id}`} />
                   </div>
                 ))}
               </div>

@@ -60,6 +60,9 @@ export const AUDIT_LABELS: Record<string, string> = {
   USER_ENABLE: "Хэрэглэгч идэвхжүүлсэн",
   ROLE_CHANGE: "Үүрэг өөрчилсөн",
   PASSWORD_RESET: "Нууц үг сэргээсэн",
+  RELATE: "Хамаарал үүсгэсэн",
+  UNRELATE: "Хамаарал хассан",
+  DISPOSE: "Хадгалах хугацааны шийдвэр гаргасан",
 };
 
 type DocLite = { id: string; statusId: string; documentTypeId: string; createdById: string; direction: string };

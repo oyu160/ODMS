@@ -11,7 +11,8 @@ import { saveFile } from "@/lib/storage";
 import { writeAudit } from "@/lib/audit";
 import { performAction, WorkflowError } from "@/lib/workflow";
 
-export type SaveState = { error?: string } | undefined;
+/** fieldErrors: талбарын нэр (title, documentDate, f_<id>) → алдааны бичвэр — маягт дээр тухайн талбарын доор харагдана */
+export type SaveState = { error?: string; fieldErrors?: Record<string, string> } | undefined;
 
 const Schema = z.object({
   documentId: z.string().optional(),
@@ -22,6 +23,7 @@ const Schema = z.object({
   confidentiality: z.enum(["NORMAL", "INTERNAL", "CONFIDENTIAL"]),
   documentDate: z.string().optional(),
   relatedId: z.string().optional(),
+  relationType: z.enum(["Үндэслэсэн", "Хариу", "Өөрчилсөн", "Хүчингүй болгосон"]).default("Үндэслэсэн"),
   reviewerId: z.string().optional(),
   intent: z.enum(["draft", "submit", "register"]),
 });
@@ -41,26 +43,41 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
     confidentiality: str("confidentiality"),
     documentDate: str("documentDate"),
     relatedId: str("relatedId"),
+    relationType: str("relationType"),
     reviewerId: str("reviewerId"),
     intent: str("intent") ?? "draft",
   });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const i of parsed.error.issues) {
+      const k = String(i.path[0] ?? "");
+      if (k && !fieldErrors[k]) fieldErrors[k] = i.message;
+    }
+    return { error: parsed.error.issues[0].message, fieldErrors };
+  }
   const v = parsed.data;
 
   const type = await prisma.documentType.findUnique({ where: { id: v.documentTypeId }, include: { fields: { where: { isActive: true } } } });
   if (!type || !type.isActive) return { error: "Баримтын төрөл олдсонгүй" };
 
-  // Төрлөөс хамаарах талбар
+  // Төрлөөс хамаарах талбар — БД-02: бүх дутуу/буруу талбарыг нэг дор цуглуулж, талбар бүрийн доор харуулна
   const values: { fieldId: string; valueText: string }[] = [];
+  const fieldErrors: Record<string, string> = {};
+  if (v.intent !== "draft" && !v.documentDate) fieldErrors.documentDate = "Баримтын огноог оруулна уу";
   for (const f of type.fields) {
     const raw = String(formData.get(`f_${f.id}`) ?? "").trim();
     if (!raw) {
-      if (f.isRequired && v.intent !== "draft") return { error: `«${f.label}» талбарыг бөглөнө үү` };
+      if (f.isRequired && v.intent !== "draft") fieldErrors[`f_${f.id}`] = "Энэ талбарыг заавал бөглөнө";
       continue;
     }
-    if (f.dataType === "number" && Number.isNaN(Number(raw))) return { error: `«${f.label}» тоо байх ёстой` };
+    if (f.dataType === "number" && Number.isNaN(Number(raw))) {
+      fieldErrors[`f_${f.id}`] = "Тоо оруулна уу";
+      continue;
+    }
     values.push({ fieldId: f.id, valueText: raw });
   }
+  const errCount = Object.keys(fieldErrors).length;
+  if (errCount) return { error: `${errCount} талбар дутуу эсвэл буруу байна. Улаанаар тэмдэглэсэн талбаруудыг засна уу.`, fieldErrors };
   // Хянагч сонгоогүй бол хяналтад илгээх үед мета өгөгдлийн дүрмээр автоматаар чиглүүлнэ (lib/routing.ts)
 
   // Файлууд
@@ -156,8 +173,8 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
       if (first) await tx.attachment.update({ where: { id: first.id }, data: { isMain: true } });
     }
     if (v.relatedId && v.relatedId !== id) {
-      const exists = await tx.documentRelation.findFirst({ where: { sourceDocumentId: id, targetDocumentId: v.relatedId } });
-      if (!exists) await tx.documentRelation.create({ data: { sourceDocumentId: id, targetDocumentId: v.relatedId, relationType: "Үндэслэсэн", createdById: user.id } });
+      const exists = await tx.documentRelation.findFirst({ where: { sourceDocumentId: id, targetDocumentId: v.relatedId, relationType: v.relationType } });
+      if (!exists) await tx.documentRelation.create({ data: { sourceDocumentId: id, targetDocumentId: v.relatedId, relationType: v.relationType, createdById: user.id } });
     }
     await writeAudit(
       { userId: user.id, documentId: id, entityType: "document", entityId: id, action: existing ? "UPDATE" : "CREATE", newStatusId: existing ? undefined : draft.id, newValue: { version: versionNo, ...(removedFiles.length ? { removedFiles: removedFiles.join(", ") } : {}) } },

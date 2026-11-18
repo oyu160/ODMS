@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound, forbidden } from "next/navigation";
-import { Download, Pencil, File as FileIcon, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Download, Pencil, File as FileIcon, ShieldCheck, ShieldAlert, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { documentScope } from "@/lib/access";
 import { availableActions, AUDIT_LABELS } from "@/lib/workflow";
-import { CONF_LABELS, DIRECTION_LABELS, ASSIGNMENT_LABELS, DECISION_LABELS, fmtDate, fmtDateTime, fmtShort, shortName, fileSize, startOfToday, daysBetween, describeAuditValue } from "@/lib/format";
+import { CONF_LABELS, DIRECTION_LABELS, ASSIGNMENT_LABELS, DECISION_LABELS, fmtDate, fmtDateTime, fmtShort, shortName, fileSize, startOfToday, daysBetween, describeAuditValue, RELATION_TYPES, RELATION_INVERSE } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, Tabs, Pill, STATUS_COLOR } from "@/components/ui";
 import { ActionPanel } from "./action-panel";
 import { WorkflowSteps, NextStep } from "@/components/workflow-steps";
 import { ReviewerEdit } from "./reviewer-edit";
+import { addRelation, removeRelation } from "./actions";
+import { ModalButton, ModalCloser, ConfirmButton } from "@/components/modal";
+import { SubmitButton } from "@/components/feedback";
 import { verifyDocumentSignatures } from "@/lib/signature";
 import { resolveRoute } from "@/lib/routing";
 
@@ -86,6 +89,16 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
   const sigOk = signatures.length > 0 && signatures.every((x) => x.status === "VALID");
 
   const editable = doc.createdById === user.id && ["DRAFT", "RETURNED"].includes(doc.status.code);
+  // ФШ-22: баримт бичгийн ажилтан эсвэл үүсгэгч хамаарал нэмнэ
+  const canRelate = can(user, "document.register") || doc.createdById === user.id;
+  const relationCandidates = canRelate
+    ? await prisma.document.findMany({
+        where: { AND: [documentScope(user), { id: { not: doc.id } }] },
+        orderBy: { createdAt: "desc" },
+        take: 300,
+        select: { id: true, documentNumber: true, internalNumber: true, title: true },
+      })
+    : [];
 
   // Дараагийн алхам: хэн, юу хийх вэ
   const pendingReview = doc.approvals.find((a) => a.decision === "PENDING");
@@ -108,8 +121,8 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
   const statusLogs = doc.auditLogs.filter((l) => l.newStatus);
   const today = startOfToday();
   const relations = [
-    ...doc.relationsFrom.map((r) => ({ id: r.id, doc: r.target, type: r.relationType })),
-    ...doc.relationsTo.map((r) => ({ id: r.id, doc: r.source, type: `${r.relationType} (эх)` })),
+    ...doc.relationsFrom.map((r) => ({ id: r.id, doc: r.target, type: r.relationType, own: true })),
+    ...doc.relationsTo.map((r) => ({ id: r.id, doc: r.source, type: RELATION_INVERSE[r.relationType] ?? r.relationType, own: false })),
   ];
 
   const info: [string, React.ReactNode][] = [
@@ -363,13 +376,54 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
             </Card>
           )}
 
-          <Card title="Холбоотой баримт">
+          <Card
+            title="Холбоотой баримт"
+            right={
+              canRelate && (
+                <ModalButton label="+ Нэмэх" title="Баримт холбох" description="Жишээ нь ирсэн бичгийн хариуг «Хариу», батлагдсан баримтыг өөрчилсөн шинэ баримтыг «Өөрчилсөн» хамаарлаар холбоно." className="text-sm font-semibold link">
+                  <form action={addRelation} className="space-y-4">
+                    <ModalCloser />
+                    <input type="hidden" name="documentId" value={doc.id} />
+                    <div>
+                      <label className="label" htmlFor="rel-type">Энэ баримт нь… <span className="text-red-600">*</span></label>
+                      <select id="rel-type" name="relationType" required className="input" defaultValue="Хариу">
+                        {RELATION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="rel-target">Холбох баримт <span className="text-red-600">*</span></label>
+                      <select id="rel-target" name="targetId" required className="input" defaultValue="">
+                        <option value="" disabled>— Баримт сонгох —</option>
+                        {relationCandidates.map((d) => <option key={d.id} value={d.id}>{d.documentNumber ?? d.internalNumber} · {d.title}</option>)}
+                      </select>
+                      <p className="mt-1 text-xs text-slate-500">Таны харах эрхтэй сүүлийн 300 баримт.</p>
+                    </div>
+                    <SubmitButton className="btn-primary w-full" pendingText="Холбож байна…">Холбох</SubmitButton>
+                  </form>
+                </ModalButton>
+              )
+            }
+          >
             {relations.length === 0 && <p className="text-sm text-slate-500">Холбоос алга</p>}
             <ul className="space-y-3">
               {relations.map((r) => (
-                <li key={r.id}>
-                  <Link href={`/documents/${r.doc.id}`} className="text-sm font-semibold link">{r.doc.documentNumber ?? r.doc.internalNumber} · {r.doc.title}</Link>
-                  <div className="text-xs text-slate-500">{r.type} · {r.doc.status.name}</div>
+                <li key={r.id} className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/documents/${r.doc.id}`} className="text-sm font-semibold link">{r.doc.documentNumber ?? r.doc.internalNumber} · {r.doc.title}</Link>
+                    <div className="text-xs text-slate-500">{r.type} · {r.doc.status.name}</div>
+                  </div>
+                  {r.own && canRelate && (
+                    <ConfirmButton
+                      action={removeRelation}
+                      fields={{ relationId: r.id, documentId: doc.id }}
+                      className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                      title="Хамаарлыг хасах уу?"
+                      description={`«${r.type}» хамаарал хасагдана. Баримтууд өөрсдөө хэвээр үлдэх ба хасалт аудитад бүртгэгдэнэ.`}
+                      confirmLabel="Хасах"
+                    >
+                      <X size={14} aria-label="Хамаарал хасах" />
+                    </ConfirmButton>
+                  )}
                 </li>
               ))}
             </ul>

@@ -92,6 +92,10 @@ const AUDIT_KEY_LABELS: Record<string, string> = {
   added: "Шинэ ажилтан",
   left: "Ажлаас гарсан",
   deactivatedUsers: "Хаагдсан эрх",
+  relationType: "Хамаарал",
+  target: "Холбосон баримт",
+  decision: "Шийдвэр",
+  note: "Тэмдэглэл",
 };
 
 /** Аудитын объектын төрөл */
@@ -107,6 +111,8 @@ export const ENTITY_LABELS: Record<string, string> = {
   document_category: "Ангилал",
   numbering_rule: "Дугаарлалт",
   hr_sync: "HR синхрончлол",
+  document_relation: "Баримтын хамаарал",
+  archive: "Архив",
 };
 
 /**
@@ -124,3 +130,13 @@ export function describeAuditValue(value: unknown): { label: string; value: stri
       value: Array.isArray(v) ? v.join(", ") : typeof v === "object" ? Object.entries(v as Record<string, unknown>).map(([a, b]) => `${a}: ${b}`).join(", ") : String(v),
     }));
 }
+
+/** ФШ-22: баримт хоорондын хамаарлын төрөл (эх баримтаас харахад) */
+export const RELATION_TYPES = ["Үндэслэсэн", "Хариу", "Өөрчилсөн", "Хүчингүй болгосон"];
+/** Холбогдсон (зорилтот) баримтаас харахад хамаарлыг эсрэг утгаар нь уншина */
+export const RELATION_INVERSE: Record<string, string> = {
+  "Үндэслэсэн": "Үндэслэл болсон",
+  "Хариу": "Хариу ирүүлсэн",
+  "Өөрчилсөн": "Өөрчлөгдсөн",
+  "Хүчингүй болгосон": "Хүчингүй болсон",
+};

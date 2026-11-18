@@ -21,6 +21,16 @@ export default async function PrintReport({ searchParams }: { searchParams: SP }
 
   return (
     <div className="min-h-screen bg-slate-200 py-8 print:bg-white print:py-0">
+      {/* 3.4: PDF/хэвлэмэлд хуудас бүрийн доод баруун буланд «Хуудас N / M». Chrome, Edge 131+ дэмжинэ. */}
+      <style>{`
+        @page {
+          size: A4 landscape;
+          margin: 14mm 12mm 16mm;
+          @bottom-right { content: "Хуудас " counter(page) " / " counter(pages); font-family: serif; font-size: 10px; color: #475569; }
+          @bottom-left { content: ${JSON.stringify(report.title)}; font-family: serif; font-size: 10px; color: #475569; }
+        }
+        @media print { thead { display: table-header-group; } tr { break-inside: avoid; } }
+      `}</style>
       <div className="no-print mx-auto mb-4 flex max-w-[297mm] justify-end"><PrintButton /></div>
       <div className="mx-auto max-w-[297mm] bg-white px-14 py-12 font-serif text-[13px] text-slate-900 shadow print:shadow-none">
         <div className="flex justify-between">

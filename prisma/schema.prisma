@@ -75,7 +75,8 @@ model User {
   signatures          Signature[]
   assignmentsAsAssignee Assignment[]     @relation("AssignmentAssignee")
   assignmentsAssigned   Assignment[]     @relation("AssignmentAssignedBy")
-  archives            Archive[]
+  archives            Archive[]          @relation("ArchiveArchivedBy")
+  disposedArchives    Archive[]          @relation("ArchiveDisposedBy")
   auditLogs           AuditLog[]
   notifications       Notification[]
   routingRules        RoutingRule[]
@@ -457,9 +458,14 @@ model Archive {
   retentionUntil  DateTime? @map("retention_until") @db.Date
   disposalAction  String?   @map("disposal_action") @db.VarChar(30) // DESTROY | TRANSFER
   storageLocation String?   @map("storage_location") @db.Text
+  // Хадгалах хугацаа дууссаны дараах шийдвэр (устгасан / улсын архивт шилжүүлсэн)
+  disposedAt      DateTime? @map("disposed_at")
+  disposedById    String?   @map("disposed_by") @db.Uuid
+  disposalNote    String?   @map("disposal_note") @db.Text
 
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  archivedBy User     @relation(fields: [archivedById], references: [id])
+  archivedBy User     @relation("ArchiveArchivedBy", fields: [archivedById], references: [id])
+  disposedBy User?    @relation("ArchiveDisposedBy", fields: [disposedById], references: [id])
 
   @@map("archives")
 }

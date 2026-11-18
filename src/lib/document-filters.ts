@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import type { CurrentUser } from "./auth";
 import { documentScope } from "./access";
 
-export type DocFilter = { q?: string; type?: string; status?: string; direction?: string; from?: string; to?: string; mine?: string; sort?: SortKey; dir?: "asc" | "desc" };
+export type DocFilter = { q?: string; type?: string; status?: string; direction?: string; from?: string; to?: string; mine?: string; assignee?: string; sort?: SortKey; dir?: "asc" | "desc" };
 
 /** Эрэмбэлэх боломжтой баганууд */
 export type SortKey = "number" | "title" | "date";
@@ -13,7 +13,7 @@ export function readFilter(sp: Record<string, string | string[] | undefined>): D
   const g = (k: string) => (typeof sp[k] === "string" && sp[k] ? (sp[k] as string) : undefined);
   const sort = SORT_KEYS.find((k) => k === g("sort"));
   const dir = g("dir") === "asc" ? "asc" : g("dir") === "desc" ? "desc" : undefined;
-  return { q: g("q"), type: g("type"), status: g("status"), direction: g("direction"), from: g("from"), to: g("to"), mine: g("mine"), sort, dir };
+  return { q: g("q"), type: g("type"), status: g("status"), direction: g("direction"), from: g("from"), to: g("to"), mine: g("mine"), assignee: g("assignee"), sort, dir };
 }
 
 export function buildWhere(user: CurrentUser, f: DocFilter): Prisma.DocumentWhereInput {
@@ -31,6 +31,10 @@ export function buildWhere(user: CurrentUser, f: DocFilter): Prisma.DocumentWher
     });
   }
   if (f.mine) and.push({ createdById: user.id });
+  // Хариуцагчаар шүүх: "me" — надад эсвэл миний нэгжид, "u:<id>" — ажилтан, "d:<id>" — нэгж (идэвхтэй/дууссан хуваарилалт аль аль нь)
+  if (f.assignee === "me") and.push({ assignments: { some: { status: { not: "REASSIGNED" }, OR: [{ assigneeUserId: user.id }, { assigneeDepartmentId: user.departmentId }] } } });
+  else if (f.assignee?.startsWith("u:")) and.push({ assignments: { some: { status: { not: "REASSIGNED" }, assigneeUserId: f.assignee.slice(2) } } });
+  else if (f.assignee?.startsWith("d:")) and.push({ assignments: { some: { status: { not: "REASSIGNED" }, assigneeDepartmentId: f.assignee.slice(2) } } });
   if (f.type) and.push({ documentTypeId: f.type });
   if (f.status) and.push({ status: { code: f.status } });
   if (f.direction) and.push({ direction: f.direction });

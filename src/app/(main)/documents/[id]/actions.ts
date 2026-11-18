@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { requireUser, can } from "@/lib/auth";
+import { documentScope } from "@/lib/access";
+import { RELATION_TYPES } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/lib/audit";
 import { performAction, remindAssignment, WorkflowError } from "@/lib/workflow";
@@ -133,4 +136,49 @@ export async function reviewerEdit(_prev: ActionState, formData: FormData): Prom
   }
   revalidatePath("/", "layout");
   return { ok: `Засвар хадгалагдлаа (хувилбар ${versionNo}): ${changed.join(", ")}` };
+}
+
+/**
+ * ФШ-22: баримт хооронд хамаарал үүсгэх (Үндэслэсэн, Хариу, Өөрчилсөн, Хүчингүй болгосон).
+ * Баримт бичгийн ажилтан эсвэл баримтын үүсгэгч нэмнэ. Хоёр баримт хоёулаа хэрэглэгчийн харах хүрээнд байх ёстой.
+ * Батлагдсан баримтыг өөрчлөх бол шинэ баримт үүсгэж «Өөрчилсөн» хамаарлаар холбоно (БД-12).
+ */
+export async function addRelation(formData: FormData) {
+  const user = await requireUser();
+  const sourceId = String(formData.get("documentId"));
+  const targetId = s(formData, "targetId");
+  const type = s(formData, "relationType");
+  const back = (msg: string): never => redirect(`/documents/${sourceId}?msg=${encodeURIComponent(msg)}`);
+  if (!targetId || !type || !RELATION_TYPES.includes(type)) back("Холбох баримт болон хамаарлын төрлийг сонгоно уу");
+  if (targetId === sourceId) back("Баримтыг өөртэй нь холбох боломжгүй");
+
+  const docs = await prisma.document.findMany({ where: { AND: [{ id: { in: [sourceId, targetId!] } }, documentScope(user)] }, select: { id: true, createdById: true, documentNumber: true, internalNumber: true } });
+  const source = docs.find((d) => d.id === sourceId);
+  if (!source || docs.length < 2) back("Баримт олдсонгүй эсвэл харах эрхгүй байна");
+  if (!can(user, "document.register") && source!.createdById !== user.id) back("Хамаарал үүсгэх эрхгүй байна");
+
+  const exists = await prisma.documentRelation.findFirst({ where: { sourceDocumentId: sourceId, targetDocumentId: targetId, relationType: type } });
+  if (exists) back("Энэ хамаарал аль хэдийн бүртгэгдсэн байна");
+  await prisma.$transaction(async (tx) => {
+    const r = await tx.documentRelation.create({ data: { sourceDocumentId: sourceId, targetDocumentId: targetId!, relationType: type!, createdById: user.id } });
+    await writeAudit({ userId: user.id, documentId: sourceId, entityType: "document_relation", entityId: r.id, action: "RELATE", newValue: { relationType: type!, target: (() => { const t = docs.find((d) => d.id === targetId)!; return t.documentNumber ?? t.internalNumber; })() } }, tx);
+  });
+  revalidatePath(`/documents/${sourceId}`);
+  revalidatePath(`/documents/${targetId}`);
+}
+
+/** Буруу үүсгэсэн хамаарлыг хасах (үүсгэгч эсвэл баримт бичгийн ажилтан). Аудитад үлдэнэ. */
+export async function removeRelation(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("relationId"));
+  const documentId = String(formData.get("documentId"));
+  const r = await prisma.documentRelation.findUnique({ where: { id }, include: { source: { select: { createdById: true } }, target: { select: { documentNumber: true, internalNumber: true } } } });
+  if (!r) redirect(`/documents/${documentId}`);
+  if (!can(user, "document.register") && r!.source.createdById !== user.id) redirect(`/documents/${documentId}?msg=${encodeURIComponent("Хамаарал хасах эрхгүй байна")}`);
+  await prisma.$transaction(async (tx) => {
+    await tx.documentRelation.delete({ where: { id } });
+    await writeAudit({ userId: user.id, documentId: r!.sourceDocumentId, entityType: "document_relation", entityId: id, action: "UNRELATE", newValue: { removed: r!.relationType, target: r!.target.documentNumber ?? r!.target.internalNumber } }, tx);
+  });
+  revalidatePath(`/documents/${r!.sourceDocumentId}`);
+  revalidatePath(`/documents/${r!.targetDocumentId}`);
 }
