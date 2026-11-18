@@ -72,6 +72,9 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
     return { error: (e as Error).message };
   }
 
+  // Хадгалсан хавсралтаас хасах (зөвхөн засах үед)
+  const removeIds = formData.getAll("removeAttachment").map(String).filter(Boolean);
+
   // Засах үед: зөвхөн үүсгэгч, зөвхөн Ноорог/Засварт буцаасан төлөвт
   let existing: { id: string; currentVersionNo: number; statusCode: string } | null = null;
   if (v.documentId) {
@@ -85,6 +88,7 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
   const draft = await prisma.documentStatus.findUniqueOrThrow({ where: { code: "DRAFT" } });
   const snapshot: Prisma.InputJsonValue = { title: v.title, summary: v.summary ?? null, fields: values };
 
+  let removedFiles: string[] = [];
   const docId = await prisma.$transaction(async (tx) => {
     let id: string;
     let versionNo: number;
@@ -102,6 +106,14 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
         },
       });
       id = existing.id;
+      // Хавсралт хасах: зөвхөн энэ баримтынх, цахим гарын үсэггүй файлыг. Хассан файлын нэр аудитад үлдэнэ
+      if (removeIds.length) {
+        const toRemove = await tx.attachment.findMany({ where: { id: { in: removeIds }, documentId: id, signatures: { none: {} } }, select: { id: true, fileName: true } });
+        if (toRemove.length) {
+          await tx.attachment.deleteMany({ where: { id: { in: toRemove.map((a) => a.id) } } });
+          removedFiles = toRemove.map((a) => a.fileName);
+        }
+      }
       await tx.documentFieldValue.deleteMany({ where: { documentId: id } });
       if (values.length) await tx.documentFieldValue.createMany({ data: values.map((x) => ({ ...x, documentId: id })) });
     } else {
@@ -138,12 +150,17 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
     for (const [i, s] of stored.entries()) {
       await tx.attachment.create({ data: { ...s, documentId: id, versionId: version.id, isMain: !hasMain && i === 0, uploadedById: user.id } });
     }
+    // Үндсэн файлыг хассан бөгөөд шинэ файл нэмээгүй бол үлдсэн хамгийн эхний файлыг үндсэн болгоно
+    if (!hasMain && stored.length === 0) {
+      const first = await tx.attachment.findFirst({ where: { documentId: id }, orderBy: { uploadedAt: "asc" }, select: { id: true } });
+      if (first) await tx.attachment.update({ where: { id: first.id }, data: { isMain: true } });
+    }
     if (v.relatedId && v.relatedId !== id) {
       const exists = await tx.documentRelation.findFirst({ where: { sourceDocumentId: id, targetDocumentId: v.relatedId } });
       if (!exists) await tx.documentRelation.create({ data: { sourceDocumentId: id, targetDocumentId: v.relatedId, relationType: "Үндэслэсэн", createdById: user.id } });
     }
     await writeAudit(
-      { userId: user.id, documentId: id, entityType: "document", entityId: id, action: existing ? "UPDATE" : "CREATE", newStatusId: existing ? undefined : draft.id, newValue: { version: versionNo } },
+      { userId: user.id, documentId: id, entityType: "document", entityId: id, action: existing ? "UPDATE" : "CREATE", newStatusId: existing ? undefined : draft.id, newValue: { version: versionNo, ...(removedFiles.length ? { removedFiles: removedFiles.join(", ") } : {}) } },
       tx,
     );
     return id;

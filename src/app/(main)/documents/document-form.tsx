@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
-import { Upload, File as FileIcon, X, Info, Route } from "lucide-react";
+import { Upload, File as FileIcon, X, Info, Route, Undo2 } from "lucide-react";
 import { pickRule, type RuleLike } from "@/lib/routing";
 import { saveDocument, type SaveState } from "./save-action";
 import { Toast, Spinner } from "@/components/feedback";
@@ -19,7 +19,7 @@ export type Initial = {
   confidentiality?: string;
   documentDate?: string;
   values?: Record<string, string>;
-  attachments?: { name: string; size: string }[];
+  attachments?: { id: string; name: string; size: string; isMain?: boolean; locked?: boolean }[];
   returnedComment?: string | null;
 };
 
@@ -37,6 +37,8 @@ type Props = {
 export function DocumentForm({ type, employees, departments, reviewers, related, rules = [], me, initial }: Props) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveDocument, undefined);
   const [files, setFiles] = useState<File[]>([]);
+  // Хадгалсан хавсралтаас хасахаар тэмдэглэсэн файлууд (хадгалах үед устгагдана)
+  const [removed, setRemoved] = useState<string[]>([]);
   const [values, setValues] = useState<Record<string, string>>(initial.values ?? {});
   const [direction, setDirection] = useState(initial.direction ?? "INTERNAL");
   const [confidentiality, setConfidentiality] = useState(initial.confidentiality ?? "INTERNAL");
@@ -70,6 +72,8 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
   const submit = (fd: FormData) => {
     fd.delete("files");
     files.forEach((f) => fd.append("files", f));
+    fd.delete("removeAttachment");
+    removed.forEach((id) => fd.append("removeAttachment", id));
     return action(fd);
   };
 
@@ -185,37 +189,52 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
           )}
 
           <section className="card p-5">
-            <label className="label">Агуулга / товч утга</label>
-            <textarea name="summary" rows={5} defaultValue={initial.summary} className="input" placeholder="Баримтын товч агуулга…" />
+            <label className="label" htmlFor="doc-summary">Агуулга / товч утга</label>
+            <textarea id="doc-summary" name="summary" rows={5} defaultValue={initial.summary} className="input" placeholder="Баримтын товч агуулга…" />
           </section>
         </div>
 
         <aside className="space-y-5">
           <section className="card p-5">
             <h2 className="mb-3 text-base font-semibold">Хавсралт</h2>
-            <label className="flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-center hover:border-navy-600 hover:bg-navy-50/40">
+            <label className="flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-center hover:border-navy-600 hover:bg-navy-50/40 focus-within:border-navy-600 focus-within:ring-2 focus-within:ring-navy-100">
               <Upload size={20} className="text-slate-600" />
               <span className="text-sm"><b>Файл сонгох</b> эсвэл энд дарна уу</span>
               <span className="text-xs text-slate-500">PDF, DOCX, XLSX, JPG, PNG · нэг файл 20 МБ хүртэл</span>
-              <input type="file" multiple className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" onChange={(e) => addFiles(e.target.files)} />
+              <input type="file" multiple className="sr-only" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" onChange={(e) => addFiles(e.target.files)} />
             </label>
             <ul className="mt-3 space-y-2">
-              {initial.attachments?.map((a) => (
-                <li key={a.name} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                  <FileIcon size={16} className="text-slate-500" />
-                  <span className="flex-1 truncate">{a.name}</span>
-                  <span className="text-xs text-slate-500">{a.size}</span>
-                </li>
-              ))}
+              {initial.attachments?.map((a) => {
+                const gone = removed.includes(a.id);
+                return (
+                  <li key={a.id} className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm ${gone ? "border-dashed border-red-200 bg-red-50/50" : "border-slate-200"}`}>
+                    <FileIcon size={16} className={gone ? "text-red-400" : "text-slate-500"} aria-hidden />
+                    <span className={`min-w-0 flex-1 truncate ${gone ? "text-slate-500 line-through" : ""}`}>{a.name}</span>
+                    {a.isMain && !gone && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">үндсэн</span>}
+                    <span className="text-xs text-slate-500">{gone ? "Хасагдана" : a.size}</span>
+                    {a.locked ? (
+                      <span className="text-xs text-slate-400" title="Цахим гарын үсэгтэй файлыг хасах боломжгүй">түгжээтэй</span>
+                    ) : gone ? (
+                      <button type="button" onClick={() => setRemoved((p) => p.filter((x) => x !== a.id))} aria-label={`«${a.name}»-г буцааж үлдээх`} title="Буцаах" className="rounded p-1 text-slate-500 hover:bg-white hover:text-slate-900"><Undo2 size={14} /></button>
+                    ) : (
+                      <button type="button" onClick={() => setRemoved((p) => [...p, a.id])} aria-label={`«${a.name}» файлыг хасах`} title="Хасах" className="rounded p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"><X size={14} /></button>
+                    )}
+                  </li>
+                );
+              })}
               {files.map((f, i) => (
                 <li key={i} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                  <FileIcon size={16} className="text-slate-500" />
-                  <span className="flex-1 truncate">{f.name}</span>
+                  <FileIcon size={16} className="text-slate-500" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate">{f.name}</span>
+                  <span className="rounded bg-green-50 px-1.5 py-0.5 text-[11px] font-semibold text-green-800">шинэ</span>
                   <span className="text-xs text-slate-500">{Math.max(1, Math.round(f.size / 1024))} КБ</span>
-                  <button type="button" onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-600"><X size={14} /></button>
+                  <button type="button" onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} aria-label={`«${f.name}» файлыг хасах`} title="Хасах" className="rounded p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"><X size={14} /></button>
                 </li>
               ))}
             </ul>
+            {removed.length > 0 && (
+              <p className="mt-2 text-xs text-red-700" role="status">{removed.length} файл хадгалах үед хасагдана. Буцаах бол ↶ товч дарна уу.</p>
+            )}
           </section>
 
           {!incoming && (

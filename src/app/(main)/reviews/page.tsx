@@ -3,12 +3,15 @@ import { Search, Paperclip, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import { availableActions } from "@/lib/workflow";
-import { fmtShort, fmtDate, shortName, daysBetween, startOfToday } from "@/lib/format";
+import { fmtShort, fmtDate, shortName, daysBetween, startOfToday, DECISION_LABELS } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, Tabs, Pill } from "@/components/ui";
 import { ActionPanel } from "../documents/[id]/action-panel";
 import { ReviewerEdit } from "../documents/[id]/reviewer-edit";
 
 export const dynamic = "force-dynamic";
+
+/** Шийдвэр бүрийн өнгө — FORWARDED-ийг «Засварт буцаасан» гэж харуулдаг байсан алдааг засав */
+const DECISION_TONE: Record<string, "green" | "orange" | "navy" | "slate"> = { APPROVED: "green", RETURNED: "orange", FORWARDED: "navy", CANCELLED: "slate" };
 
 type SP = Promise<{ tab?: string; id?: string; q?: string }>;
 
@@ -83,7 +86,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
                   <td className="td font-semibold">{a.document.documentNumber ?? a.document.internalNumber}</td>
                   <td className="td"><Link href={`/documents/${a.documentId}`} className="link">{a.document.title}</Link></td>
                   <td className="td text-slate-600">{a.document.documentType.name}</td>
-                  <td className="td"><Pill tone={a.decision === "APPROVED" ? "green" : "amber"}>{a.decision === "APPROVED" ? "Баталсан" : "Засварт буцаасан"}</Pill></td>
+                  <td className="td"><Pill tone={DECISION_TONE[a.decision] ?? "slate"}>{DECISION_LABELS[a.decision] ?? a.decision}</Pill></td>
                   <td className="td max-w-72 truncate text-slate-600">{a.comment ?? "—"}</td>
                   <td className="td text-slate-600">{fmtDate(a.decidedAt)}</td>
                   <td className="td"><StatusBadge code={a.document.status.code} name={a.document.status.name} /></td>
@@ -149,6 +152,8 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
                   actions={actions}
                   reviewers={reviewers.map((r) => ({ id: r.id, name: `${shortName(r.employee)} — ${r.employee.department.name}` }))}
                   compact
+                  signer={`${user.fullName}${user.roles[0] ? ` · ${user.roles[0].name}` : ""}`}
+                  documentLabel={`«${doc.title}» · ${doc.internalNumber}`}
                 />
                 {actions.some((a) => a.code === "approve") && (
                   <div className="mt-4 border-t border-slate-100 pt-4">

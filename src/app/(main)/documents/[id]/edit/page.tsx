@@ -17,7 +17,7 @@ export default async function EditDocumentPage({ params }: { params: Promise<{ i
     include: {
       status: true,
       fieldValues: true,
-      attachments: true,
+      attachments: { orderBy: { uploadedAt: "asc" }, include: { _count: { select: { signatures: true } } } },
       approvals: { where: { decision: "RETURNED" }, orderBy: { decidedAt: "desc" }, take: 1 },
     },
   });
@@ -51,7 +51,7 @@ export default async function EditDocumentPage({ params }: { params: Promise<{ i
           confidentiality: doc.confidentiality,
           documentDate: doc.documentDate?.toISOString().slice(0, 10),
           values: Object.fromEntries(doc.fieldValues.map((v) => [v.fieldId, v.valueText])),
-          attachments: doc.attachments.map((a) => ({ name: a.fileName, size: fileSize(a.fileSize) })),
+          attachments: doc.attachments.map((a) => ({ id: a.id, name: a.fileName, size: fileSize(a.fileSize), isMain: a.isMain, locked: a._count.signatures > 0 })),
           returnedComment: doc.status.code === "RETURNED" ? doc.approvals[0]?.comment : null,
         }}
       />

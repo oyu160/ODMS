@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { documentScope } from "@/lib/access";
 import { availableActions, AUDIT_LABELS } from "@/lib/workflow";
-import { CONF_LABELS, DIRECTION_LABELS, ASSIGNMENT_LABELS, DECISION_LABELS, fmtDate, fmtDateTime, fmtShort, shortName, fileSize, startOfToday, daysBetween } from "@/lib/format";
+import { CONF_LABELS, DIRECTION_LABELS, ASSIGNMENT_LABELS, DECISION_LABELS, fmtDate, fmtDateTime, fmtShort, shortName, fileSize, startOfToday, daysBetween, describeAuditValue } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, Tabs, Pill, STATUS_COLOR } from "@/components/ui";
 import { ActionPanel } from "./action-panel";
 import { WorkflowSteps, NextStep } from "@/components/workflow-steps";
@@ -277,7 +277,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
                       <td className="td">{shortName(l.user.employee)}</td>
                       <td className="td font-medium">{AUDIT_LABELS[l.action] ?? l.action}</td>
                       <td className="td">{l.newStatus ? <StatusBadge code={l.newStatus.code} name={l.newStatus.name} /> : "—"}</td>
-                      <td className="td text-xs text-slate-500">{l.newValue ? Object.values(l.newValue as Record<string, unknown>).join(" · ") : ""}</td>
+                      <td className="td text-xs text-slate-600">{describeAuditValue(l.newValue).map((d) => `${d.label}: ${d.value}`).join(" · ")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -299,6 +299,8 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
               departments={departments.map((d) => ({ id: d.id, name: d.name }))}
               defaultArchiveCategory={doc.documentType.name}
               autoReviewer={autoRule && autoReviewer ? { name: `${shortName(autoReviewer.employee)} — ${autoReviewer.employee.department.name}`, rule: autoRule.name } : null}
+              signer={`${user.fullName}${user.roles[0] ? ` · ${user.roles[0].name}` : ""}`}
+              documentLabel={`«${doc.title}» · ${doc.documentNumber ?? doc.internalNumber}`}
             />
             {codes.has("approve") && (
               <div className="mt-4 border-t border-slate-100 pt-4">
