@@ -63,3 +63,64 @@ export function fileSize(bytes: number | bigint) {
   const n = Number(bytes);
   return n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} МБ` : `${Math.max(1, Math.round(n / 1024))} КБ`;
 }
+
+/** Аудитын бичлэгийн newValue (JSON)-ийн түлхүүрийн нэр */
+const AUDIT_KEY_LABELS: Record<string, string> = {
+  comment: "Тайлбар",
+  routing: "Чиглүүлэлт",
+  number: "Дугаар",
+  signature: "Гарын үсэг",
+  step: "Шат",
+  assignee: "Хариуцагч",
+  dueDate: "Хугацаа",
+  version: "Хувилбар",
+  changed: "Өөрчилсөн",
+  removed: "Хассан",
+  removedFiles: "Хассан файл",
+  report: "Тайлан",
+  rows: "Мөр",
+  roles: "Үүрэг",
+  pairs: "Эрхийн хослол",
+  created: "Нэмсэн",
+  updated: "Шинэчилсэн",
+  deactivated: "Идэвхгүй болгосон",
+  name: "Нэр",
+  code: "Код",
+  field: "Талбар",
+  pattern: "Хэлбэр",
+  departments: "Нэгж",
+  added: "Шинэ ажилтан",
+  left: "Ажлаас гарсан",
+  deactivatedUsers: "Хаагдсан эрх",
+};
+
+/** Аудитын объектын төрөл */
+export const ENTITY_LABELS: Record<string, string> = {
+  document: "Баримт",
+  user: "Хэрэглэгч",
+  report: "Тайлан",
+  assignment: "Хуваарилалт",
+  field_definition: "Маягтын талбар",
+  routing_rule: "Чиглүүлэх дүрэм",
+  role_permission: "Эрх",
+  document_type: "Баримтын төрөл",
+  document_category: "Ангилал",
+  numbering_rule: "Дугаарлалт",
+  hr_sync: "HR синхрончлол",
+};
+
+/**
+ * Аудитын newValue-г хүн уншихуйц «Түлхүүр: утга» хос болгоно.
+ * ID (…Id, uuid) утгыг харуулахгүй — тэдгээр нь хэрэглэгчид утга агуулахгүй.
+ */
+export function describeAuditValue(value: unknown): { label: string; value: string }[] {
+  if (value === null || value === undefined) return [];
+  if (typeof value !== "object" || Array.isArray(value)) return [{ label: "Утга", value: String(value) }];
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return Object.entries(value as Record<string, unknown>)
+    .filter(([k, v]) => !k.endsWith("Id") && !(typeof v === "string" && uuid.test(v)) && v !== null && v !== "")
+    .map(([k, v]) => ({
+      label: AUDIT_KEY_LABELS[k] ?? k,
+      value: Array.isArray(v) ? v.join(", ") : typeof v === "object" ? Object.entries(v as Record<string, unknown>).map(([a, b]) => `${a}: ${b}`).join(", ") : String(v),
+    }));
+}

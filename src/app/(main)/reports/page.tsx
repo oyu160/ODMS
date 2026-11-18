@@ -39,14 +39,15 @@ export default async function ReportsPage({ searchParams }: { searchParams: SP }
       <PageHeader crumbs={[["Тайлан"]]} title="Тайлан" subtitle="Огнооны мужаар шүүж, Excel болон PDF (хэвлэх) хэлбэрээр татна. Зөвхөн таны эрхийн хүрээний баримт орно." />
 
       <div className="grid gap-5 xl:grid-cols-[300px_1fr]">
-        <nav className="space-y-2">
+        <nav className="space-y-2" aria-label="Тайлангийн жагсаалт">
           {reports.map((r) => (
             <Link
               key={r.key}
               href={makeHref("/reports", { from: sp.from, to: sp.to }, { r: r.key })}
+              aria-current={r.key === report.key ? "page" : undefined}
               className={`block rounded-xl border p-4 transition ${r.key === report.key ? "border-navy-800 bg-white ring-1 ring-navy-800" : "border-slate-200 bg-white hover:border-slate-300"}`}
             >
-              <div className="flex items-center gap-2 font-semibold"><BarChart3 size={16} className="text-navy-700" />{r.title}</div>
+              <div className="flex items-center gap-2 font-semibold"><BarChart3 size={16} aria-hidden className="text-navy-700" />{r.title}</div>
               <div className="mt-1 text-xs text-slate-500">{r.audience}</div>
             </Link>
           ))}
@@ -60,12 +61,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: SP }
             </div>
             <form className="flex flex-wrap items-end gap-3">
               <input type="hidden" name="r" value={report.key} />
-              <div><label className="label text-xs">Эхлэх огноо</label><input type="date" name="from" defaultValue={sp.from} className="input" /></div>
-              <div><label className="label text-xs">Дуусах огноо</label><input type="date" name="to" defaultValue={sp.to} className="input" /></div>
+              <div><label className="label" htmlFor="rp-from">Эхлэх огноо</label><input id="rp-from" type="date" name="from" defaultValue={sp.from} className="input" /></div>
+              <div><label className="label" htmlFor="rp-to">Дуусах огноо</label><input id="rp-to" type="date" name="to" defaultValue={sp.to} className="input" /></div>
               {(report.key === "registration" || report.key === "overdue") && (
                 <div>
-                  <label className="label text-xs">Нэгж</label>
-                  <select name="department" defaultValue={sp.department ?? ""} className="input">
+                  <label className="label" htmlFor="rp-dept">Нэгж</label>
+                  <select id="rp-dept" name="department" defaultValue={sp.department ?? ""} className="input">
                     <option value="">Бүх нэгж</option>
                     {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
@@ -79,9 +80,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: SP }
             </form>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
               <span className="text-slate-500">Хамрах хугацаа: <b className="text-slate-700">{periodLabel(params)}</b></span>
-              <span className="text-slate-300">|</span>
+              <span className="text-slate-300" aria-hidden>|</span>
               {presets().map((pr) => (
-                <Link key={pr.label} href={makeHref("/reports", { r: report.key, department: sp.department }, { from: pr.from, to: pr.to })} className={`rounded-full border px-2.5 py-1 ${sp.from === pr.from && sp.to === pr.to ? "border-navy-800 bg-navy-800 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-navy-600"}`}>{pr.label}</Link>
+                <Link key={pr.label} href={makeHref("/reports", { r: report.key, department: sp.department }, { from: pr.from, to: pr.to })} aria-current={sp.from === pr.from && sp.to === pr.to ? "true" : undefined} className={`rounded-full border px-2.5 py-1 font-medium ${sp.from === pr.from && sp.to === pr.to ? "border-navy-800 bg-navy-800 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-navy-600"}`}>{pr.label}</Link>
               ))}
             </div>
           </Card>
@@ -96,7 +97,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: SP }
                   {result.rows.map((r, i) => (
                     <tr key={i} className="hover:bg-slate-50/70">{r.map((c, j) => <td key={j} className="td">{c}</td>)}</tr>
                   ))}
-                  {result.rows.length === 0 && <tr><td colSpan={result.columns.length} className="px-4 py-12 text-center text-sm text-slate-500">Энэ хугацаанд өгөгдөл алга</td></tr>}
+                  {result.rows.length === 0 && <tr><td colSpan={result.columns.length} className="px-4 py-12 text-center text-sm text-slate-500">Сонгосон хугацаанд өгөгдөл алга. Хугацааг өргөтгөж эсвэл дээрх товчнуудаас сонгоно уу.</td></tr>}
                 </tbody>
                 {result.footer && result.rows.length > 0 && (
                   <tfoot className="border-t border-slate-200 bg-slate-50 font-semibold">

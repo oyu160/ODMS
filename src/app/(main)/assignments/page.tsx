@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { documentScope } from "@/lib/access";
 import { fmtShort, shortName, startOfToday, daysBetween, ASSIGNMENT_LABELS } from "@/lib/format";
-import { PageHeader, StatCard, Tabs, Pagination, EmptyRow, Pill, makeHref } from "@/components/ui";
+import { PageHeader, StatCard, Tabs, Pagination, EmptyRow, Pill, FilterChip, makeHref } from "@/components/ui";
 import { remind } from "../documents/[id]/actions";
 import { SubmitButton } from "@/components/feedback";
 
@@ -61,6 +61,17 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const href = (p: number) => makeHref("/assignments", sp, { page: String(p) });
   const tabHref = (t: string) => makeHref("/assignments", {}, { tab: t });
+  const without = (...keys: string[]) => makeHref("/assignments", sp, Object.fromEntries([...keys, "page"].map((k) => [k, undefined])));
+  const assigneeName = sp.assignee?.startsWith("u:")
+    ? (() => { const u = users.find((x) => x.id === sp.assignee!.slice(2)); return u ? shortName(u.employee) : undefined; })()
+    : departments.find((d) => d.id === sp.assignee?.slice(2))?.name;
+  const DUE_LABELS: Record<string, string> = { overdue: "Хэтэрсэн", week: "7 хоногт дуусах" };
+  const chips = [
+    ...(sp.q ? [{ label: `Түлхүүр үг: ${sp.q}`, href: without("q") }] : []),
+    ...(assigneeName ? [{ label: `Хариуцагч: ${assigneeName}`, href: without("assignee") }] : []),
+    ...(sp.status ? [{ label: `Төлөв: ${ASSIGNMENT_LABELS[sp.status] ?? sp.status}`, href: without("status") }] : []),
+    ...(sp.due ? [{ label: `Хугацаа: ${DUE_LABELS[sp.due] ?? sp.due}`, href: without("due") }] : []),
+  ];
 
   return (
     <div>
@@ -86,33 +97,44 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
         ]}
       />
 
-      <form className="card mb-5 grid gap-4 p-5 md:grid-cols-[2fr_1.3fr_1fr_1fr_auto] md:items-end">
+      <form className="card mb-5 space-y-4 p-5" role="search" aria-label="Хуваарилалт шүүх">
         <input type="hidden" name="tab" value={tab} />
-        <div><label className="label text-xs">Түлхүүр үг</label><input name="q" defaultValue={sp.q} placeholder="Баримтын дугаар, гарчгаар хайх…" className="input" /></div>
-        <div>
-          <label className="label text-xs">Хариуцагч</label>
-          <select name="assignee" defaultValue={sp.assignee ?? ""} className="input">
-            <option value="">Бүх ажилтан, нэгж</option>
-            {users.map((u) => <option key={u.id} value={`u:${u.id}`}>{shortName(u.employee)}</option>)}
-            {departments.map((d) => <option key={d.id} value={`d:${d.id}`}>{d.name} (нэгж)</option>)}
-          </select>
+        <div className={`grid gap-3 md:grid-cols-2 xl:items-end ${manager ? "xl:grid-cols-[2fr_1.3fr_1fr_1fr_auto]" : "xl:grid-cols-[2fr_1fr_1fr_auto]"}`}>
+          <div><label className="label" htmlFor="as-q">Түлхүүр үг</label><input id="as-q" name="q" defaultValue={sp.q} placeholder="Баримтын дугаар, гарчгаар…" className="input" /></div>
+          {manager && (
+            <div>
+              <label className="label" htmlFor="as-who">Хариуцагч</label>
+              <select id="as-who" name="assignee" defaultValue={sp.assignee ?? ""} className="input">
+                <option value="">Бүх ажилтан, нэгж</option>
+                <optgroup label="Ажилтан">{users.map((u) => <option key={u.id} value={`u:${u.id}`}>{shortName(u.employee)}</option>)}</optgroup>
+                <optgroup label="Нэгж">{departments.map((d) => <option key={d.id} value={`d:${d.id}`}>{d.name}</option>)}</optgroup>
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="label" htmlFor="as-status">Төлөв</label>
+            <select id="as-status" name="status" defaultValue={sp.status ?? ""} className="input">
+              <option value="">Бүх төлөв</option>
+              {Object.entries(ASSIGNMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label" htmlFor="as-due">Хугацаа</label>
+            <select id="as-due" name="due" defaultValue={sp.due ?? ""} className="input">
+              <option value="">Бүгд</option>
+              <option value="overdue">Хэтэрсэн</option>
+              <option value="week">7 хоногт дуусах</option>
+            </select>
+          </div>
+          <button className="btn-primary">Шүүх</button>
         </div>
-        <div>
-          <label className="label text-xs">Төлөв</label>
-          <select name="status" defaultValue={sp.status ?? ""} className="input">
-            <option value="">Бүх төлөв</option>
-            {Object.entries(ASSIGNMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="label text-xs">Хугацаа</label>
-          <select name="due" defaultValue={sp.due ?? ""} className="input">
-            <option value="">Бүгд</option>
-            <option value="overdue">Хэтэрсэн</option>
-            <option value="week">7 хоногт дуусах</option>
-          </select>
-        </div>
-        <button className="btn-primary">Шүүх</button>
+        {chips.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+            <span className="text-xs text-slate-500">Идэвхтэй шүүлтүүр:</span>
+            {chips.map((c) => <FilterChip key={c.label} label={c.label} href={c.href} />)}
+            <Link href={tabHref(tab)} className="text-xs font-semibold text-navy-700 hover:underline">Бүгдийг арилгах</Link>
+          </div>
+        )}
       </form>
 
       <div className="card overflow-hidden">
@@ -143,7 +165,7 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
                     <td className="td text-slate-600">{fmtShort(a.assignedAt)}</td>
                     <td className="td text-slate-600">{fmtShort(a.dueDate)}</td>
                     <td className="td">{remain}</td>
-                    <td className="td"><Pill tone={a.status === "DONE" ? "green" : active ? "navy" : "slate"}>{ASSIGNMENT_LABELS[a.status]}</Pill></td>
+                    <td className="td"><Pill tone={a.status === "DONE" ? "green" : active ? "violet" : "slate"}>{ASSIGNMENT_LABELS[a.status]}</Pill></td>
                     <td className="td whitespace-nowrap font-semibold">
                       {late && manager ? (
                         <form action={remind}><input type="hidden" name="assignmentId" value={a.id} /><SubmitButton className="font-semibold link disabled:opacity-60" pendingText="Илгээж байна">Сануулах</SubmitButton></form>
@@ -154,7 +176,7 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
                   </tr>
                 );
               })}
-              {rows.length === 0 && <EmptyRow cols={8} text="Хуваарилалт олдсонгүй" />}
+              {rows.length === 0 && <EmptyRow cols={8} text={chips.length ? "Шүүлтүүрт тохирох хуваарилалт олдсонгүй." : "Хуваарилалт алга."} action={chips.length ? <Link href={tabHref(tab)} className="link text-sm">Шүүлтүүрийг арилгах</Link> : undefined} />}
             </tbody>
           </table>
         </div>
