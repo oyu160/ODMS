@@ -3,11 +3,17 @@ import type { Prisma } from "@prisma/client";
 import type { CurrentUser } from "./auth";
 import { documentScope } from "./access";
 
-export type DocFilter = { q?: string; type?: string; status?: string; direction?: string; from?: string; to?: string; mine?: string };
+export type DocFilter = { q?: string; type?: string; status?: string; direction?: string; from?: string; to?: string; mine?: string; sort?: SortKey; dir?: "asc" | "desc" };
+
+/** Эрэмбэлэх боломжтой баганууд */
+export type SortKey = "number" | "title" | "date";
+const SORT_KEYS: SortKey[] = ["number", "title", "date"];
 
 export function readFilter(sp: Record<string, string | string[] | undefined>): DocFilter {
   const g = (k: string) => (typeof sp[k] === "string" && sp[k] ? (sp[k] as string) : undefined);
-  return { q: g("q"), type: g("type"), status: g("status"), direction: g("direction"), from: g("from"), to: g("to"), mine: g("mine") };
+  const sort = SORT_KEYS.find((k) => k === g("sort"));
+  const dir = g("dir") === "asc" ? "asc" : g("dir") === "desc" ? "desc" : undefined;
+  return { q: g("q"), type: g("type"), status: g("status"), direction: g("direction"), from: g("from"), to: g("to"), mine: g("mine"), sort, dir };
 }
 
 export function buildWhere(user: CurrentUser, f: DocFilter): Prisma.DocumentWhereInput {
@@ -31,4 +37,12 @@ export function buildWhere(user: CurrentUser, f: DocFilter): Prisma.DocumentWher
   if (f.from) and.push({ createdAt: { gte: new Date(`${f.from}T00:00:00+08:00`) } });
   if (f.to) and.push({ createdAt: { lte: new Date(`${f.to}T23:59:59+08:00`) } });
   return { AND: and };
+}
+
+/** Эрэмбэ: анхдагчаар огноогоор, шинэ нь эхэндээ. Дугаараар эрэмбэлэхэд дотоод дугаар (бүх баримтад байдаг) */
+export function buildOrderBy(f: DocFilter): Prisma.DocumentOrderByWithRelationInput[] {
+  const dir = f.dir ?? (f.sort && f.sort !== "date" ? "asc" : "desc");
+  if (f.sort === "number") return [{ internalNumber: dir }];
+  if (f.sort === "title") return [{ title: dir }, { createdAt: "desc" }];
+  return [{ createdAt: dir }];
 }

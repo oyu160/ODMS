@@ -2,7 +2,7 @@
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { buildWhere, readFilter } from "@/lib/document-filters";
+import { buildOrderBy, buildWhere, readFilter } from "@/lib/document-filters";
 import { DIRECTION_LABELS, fmtDate, shortName } from "@/lib/format";
 import { writeAudit } from "@/lib/audit";
 
@@ -11,9 +11,10 @@ export async function GET(req: Request) {
   if (!user) return new Response("Нэвтрээгүй байна", { status: 401 });
 
   const sp = Object.fromEntries(new URL(req.url).searchParams);
+  const filter = readFilter(sp);
   const docs = await prisma.document.findMany({
-    where: buildWhere(user, readFilter(sp)),
-    orderBy: { createdAt: "desc" },
+    where: buildWhere(user, filter),
+    orderBy: buildOrderBy(filter),
     take: 5000,
     include: { status: true, documentType: true, ownerDepartment: true, createdBy: { include: { employee: true } } },
   });
