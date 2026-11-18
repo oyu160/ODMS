@@ -7,6 +7,7 @@ import { fmtDateTime, shortName, initials } from "@/lib/format";
 import { PageHeader, Card, Tabs, Pill, Avatar } from "@/components/ui";
 import { toggleUser, setRoles, resetPassword, createUser, runHrSync } from "./actions";
 import { SubmitButton, Toast } from "@/components/feedback";
+import { ConfirmButton } from "@/components/modal";
 
 export const dynamic = "force-dynamic";
 
@@ -88,9 +89,30 @@ export default async function UsersPage({ searchParams }: { searchParams: SP }) 
                   <td className="td text-xs text-slate-500">{fmtDateTime(u.lastLoginAt)}</td>
                   <td className="td">{u.employee.employmentStatus === "LEFT" ? <Pill tone="red">Ажлаас гарсан</Pill> : u.isActive ? <Pill tone="green">Идэвхтэй</Pill> : <Pill>Идэвхгүй</Pill>}</td>
                   <td className="td whitespace-nowrap text-xs font-semibold">
-                    <form action={toggleUser} className="inline"><input type="hidden" name="id" value={u.id} /><button className="link">{u.isActive ? "Хаах" : "Идэвхжүүлэх"}</button></form>
-                    <span className="mx-1.5 text-slate-300">·</span>
-                    <form action={resetPassword} className="inline"><input type="hidden" name="id" value={u.id} /><button className="link">Нууц үг сэргээх</button></form>
+                    {u.isActive ? (
+                      <ConfirmButton
+                        action={toggleUser}
+                        fields={{ id: u.id }}
+                        title={`${shortName(u.employee)}-ийн эрхийг хаах уу?`}
+                        description="Хэрэглэгч системд нэвтэрч чадахгүй болно. Түүнд хуваарилагдсан идэвхтэй ажлыг дахин хуваарилах шаардлагатай. Дараа нь «Идэвхжүүлэх»-ээр сэргээж болно."
+                        confirmLabel="Эрхийг хаах"
+                      >
+                        Хаах
+                      </ConfirmButton>
+                    ) : (
+                      <form action={toggleUser} className="inline"><input type="hidden" name="id" value={u.id} /><button className="link">Идэвхжүүлэх</button></form>
+                    )}
+                    <span className="mx-1.5 text-slate-300" aria-hidden>·</span>
+                    <ConfirmButton
+                      action={resetPassword}
+                      fields={{ id: u.id }}
+                      tone="primary"
+                      title={`${shortName(u.employee)}-ийн нууц үгийг сэргээх үү?`}
+                      description="Одоогийн нууц үг ажиллахаа больж, түр нууц үг үүснэ. Түр нууц үгийг хэрэглэгчид аюулгүй замаар дамжуулна уу."
+                      confirmLabel="Нууц үг сэргээх"
+                    >
+                      Нууц үг сэргээх
+                    </ConfirmButton>
                   </td>
                 </tr>
               ))}

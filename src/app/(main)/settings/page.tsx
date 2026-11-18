@@ -8,6 +8,7 @@ import { PageHeader, Card, Tabs, Pill } from "@/components/ui";
 import { saveType, saveField, moveField, deleteField, saveCategory, saveRule, saveRoutingRule, deleteRoutingRule } from "./actions";
 import { DATA_TYPE_LABELS, CONF_LABELS, DIRECTION_LABELS, shortName } from "@/lib/format";
 import { SubmitButton, Toast } from "@/components/feedback";
+import { ConfirmButton, ModalButton, ModalCloser } from "@/components/modal";
 
 export const dynamic = "force-dynamic";
 
@@ -102,8 +103,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
                         <td className="px-1 py-3 text-sm">
                           <span className="flex items-center gap-1">
                             {i + 1}
-                            <form action={moveField}><input type="hidden" name="id" value={f.id} /><input type="hidden" name="dir" value="up" /><button className="text-slate-400 hover:text-slate-800" title="Дээш"><ArrowUp size={13} /></button></form>
-                            <form action={moveField}><input type="hidden" name="id" value={f.id} /><input type="hidden" name="dir" value="down" /><button className="text-slate-400 hover:text-slate-800" title="Доош"><ArrowDown size={13} /></button></form>
+                            <form action={moveField}><input type="hidden" name="id" value={f.id} /><input type="hidden" name="dir" value="up" /><button className="rounded p-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title="Дээш" aria-label={`«${f.label}» дээш`}><ArrowUp size={14} /></button></form>
+                            <form action={moveField}><input type="hidden" name="id" value={f.id} /><input type="hidden" name="dir" value="down" /><button className="rounded p-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title="Доош" aria-label={`«${f.label}» доош`}><ArrowDown size={14} /></button></form>
                           </span>
                         </td>
                         <td className="td font-medium">{f.label}</td>
@@ -112,22 +113,31 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
                         <td className="td">{f.isRequired ? <span className="font-semibold text-green-700">✓ Заавал</span> : "Сонголттой"}</td>
                         <td className="td">{f.isActive ? "Идэвхтэй" : "Идэвхгүй"}</td>
                         <td className="td">
-                          <details className="relative">
-                            <summary className="cursor-pointer list-none font-semibold link">Засах</summary>
-                            <div className="absolute right-0 z-10 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
-                              <FieldForm typeId={current.id} f={f} />
-                              <form action={deleteField} className="mt-2"><input type="hidden" name="id" value={f.id} /><button className="text-xs text-red-700 hover:underline">Устгах</button></form>
+                          <ModalButton label="Засах" title={`«${f.label}» талбар засах`} className="font-semibold link">
+                            <FieldForm typeId={current.id} f={f} />
+                            <div className="mt-4 border-t border-slate-100 pt-4">
+                                <ConfirmButton
+                                  action={deleteField}
+                                  fields={{ id: f.id }}
+                                  className="text-xs font-semibold text-red-700 hover:underline"
+                                  title={`«${f.label}» талбарыг устгах уу?`}
+                                  description="Энэ талбарт утга бүртгэгдсэн баримт байвал талбар устахгүй, идэвхгүй болж түүх нь хадгалагдана. Утгагүй бол бүрмөсөн устах бөгөөд буцаах боломжгүй."
+                                  confirmLabel="Устгах"
+                                >
+                                  Устгах
+                                </ConfirmButton>
                             </div>
-                          </details>
+                          </ModalButton>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <details className="mt-4">
-                  <summary className="cursor-pointer list-none text-sm font-semibold text-navy-800">+ Талбар нэмэх</summary>
-                  <div className="mt-3 max-w-md rounded-xl border border-slate-200 p-4"><FieldForm typeId={current.id} /></div>
-                </details>
+                <div className="mt-4">
+                  <ModalButton label="+ Талбар нэмэх" title={`«${current.name}» төрөлд талбар нэмэх`} className="btn-outline">
+                    <FieldForm typeId={current.id} />
+                  </ModalButton>
+                </div>
               </Card>
             )}
           </div>
@@ -136,61 +146,55 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
 
       {tab === "categories" && (
         <Card title="Баримтын ангилал">
-          <table className="w-full">
-            <thead className="border-b border-slate-100"><tr><th className="th px-0">Код</th><th className="th">Нэр</th><th className="th">Төрлийн тоо</th><th className="th">Идэвхтэй</th><th className="th"></th></tr></thead>
-            <tbody className="divide-y divide-slate-100">
-              {cats.map((c) => (
-                <tr key={c.id}>
-                  <td colSpan={5} className="py-2">
-                    <form action={saveCategory} className="grid grid-cols-[160px_1fr_120px_100px_100px] items-center gap-3">
-                      <input type="hidden" name="id" value={c.id} />
-                      <input name="code" defaultValue={c.code} className="input font-mono" />
-                      <input name="name" defaultValue={c.name} className="input" />
-                      <span className="text-sm text-slate-600">{c.types.length}</span>
-                      <input type="checkbox" name="isActive" defaultChecked={c.isActive} className="h-4 w-4" />
-                      <button className="btn-outline py-1.5">Хадгалах</button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td colSpan={5} className="py-3">
-                  <form action={saveCategory} className="grid grid-cols-[160px_1fr_120px_100px_100px] items-center gap-3">
-                    <input name="code" placeholder="Шинэ код" className="input font-mono" />
-                    <input name="name" placeholder="Шинэ ангиллын нэр" className="input" />
-                    <span /><span />
-                    <button className="btn-primary py-1.5">Нэмэх</button>
-                  </form>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="hidden grid-cols-[160px_1fr_110px_90px_110px] gap-3 border-b border-slate-100 pb-2 text-xs font-semibold text-slate-500 md:grid">
+            <span>Код</span><span>Нэр</span><span>Төрлийн тоо</span><span>Идэвхтэй</span><span />
+          </div>
+          <ul className="divide-y divide-slate-100">
+            {cats.map((c) => (
+              <li key={c.id} className="py-3">
+                <form action={saveCategory} className="grid items-center gap-3 md:grid-cols-[160px_1fr_110px_90px_110px]">
+                  <input type="hidden" name="id" value={c.id} />
+                  <input name="code" defaultValue={c.code} aria-label="Ангиллын код" className="input font-mono" />
+                  <input name="name" defaultValue={c.name} aria-label="Ангиллын нэр" className="input" />
+                  <span className="text-sm text-slate-600"><span className="md:hidden">Төрөл: </span>{c.types.length}</span>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isActive" defaultChecked={c.isActive} className="h-4 w-4" /><span className="md:sr-only">Идэвхтэй</span></label>
+                  <SubmitButton className="btn-outline py-1.5" pendingText="…">Хадгалах</SubmitButton>
+                </form>
+              </li>
+            ))}
+            <li className="py-3">
+              <form action={saveCategory} className="grid items-center gap-3 md:grid-cols-[160px_1fr_110px_90px_110px]">
+                <input name="code" placeholder="Шинэ код" aria-label="Шинэ ангиллын код" required className="input font-mono" />
+                <input name="name" placeholder="Шинэ ангиллын нэр" aria-label="Шинэ ангиллын нэр" required className="input" />
+                <span className="hidden md:block" /><span className="hidden md:block" />
+                <SubmitButton className="btn-primary py-1.5" pendingText="…">Нэмэх</SubmitButton>
+              </form>
+            </li>
+          </ul>
         </Card>
       )}
 
       {tab === "numbering" && (
         <Card title="Дугаарлалтын дүрэм">
           <p className="-mt-2 mb-4 text-sm text-slate-500">Хэлбэрт ашиглах тэмдэг: <code>{"{SEQ:3}"}</code> дараалал (3 оронтой), <code>{"{YYYY}"}</code> он, <code>{"{TYPE}"}</code> төрлийн код, <code>{"{DEPT}"}</code> нэгжийн код. Тоологч транзакц дотор түгжигдэж олгогддог тул дугаар давхардахгүй.</p>
-          <table className="w-full">
-            <thead className="border-b border-slate-100"><tr><th className="th px-0">Хэлбэр</th><th className="th">Тэглэх</th><th className="th">Нэгжээр</th><th className="th">Жишээ</th><th className="th">Ашиглаж буй төрөл</th><th className="th"></th></tr></thead>
-            <tbody className="divide-y divide-slate-100">
-              {[...rules, null].map((r) => (
-                <tr key={r?.id ?? "new"}>
-                  <td colSpan={6} className="py-2">
-                    <form action={saveRule} className="grid grid-cols-[200px_150px_90px_120px_1fr_100px] items-center gap-3">
-                      <input type="hidden" name="id" value={r?.id ?? ""} />
-                      <input name="pattern" defaultValue={r?.pattern} placeholder="Ж/{YY}-{SEQ:3}" className="input font-mono" />
-                      <select name="resetPeriod" defaultValue={r?.resetPeriod ?? "YEARLY"} className="input"><option value="YEARLY">Жил бүр</option><option value="NEVER">Хэзээ ч</option></select>
-                      <input type="checkbox" name="perDepartment" defaultChecked={r?.perDepartment} className="h-4 w-4" />
-                      <span className="font-mono text-sm">{r ? formatNumber(r.pattern, { typeCode: "A", deptCode: "ADM", year: new Date().getFullYear(), seq: 7 }) : ""}</span>
-                      <span className="truncate text-sm text-slate-600">{r?.types.map((t) => t.name).join(", ")}</span>
-                      <button className={r ? "btn-outline py-1.5" : "btn-primary py-1.5"}>{r ? "Хадгалах" : "Нэмэх"}</button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="hidden grid-cols-[200px_140px_90px_130px_1fr_110px] gap-3 border-b border-slate-100 pb-2 text-xs font-semibold text-slate-500 lg:grid">
+            <span>Хэлбэр</span><span>Тэглэх</span><span>Нэгжээр</span><span>Жишээ</span><span>Ашиглаж буй төрөл</span><span />
+          </div>
+          <ul className="divide-y divide-slate-100">
+            {[...rules, null].map((r) => (
+              <li key={r?.id ?? "new"} className="py-3">
+                <form action={saveRule} className="grid items-center gap-3 sm:grid-cols-2 lg:grid-cols-[200px_140px_90px_130px_1fr_110px]">
+                  <input type="hidden" name="id" value={r?.id ?? ""} />
+                  <input name="pattern" defaultValue={r?.pattern} placeholder="Ж/{YY}-{SEQ:3}" aria-label="Дугаарын хэлбэр" required className="input font-mono" />
+                  <select name="resetPeriod" defaultValue={r?.resetPeriod ?? "YEARLY"} aria-label="Тоологч тэглэх" className="input"><option value="YEARLY">Жил бүр</option><option value="NEVER">Хэзээ ч</option></select>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="perDepartment" defaultChecked={r?.perDepartment} className="h-4 w-4" /><span className="lg:sr-only">Нэгж бүрээр тусдаа</span></label>
+                  <span className="font-mono text-sm">{r ? formatNumber(r.pattern, { typeCode: "A", deptCode: "ADM", year: new Date().getFullYear(), seq: 7 }) : <span className="font-sans text-slate-400">Шинэ дүрэм</span>}</span>
+                  <span className="truncate text-sm text-slate-600" title={r?.types.map((t) => t.name).join(", ")}>{r?.types.map((t) => t.name).join(", ")}</span>
+                  <SubmitButton className={r ? "btn-outline py-1.5" : "btn-primary py-1.5"} pendingText="…">{r ? "Хадгалах" : "Нэмэх"}</SubmitButton>
+                </form>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 
@@ -201,24 +205,32 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
 }
 
 function FieldForm({ typeId, f }: { typeId: string; f?: { id: string; label: string; name: string; dataType: string; isRequired: boolean; isActive: boolean; options: unknown } }) {
+  const p = `ff-${f?.id ?? "new"}`;
   return (
-    <form action={saveField} className="space-y-3 text-sm">
+    <form action={saveField} className="space-y-4 text-sm">
+      <ModalCloser />
       <input type="hidden" name="id" value={f?.id ?? ""} />
       <input type="hidden" name="documentTypeId" value={typeId} />
-      <div><label className="label">Талбарын нэр</label><input name="label" defaultValue={f?.label} required className="input" /></div>
-      <div><label className="label">Код (латин)</label><input name="name" defaultValue={f?.name} required className="input font-mono" /></div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div><label className="label" htmlFor={`${p}-label`}>Талбарын нэр <span className="text-red-600">*</span></label><input id={`${p}-label`} name="label" defaultValue={f?.label} required className="input" /></div>
+        <div><label className="label" htmlFor={`${p}-name`}>Код (латин) <span className="text-red-600">*</span></label><input id={`${p}-name`} name="name" defaultValue={f?.name} required className="input font-mono" /></div>
+      </div>
       <div>
-        <label className="label">Өгөгдлийн төрөл</label>
-        <select name="dataType" defaultValue={f?.dataType ?? "text"} className="input">
+        <label className="label" htmlFor={`${p}-type`}>Өгөгдлийн төрөл</label>
+        <select id={`${p}-type`} name="dataType" defaultValue={f?.dataType ?? "text"} className="input">
           {Object.entries(DATA_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
       </div>
-      <div><label className="label">Сонголтууд (таслалаар)</label><input name="options" defaultValue={Array.isArray(f?.options) ? (f!.options as string[]).join(", ") : ""} className="input" /></div>
-      <div className="flex gap-4">
-        <label className="flex items-center gap-2"><input type="checkbox" name="isRequired" defaultChecked={f?.isRequired} /> Заавал</label>
-        {f && <label className="flex items-center gap-2"><input type="checkbox" name="isActive" defaultChecked={f.isActive} /> Идэвхтэй</label>}
+      <div>
+        <label className="label" htmlFor={`${p}-opts`}>Сонголтууд</label>
+        <input id={`${p}-opts`} name="options" defaultValue={Array.isArray(f?.options) ? (f!.options as string[]).join(", ") : ""} aria-describedby={`${p}-opts-help`} className="input" />
+        <p id={`${p}-opts-help`} className="mt-1 text-xs text-slate-500">«Сонголт» төрөлд л хэрэглэнэ. Таслалаар тусгаарлана: Б, А, Ш</p>
       </div>
-      <button className="btn-primary w-full">{f ? "Хадгалах" : "Нэмэх"}</button>
+      <div className="flex gap-6">
+        <label className="flex items-center gap-2"><input type="checkbox" name="isRequired" defaultChecked={f?.isRequired} className="h-4 w-4" /> Заавал бөглөх</label>
+        {f && <label className="flex items-center gap-2"><input type="checkbox" name="isActive" defaultChecked={f.isActive} className="h-4 w-4" /> Идэвхтэй</label>}
+      </div>
+      <SubmitButton className="btn-primary w-full" pendingText="Хадгалж байна…">{f ? "Хадгалах" : "Талбар нэмэх"}</SubmitButton>
     </form>
   );
 }
@@ -298,13 +310,21 @@ async function Routing({ types }: { types: Opt[] }) {
                   <span className="rounded-md bg-navy-800 px-2 py-0.5 text-xs font-semibold text-white">{shortName(r.reviewer.employee)}</span>
                 </div>
               </div>
-              <details className="relative">
-                <summary className="cursor-pointer list-none text-sm font-semibold link">Засах</summary>
-                <div className="absolute right-0 z-10 mt-2 w-[min(90vw,560px)] rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
+              <ModalButton label="Засах" title={`«${r.name}» дүрэм засах`} size="lg" className="text-sm font-semibold link">
                   <RuleForm r={r} {...opts} />
-                  <form action={deleteRoutingRule} className="mt-3 border-t border-slate-100 pt-3"><input type="hidden" name="id" value={r.id} /><button className="text-xs text-red-700 hover:underline">Дүрмийг устгах</button></form>
-                </div>
-              </details>
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <ConfirmButton
+                      action={deleteRoutingRule}
+                      fields={{ id: r.id }}
+                      className="text-xs font-semibold text-red-700 hover:underline"
+                      title={`«${r.name}» дүрмийг устгах уу?`}
+                      description="Устгасны дараа энэ нөхцөлтэй баримтууд дараагийн тохирох дүрмээр, эсвэл гараар сонгосон хянагч руу очно. Буцаах боломжгүй — түр зогсоох бол «Идэвхтэй»-г болиулна уу."
+                      confirmLabel="Дүрмийг устгах"
+                    >
+                      Дүрмийг устгах
+                    </ConfirmButton>
+                  </div>
+              </ModalButton>
             </li>
           ))}
         </ul>
@@ -318,35 +338,37 @@ async function Routing({ types }: { types: Opt[] }) {
 
 function RuleForm({ r, types, departments, fields, reviewers }: { r?: RuleRow; types: Opt[]; departments: Opt[]; fields: Opt[]; reviewers: Opt[] }) {
   const any = <option value="">— Ямар ч —</option>;
+  const p = `rf-${r?.id ?? "new"}`;
   return (
     <form action={saveRoutingRule} className="grid gap-3 text-sm md:grid-cols-3">
+      <ModalCloser />
       <input type="hidden" name="id" value={r?.id ?? ""} />
-      <div className="md:col-span-2"><label className="label">Дүрмийн нэр *</label><input name="name" required defaultValue={r?.name} placeholder="Жишээ: Нууц баримт захирал руу" className="input" /></div>
-      <div><label className="label">Эрэмбэ (бага нь түрүүлнэ)</label><input name="priority" type="number" min={1} max={999} defaultValue={r?.priority ?? 100} className="input" /></div>
+      <div className="md:col-span-2"><label className="label" htmlFor={`${p}-name`}>Дүрмийн нэр <span className="text-red-600">*</span></label><input id={`${p}-name`} name="name" required defaultValue={r?.name} placeholder="Жишээ: Нууц баримт захирал руу" className="input" /></div>
+      <div><label className="label" htmlFor={`${p}-priority`}>Эрэмбэ (бага нь түрүүлнэ)</label><input id={`${p}-priority`} name="priority" type="number" min={1} max={999} defaultValue={r?.priority ?? 100} className="input" /></div>
       <div>
-        <label className="label">Баримтын төрөл</label>
-        <select name="documentTypeId" defaultValue={r?.documentTypeId ?? ""} className="input">{any}{types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+        <label className="label" htmlFor={`${p}-documentTypeId`}>Баримтын төрөл</label>
+        <select id={`${p}-documentTypeId`} name="documentTypeId" defaultValue={r?.documentTypeId ?? ""} className="input">{any}{types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
       </div>
       <div>
-        <label className="label">Нууцлалын түвшин</label>
-        <select name="confidentiality" defaultValue={r?.confidentiality ?? ""} className="input">{any}{Object.entries(CONF_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        <label className="label" htmlFor={`${p}-confidentiality`}>Нууцлалын түвшин</label>
+        <select id={`${p}-confidentiality`} name="confidentiality" defaultValue={r?.confidentiality ?? ""} className="input">{any}{Object.entries(CONF_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
       </div>
       <div>
-        <label className="label">Чиглэл</label>
-        <select name="direction" defaultValue={r?.direction ?? ""} className="input">{any}<option value="INTERNAL">{DIRECTION_LABELS.INTERNAL}</option><option value="OUTGOING">{DIRECTION_LABELS.OUTGOING}</option></select>
+        <label className="label" htmlFor={`${p}-direction`}>Чиглэл</label>
+        <select id={`${p}-direction`} name="direction" defaultValue={r?.direction ?? ""} className="input">{any}<option value="INTERNAL">{DIRECTION_LABELS.INTERNAL}</option><option value="OUTGOING">{DIRECTION_LABELS.OUTGOING}</option></select>
       </div>
       <div>
-        <label className="label">Эзэмшигч нэгж</label>
-        <select name="departmentId" defaultValue={r?.departmentId ?? ""} className="input">{any}{departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+        <label className="label" htmlFor={`${p}-departmentId`}>Эзэмшигч нэгж</label>
+        <select id={`${p}-departmentId`} name="departmentId" defaultValue={r?.departmentId ?? ""} className="input">{any}{departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
       </div>
       <div>
-        <label className="label">Талбар</label>
-        <select name="fieldId" defaultValue={r?.fieldId ?? ""} className="input">{any}{fields.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>
+        <label className="label" htmlFor={`${p}-fieldId`}>Талбар</label>
+        <select id={`${p}-fieldId`} name="fieldId" defaultValue={r?.fieldId ?? ""} className="input">{any}{fields.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>
       </div>
-      <div><label className="label">Талбарын утга</label><input name="fieldValue" defaultValue={r?.fieldValue ?? ""} placeholder="Жишээ: Б" className="input" /></div>
+      <div><label className="label" htmlFor={`${p}-fieldValue`}>Талбарын утга</label><input id={`${p}-fieldValue`} name="fieldValue" defaultValue={r?.fieldValue ?? ""} placeholder="Жишээ: Б" className="input" /></div>
       <div className="md:col-span-2">
-        <label className="label">Хянагч (автоматаар илгээх) *</label>
-        <select name="reviewerId" required defaultValue={r?.reviewerId ?? ""} className="input"><option value="" disabled>— Сонгох —</option>{reviewers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select>
+        <label className="label" htmlFor={`${p}-reviewerId`}>Хянагч (автоматаар илгээх) <span className="text-red-600">*</span></label>
+        <select id={`${p}-reviewerId`} name="reviewerId" required defaultValue={r?.reviewerId ?? ""} className="input"><option value="" disabled>— Сонгох —</option>{reviewers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select>
       </div>
       {r && <label className="flex items-center gap-2 pt-7"><input type="checkbox" name="isActive" defaultChecked={r.isActive} className="h-4 w-4" /> Идэвхтэй</label>}
       <div className="md:col-span-3"><SubmitButton pendingText="Хадгалж байна…">{r ? "Хадгалах" : "Дүрэм нэмэх"}</SubmitButton></div>
