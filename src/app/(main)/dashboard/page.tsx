@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { documentScope } from "@/lib/access";
 import { fmtShort, shortName, startOfToday, daysBetween, TZ } from "@/lib/format";
-import { PageHeader, Card, StatCard, StatusBadge, Pill, STATUS_COLOR } from "@/components/ui";
+import { PageHeader, Card, StatCard, Pill, STATUS_COLOR } from "@/components/ui";
 import { Donut, GroupedBars } from "@/components/charts";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const sixAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
 
-  const [total, thisMonth, myReviews, inReview, activeAssign, overdue, byStatus, statuses, registered, resolved, reviewList, overdueList] =
+  const [total, thisMonth, myReviews, inReview, activeAssign, overdue, byStatus, statuses, registered, resolved, overdueList] =
     await Promise.all([
       prisma.document.count({ where: scope }),
       prisma.document.count({ where: { AND: [scope, { createdAt: { gte: monthStart } }] } }),
@@ -33,17 +33,11 @@ export default async function DashboardPage() {
       prisma.documentStatus.findMany({ orderBy: { displayOrder: "asc" } }),
       prisma.document.findMany({ where: { AND: [scope, { registeredAt: { gte: sixAgo } }] }, select: { registeredAt: true } }),
       prisma.assignment.findMany({ where: { status: "DONE", completedAt: { gte: sixAgo }, document: scope }, select: { completedAt: true } }),
-      prisma.approval.findMany({
-        where: { reviewerId: user.id, decision: "PENDING" },
-        include: { document: { include: { documentType: true, createdBy: { include: { employee: true } }, status: true } } },
-        orderBy: { document: { updatedAt: "desc" } },
-        take: 3,
-      }),
       prisma.assignment.findMany({
         where: { status: "ACTIVE", dueDate: { lt: today }, document: scope },
         include: { document: true, assigneeUser: { include: { employee: true } }, assigneeDepartment: true },
         orderBy: { dueDate: "asc" },
-        take: 3,
+        take: 5,
       }),
     ]);
 
@@ -58,16 +52,27 @@ export default async function DashboardPage() {
     rec ? prisma.document.count({ where: { isDeleted: false, status: { code: "REGISTERED" } } }) : 0,
     can(user, "document.archive") ? prisma.document.count({ where: { isDeleted: false, status: { code: "RESOLVED" } } }) : 0,
   ]);
+  // «Миний хийх ажил»: төлөвийн өнгөтэй, хэтэрсэн ажил улаанаар тодорно
   const todo = [
-    { n: myReviews, label: "баримт таны хяналтыг хүлээж байна", action: "Хянах", href: "/reviews", tone: "amber" },
-    { n: myActive, label: `баримт танд хуваарилагдсан${myOverdue ? ` (${myOverdue} нь хугацаа хэтэрсэн)` : ""}`, action: "Шийдвэрлэх", href: "/assignments?tab=mine&status=ACTIVE", tone: myOverdue ? "red" : "navy" },
-    { n: myReturned, label: "таны баримт засварт буцсан", action: "Засах", href: "/documents?status=RETURNED&mine=1", tone: "amber" },
-    { n: myDraft, label: "ноорог хадгалсан, илгээгээгүй", action: "Үргэлжлүүлэх", href: "/documents?status=DRAFT&mine=1", tone: "slate" },
-    { n: toRegister, label: "батлагдсан баримт бүртгэл хүлээж байна", action: "Бүртгэх", href: "/documents?status=APPROVED", tone: "navy" },
-    { n: toAssign, label: "бүртгэгдсэн баримт хуваарилалт хүлээж байна", action: "Хуваарилах", href: "/documents?status=REGISTERED", tone: "navy" },
-    { n: toArchive, label: "шийдвэрлэгдсэн баримт архивлах боломжтой", action: "Архивлах", href: "/documents?status=RESOLVED", tone: "slate" },
+    { n: myReviews, title: "Хянах", label: "таны хяналт хүлээж буй баримт", action: "Хянах", href: "/reviews", tone: "review" },
+    { n: myOverdue, title: "Хугацаа хэтэрсэн", label: "танд хуваарилагдсан", action: "Шийдвэрлэх", href: "/assignments?tab=mine&due=overdue", tone: "danger" },
+    { n: myActive - myOverdue, title: "Шийдвэрлэх", label: "танд хуваарилагдсан баримт", action: "Шийдвэрлэх", href: "/assignments?tab=mine&status=ACTIVE", tone: "assigned" },
+    { n: myReturned, title: "Засварт буцсан", label: "таны баримт", action: "Засах", href: "/documents?status=RETURNED&mine=1", tone: "returned" },
+    { n: myDraft, title: "Ноорог", label: "хадгалсан, илгээгээгүй", action: "Үргэлжлүүлэх", href: "/documents?status=DRAFT&mine=1", tone: "draft" },
+    { n: toRegister, title: "Бүртгэх", label: "батлагдсан баримт", action: "Бүртгэх", href: "/documents?status=APPROVED", tone: "approved" },
+    { n: toAssign, title: "Хуваарилах", label: "бүртгэгдсэн баримт", action: "Хуваарилах", href: "/documents?status=REGISTERED", tone: "registered" },
+    { n: toArchive, title: "Архивлах", label: "шийдвэрлэгдсэн баримт", action: "Архивлах", href: "/documents?status=RESOLVED", tone: "draft" },
   ].filter((t) => t.n > 0);
-  const TONE: Record<string, string> = { amber: "bg-amber-100 text-amber-800", red: "bg-red-100 text-red-700", navy: "bg-navy-50 text-navy-800", slate: "bg-slate-100 text-slate-700" };
+  const todoTotal = todo.reduce((a, t) => a + t.n, 0);
+  const TONE: Record<string, { box: string; num: string }> = {
+    review: { box: "border-amber-200 bg-amber-50/60", num: "bg-amber-100 text-amber-800" },
+    danger: { box: "border-red-200 bg-red-50/70", num: "bg-red-100 text-red-700" },
+    assigned: { box: "border-slate-200", num: "bg-violet-100 text-violet-800" },
+    returned: { box: "border-slate-200", num: "bg-orange-100 text-orange-800" },
+    approved: { box: "border-slate-200", num: "bg-teal-100 text-teal-800" },
+    registered: { box: "border-slate-200", num: "bg-blue-100 text-blue-800" },
+    draft: { box: "border-slate-200", num: "bg-slate-100 text-slate-700" },
+  };
 
   const countOf = (id: string) => byStatus.find((b) => b.statusId === id)?._count ?? 0;
   const donut = statuses.map((s) => ({ name: s.name, value: countOf(s.id), color: STATUS_COLOR[s.code] ?? "#94a3b8", code: s.code }));
@@ -90,17 +95,19 @@ export default async function DashboardPage() {
         }
       />
 
-      <Card title="Миний хийх ажил" className="mb-5" right={<span className="text-xs text-slate-500">Таны үйлдэл хүлээж буй зүйлс</span>}>
+      <Card title="Миний хийх ажил" className="mb-5" right={todo.length > 0 && <span className="text-xs text-slate-500">{todoTotal} зүйл таны үйлдлийг хүлээж байна</span>}>
         {todo.length === 0 ? (
-          <p className="text-sm text-slate-500">Танд одоогоор хийх ажил алга. 👍</p>
+          <p className="text-sm text-slate-500">Танд одоогоор хийх ажил алга.</p>
         ) : (
-          <ul className="grid gap-2 md:grid-cols-2">
+          <ul className="grid gap-3 md:grid-cols-2">
             {todo.map((t) => (
               <li key={t.href}>
-                <Link href={t.href} className="group flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 transition hover:border-navy-600 hover:bg-navy-50/30">
-                  <span className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-base font-bold ${TONE[t.tone]}`}>{t.n}</span>
-                  <span className="flex-1 text-sm text-slate-700">{t.label}</span>
-                  <span className="flex items-center gap-1 text-sm font-semibold text-navy-700 group-hover:underline">{t.action} <ArrowRight size={14} /></span>
+                <Link href={t.href} className={`group flex items-center gap-3 rounded-lg border px-4 py-3 transition hover:border-navy-600 hover:shadow-sm ${TONE[t.tone].box}`}>
+                  <span className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-base font-bold ${TONE[t.tone].num}`}>{t.n}</span>
+                  <span className="flex-1 text-sm text-slate-600">
+                    <b className={t.tone === "danger" ? "text-red-700" : "text-slate-900"}>{t.title}</b> — {t.label}
+                  </span>
+                  <span className="flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-navy-700 group-hover:underline">{t.action} <ArrowRight size={14} aria-hidden /></span>
                 </Link>
               </li>
             ))}
@@ -110,7 +117,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Нийт баримт" value={total} hint={`Энэ сард +${thisMonth} үүссэн`} href="/documents" />
-        <StatCard label="Миний хяналт хүлээж буй" value={myReviews} hint={`Нийт хяналтад: ${inReview}`} href={can(user, "document.review") ? "/reviews" : "/documents?status=IN_REVIEW"} />
+        <StatCard label="Хяналтад байгаа" value={inReview} hint={can(user, "document.review") ? `Таны хяналтад: ${myReviews}` : "Хянагч шийдвэр гаргаж байна"} href="/documents?status=IN_REVIEW" />
         <StatCard label="Хуваарилагдсан" value={activeAssign} hint="Хариуцагч шийдвэрлэж байна" href="/assignments?status=ACTIVE" />
         <StatCard label="Хугацаа хэтэрсэн" value={overdue} hint="Шийдвэрлэх хугацаа өнгөрсөн хуваарилалт" tone="danger" icon={<Clock3 size={18} />} href="/assignments?due=overdue" />
       </div>
@@ -144,42 +151,34 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <Card title="Миний хяналт хүлээж буй баримт" right={<Link href="/reviews" className="font-medium text-navy-800 hover:underline">Бүгдийг үзэх →</Link>}>
-          <ul className="divide-y divide-slate-100">
-            {reviewList.length === 0 && <li className="py-6 text-center text-sm text-slate-500">Хянах баримт алга</li>}
-            {reviewList.map((a) => (
-              <li key={a.id} className="flex items-center gap-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">{a.document.internalNumber} · {a.document.title}</div>
-                  <div className="text-xs text-slate-500">{a.document.documentType.name} · {shortName(a.document.createdBy.employee)} · Илгээсэн: {fmtShort(a.document.updatedAt ?? a.document.createdAt)}</div>
-                </div>
-                <StatusBadge code={a.document.status.code} name={a.document.status.name} />
-                <Link href={`/reviews?id=${a.documentId}`} className="flex items-center gap-1 text-sm font-semibold text-navy-800">Хянах <ArrowRight size={14} /></Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card title="Хугацаа хэтэрсэн хуваарилалт" right={<Link href="/assignments?due=overdue" className="font-medium text-navy-800 hover:underline">Хуваарилалт үзэх →</Link>}>
-          <ul className="divide-y divide-slate-100">
-            {overdueList.length === 0 && <li className="py-6 text-center text-sm text-slate-500">Хугацаа хэтэрсэн зүйл алга 🎉</li>}
-            {overdueList.map((a) => (
-              <li key={a.id} className="flex items-center gap-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <Link href={`/documents/${a.documentId}`} className="block truncate text-sm font-semibold link">
-                    {a.document.documentNumber ?? a.document.internalNumber} · {a.document.title}
-                  </Link>
-                  <div className="text-xs text-slate-500">
-                    Хариуцагч: {a.assigneeUser ? shortName(a.assigneeUser.employee) : a.assigneeDepartment?.name} · Хугацаа: {fmtShort(a.dueDate)}
-                  </div>
-                </div>
-                <Pill tone="red">{daysBetween(a.dueDate!, today)} хоног хэтэрсэн</Pill>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+      <section className="card mt-5 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <h2 className="text-base font-semibold text-slate-900">Хугацаа хэтэрсэн хуваарилалт</h2>
+          <Link href="/assignments?due=overdue" className="flex items-center gap-1 text-sm font-semibold text-navy-700 hover:underline">Бүгдийг харах <ArrowRight size={14} aria-hidden /></Link>
+        </div>
+        {overdueList.length === 0 ? (
+          <p className="border-t border-slate-100 px-5 py-8 text-center text-sm text-slate-500">Хугацаа хэтэрсэн хуваарилалт алга.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-y border-slate-200 bg-slate-50/60">
+                <tr><th className="th">Дугаар</th><th className="th">Гарчиг</th><th className="th">Хариуцагч</th><th className="th">Хугацаа</th><th className="th">Хэтэрсэн</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {overdueList.map((a) => (
+                  <tr key={a.id} className="hover:bg-slate-50/70">
+                    <td className="td whitespace-nowrap font-semibold">{a.document.documentNumber ?? a.document.internalNumber}</td>
+                    <td className="td"><Link href={`/documents/${a.documentId}`} className="link">{a.document.title}</Link></td>
+                    <td className="td text-slate-600">{a.assigneeUser ? shortName(a.assigneeUser.employee) : `${a.assigneeDepartment?.name} (нэгж)`}</td>
+                    <td className="td whitespace-nowrap text-slate-600">{fmtShort(a.dueDate)}</td>
+                    <td className="td"><Pill tone="red">{daysBetween(a.dueDate!, today)} хоног</Pill></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <p className="mt-5 text-xs text-slate-400">Харагдах мэдээлэл таны үүрэг, хэлтсийн эрхээр хязгаарлагдана.</p>
     </div>
