@@ -59,7 +59,7 @@ export async function canonicalContent(db: Db, documentId: string, documentNumbe
   return canonicalJson({ ...d, documentNumber: documentNumber !== undefined ? documentNumber : d.documentNumber });
 }
 
-/** Батлах үед транзакц дотор дуудагдана */
+/** Батлах үед transaction дотор дуудагдана */
 export async function signDocument(db: Db, opts: { documentId: string; userId: string; password?: string; documentNumber: string | null }) {
   const { row, privateKey } = await unlockSigningKey(db, opts.userId, opts.password);
   const hash = sha256(await canonicalContent(db, opts.documentId, opts.documentNumber));

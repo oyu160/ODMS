@@ -1,13 +1,13 @@
 // Дугаар олгох (дипломын 3.3-ын алгоритм, БД-07)
-// Тоологчийг транзакц дотор түгжиж нэмэгдүүлдэг тул зэрэг батлахад давхардсан,
-// алгассан дугаар үүсэхгүй. Транзакц амжилтгүй болбол тоологч ч буцаагдана.
+// Тоологчийг transaction дотор түгжиж нэмэгдүүлдэг тул зэрэг батлахад давхардсан,
+// алгассан дугаар үүсэхгүй. Transaction амжилтгүй болбол тоологч ч буцаагдана.
 import type { Prisma } from "@prisma/client";
 
 type Tx = Prisma.TransactionClient;
 
 /** (дүрэм, нэгж, жил)-ийн тоологчийг 1-ээр нэмж шинэ утгыг буцаана */
 async function nextValue(tx: Tx, ruleId: string | null, departmentId: string | null, year: number) {
-  // Ижил түлхүүртэй зэрэгцээ транзакцуудыг дараалуулна (SELECT … FOR UPDATE-тэй ижил үр дүн,
+  // Ижил түлхүүртэй зэрэгцээ transaction-уудыг дараалуулна (SELECT … FOR UPDATE-тэй ижил үр дүн,
   // гэхдээ тоологчийн мөр анх үүсэх үед ч ажилладаг)
   const key = `${ruleId ?? "internal"}:${departmentId ?? "-"}:${year}`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;

@@ -178,7 +178,7 @@ async function readReviewer(tx: Tx, reviewerId: string | undefined, creatorId: s
   return reviewer;
 }
 
-/** Үйлдлийг нэг транзакцаар гүйцэтгэнэ: шалгах → өөрчлөх → аудит → мэдэгдэл */
+/** Үйлдлийг нэг transaction-аар гүйцэтгэнэ: шалгах → өөрчлөх → аудит → мэдэгдэл */
 export async function performAction(user: CurrentUser, documentId: string, action: string, input: ActionInput) {
   return prisma.$transaction(async (tx) => {
     // Баримтын мөрийг түгжинэ: хоёр хэрэглэгч зэрэг үйлдэл хийхээс сэргийлнэ
