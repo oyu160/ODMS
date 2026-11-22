@@ -12,11 +12,11 @@ import { ConfirmButton, ModalButton, ModalCloser } from "@/components/modal";
 
 export const dynamic = "force-dynamic";
 
-type SP = Promise<{ tab?: string; type?: string; msg?: string }>;
+type SP = Promise<{ tab?: string; type?: string; msg?: string; err?: string }>;
 
 export default async function SettingsPage({ searchParams }: { searchParams: SP }) {
   await requirePermission("settings.manage");
-  const { tab = "types", type: typeId, msg } = await searchParams;
+  const { tab = "types", type: typeId, msg, err } = await searchParams;
 
   const [cats, rules] = await Promise.all([
     prisma.documentCategory.findMany({ orderBy: { name: "asc" }, include: { types: { orderBy: { name: "asc" }, include: { _count: { select: { documents: true } } } } } }),
@@ -38,6 +38,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
       />
       {msg && <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">{msg}</p>}
       <Toast message={msg} />
+      {err && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">{err}</p>}
+      <Toast message={err} tone="error" />
       <Tabs
         active={tab}
         tabs={[

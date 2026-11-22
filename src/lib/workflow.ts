@@ -118,10 +118,12 @@ export async function availableActions(user: CurrentUser, doc: DocLite) {
   const result: { code: string; label: string }[] = [];
   for (const t of transitions) {
     if (result.some((r) => r.code === t.actionCode)) continue;
+    // Shoshgogui (heregjuuleltgui) uildliig towch bolgoj haruulahgui, jish: hasagdsan "revoke"
+    if (!ACTION_LABELS[t.actionCode]) continue;
     // resolve ni erhees gadna hariutsagch eseheer shiidegdene
     if (t.actionCode !== "resolve" && !can(user, t.permission.code)) continue;
     if (await ruleViolation(prisma, user, doc, t.actionCode)) continue;
-    result.push({ code: t.actionCode, label: ACTION_LABELS[t.actionCode] ?? t.actionCode });
+    result.push({ code: t.actionCode, label: ACTION_LABELS[t.actionCode] });
   }
   return result;
 }

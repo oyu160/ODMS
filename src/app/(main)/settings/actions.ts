@@ -12,6 +12,8 @@ const s = (fd: FormData, k: string) => {
   return typeof v === "string" ? v.trim() : "";
 };
 const back = (path: string, msg?: string) => redirect(msg ? `${path}${path.includes("?") ? "&" : "?"}msg=${encodeURIComponent(msg)}` : path);
+// Aldaanii medegdel: err= parametreer damjuulj ulaan unguur haruulna
+const fail = (path: string, msg: string): never => redirect(`${path}${path.includes("?") ? "&" : "?"}err=${encodeURIComponent(msg)}`);
 
 async function audit(userId: string, entityType: string, entityId: string, newValue: Prisma.InputJsonValue) {
   await writeAudit({ userId, entityType, entityId, action: "SETTINGS", newValue });
@@ -28,14 +30,14 @@ export async function saveType(fd: FormData) {
     defaultRetentionYears: s(fd, "retention") ? Number(s(fd, "retention")) : null,
     isActive: fd.get("isActive") === "on",
   };
-  if (!data.name || !data.code || !data.categoryId) back(`/settings?type=${id}`, "Нэр, код, ангиллыг бөглөнө үү");
+  if (!data.name || !data.code || !data.categoryId) fail(`/settings?type=${id}`, "Нэр, код, ангиллыг бөглөнө үү");
   try {
     const t = id ? await prisma.documentType.update({ where: { id }, data }) : await prisma.documentType.create({ data });
     await audit(user.id, "document_type", t.id, { name: t.name });
     revalidatePath("/settings");
     back(`/settings?type=${t.id}`, "Хадгаллаа");
   } catch (e) {
-    if ((e as { code?: string }).code === "P2002") back(`/settings?type=${id}`, "Ийм кодтой төрөл бүртгэлтэй байна");
+    if ((e as { code?: string }).code === "P2002") fail(`/settings?type=${id}`, "Ийм кодтой төрөл бүртгэлтэй байна");
     throw e;
   }
 }
@@ -53,7 +55,7 @@ export async function saveField(fd: FormData) {
     isRequired: fd.get("isRequired") === "on",
     isActive: id ? fd.get("isActive") === "on" : true,
   };
-  if (!data.label || !data.name) back(`/settings?type=${typeId}`, "Талбарын нэр, кодыг бөглөнө үү");
+  if (!data.label || !data.name) fail(`/settings?type=${typeId}`, "Талбарын нэр, кодыг бөглөнө үү");
   try {
     if (id) await prisma.fieldDefinition.update({ where: { id }, data });
     else {
@@ -61,7 +63,7 @@ export async function saveField(fd: FormData) {
       await prisma.fieldDefinition.create({ data: { ...data, documentTypeId: typeId, displayOrder: (max._max.displayOrder ?? 0) + 1 } });
     }
   } catch (e) {
-    if ((e as { code?: string }).code === "P2002") back(`/settings?type=${typeId}`, "Ийм кодтой талбар энэ төрөлд байна");
+    if ((e as { code?: string }).code === "P2002") fail(`/settings?type=${typeId}`, "Ийм кодтой талбар энэ төрөлд байна");
     throw e;
   }
   await audit(user.id, "field_definition", typeId, { field: data.name });
@@ -102,7 +104,7 @@ export async function saveCategory(fd: FormData) {
   const user = await requirePermission("settings.manage");
   const id = s(fd, "id");
   const data = { code: s(fd, "code").toUpperCase(), name: s(fd, "name"), isActive: id ? fd.get("isActive") === "on" : true };
-  if (!data.code || !data.name) back("/settings?tab=categories", "Код, нэрийг бөглөнө үү");
+  if (!data.code || !data.name) fail("/settings?tab=categories", "Код, нэрийг бөглөнө үү");
   const c = id ? await prisma.documentCategory.update({ where: { id }, data }) : await prisma.documentCategory.create({ data });
   await audit(user.id, "document_category", c.id, { name: c.name });
   revalidatePath("/settings");
@@ -113,12 +115,12 @@ export async function saveRule(fd: FormData) {
   const user = await requirePermission("settings.manage");
   const id = s(fd, "id");
   const data = { pattern: s(fd, "pattern"), resetPeriod: s(fd, "resetPeriod") || "YEARLY", perDepartment: fd.get("perDepartment") === "on" };
-  if (!data.pattern.includes("{SEQ")) back("/settings?tab=numbering", "Хэлбэрт {SEQ} эсвэл {SEQ:3} заавал орно");
+  if (!data.pattern.includes("{SEQ")) fail("/settings?tab=numbering", "Хэлбэрт {SEQ} эсвэл {SEQ:3} заавал орно");
   // 3.3.4: uur jil, uur negjid ijil dugaar dawtagdahguin tuld
   if (data.resetPeriod === "YEARLY" && !/\{YYYY\}|\{YY\}/.test(data.pattern))
-    back("/settings?tab=numbering", "Тоологч жил бүр тэглэгдэх тул хэлбэрт {YY} эсвэл {YYYY} заавал орно");
+    fail("/settings?tab=numbering", "Тоологч жил бүр тэглэгдэх тул хэлбэрт {YY} эсвэл {YYYY} заавал орно");
   if (data.perDepartment && !data.pattern.includes("{DEPT}"))
-    back("/settings?tab=numbering", "Нэгжээр тусад нь тоолох тул хэлбэрт {DEPT} заавал орно");
+    fail("/settings?tab=numbering", "Нэгжээр тусад нь тоолох тул хэлбэрт {DEPT} заавал орно");
   const r = id ? await prisma.numberingRule.update({ where: { id }, data }) : await prisma.numberingRule.create({ data });
   await audit(user.id, "numbering_rule", r.id, { pattern: r.pattern });
   revalidatePath("/settings");
@@ -143,19 +145,19 @@ export async function saveRoutingRule(fd: FormData) {
     isActive: id ? fd.get("isActive") === "on" : true,
   };
   const path = "/settings?tab=routing";
-  if (!data.name || !data.reviewerId) back(path, "Дүрмийн нэр, хянагчийг заавал сонгоно");
+  if (!data.name || !data.reviewerId) fail(path, "Дүрмийн нэр, хянагчийг заавал сонгоно");
   if (!data.documentTypeId && !data.confidentiality && !data.direction && !data.departmentId && !data.fieldId)
-    back(path, "Дор хаяж нэг нөхцөл сонгоно уу");
-  if (data.fieldValue && !data.fieldId) back(path, "Талбарын утга оруулбал талбараа сонгоно уу");
+    fail(path, "Дор хаяж нэг нөхцөл сонгоно уу");
+  if (data.fieldValue && !data.fieldId) fail(path, "Талбарын утга оруулбал талбараа сонгоно уу");
   if (data.fieldId && data.documentTypeId) {
     const f = await prisma.fieldDefinition.findUnique({ where: { id: data.fieldId } });
-    if (f && f.documentTypeId !== data.documentTypeId) back(path, "Сонгосон талбар тухайн баримтын төрөлд хамаарахгүй байна");
+    if (f && f.documentTypeId !== data.documentTypeId) fail(path, "Сонгосон талбар тухайн баримтын төрөлд хамаарахгүй байна");
   }
-  if (!Number.isInteger(data.priority) || data.priority < 1 || data.priority > 999) back(path, "Эрэмбэ 1–999 хооронд бүхэл тоо байна");
+  if (!Number.isInteger(data.priority) || data.priority < 1 || data.priority > 999) fail(path, "Эрэмбэ 1–999 хооронд бүхэл тоо байна");
   const reviewer = await prisma.user.findFirst({
     where: { id: data.reviewerId, isActive: true, roles: { some: { role: { permissions: { some: { permission: { code: "document.approve" } } } } } } },
   });
-  if (!reviewer) back(path, "Сонгосон хянагч батлах эрхгүй эсвэл идэвхгүй байна");
+  if (!reviewer) fail(path, "Сонгосон хянагч батлах эрхгүй эсвэл идэвхгүй байна");
   const r = id ? await prisma.routingRule.update({ where: { id }, data }) : await prisma.routingRule.create({ data });
   await audit(user.id, "routing_rule", r.id, { name: r.name });
   revalidatePath("/settings");

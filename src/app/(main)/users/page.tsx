@@ -11,11 +11,11 @@ import { ConfirmButton } from "@/components/modal";
 
 export const dynamic = "force-dynamic";
 
-type SP = Promise<{ tab?: string; msg?: string }>;
+type SP = Promise<{ tab?: string; msg?: string; err?: string }>;
 
 export default async function UsersPage({ searchParams }: { searchParams: SP }) {
   await requirePermission("user.manage");
-  const { tab = "users", msg } = await searchParams;
+  const { tab = "users", msg, err } = await searchParams;
 
   const [users, roles, departments, noUser, orphans, lastSync] = await Promise.all([
     prisma.user.findMany({ include: { employee: { include: { department: true } }, roles: { include: { role: true } } }, orderBy: { employee: { lastName: "asc" } } }),
@@ -36,6 +36,8 @@ export default async function UsersPage({ searchParams }: { searchParams: SP }) 
       />
       {msg && <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">{msg}</p>}
       <Toast message={msg} />
+      {err && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">{err}</p>}
+      <Toast message={err} tone="error" />
 
       {orphans.length > 0 && (
         <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
