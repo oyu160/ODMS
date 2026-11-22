@@ -1,8 +1,8 @@
-// ФБШ-06 гүйцэтгэлийн хэмжилт: өгөгдлийн санд нийт 10 000 баримт болтол туршилтын баримт нэмж,
-// баримтын жагсаалт, хайлтын хариу өгөх хугацааг хэмжинэ.
-//   npm run perf            — баримт нэмээд хэмжинэ (үр дүн: perf-result.json, perf-result.md)
-//   npm run perf -- --clean — туршилтаар нэмсэн баримтуудыг (PERF-) устгана
-// `npm run dev` ажиллаж байвал хуудасны бүтэн хариу (HTTP) хугацааг мөн хэмжинэ.
+// FBSh-06 guitsetgeliin hemjilt: ugugdliin sand niit 10 000 barimt boltol turshiltiin barimt nemj,
+// barimtiin jagsaalt, hailtiin hariu uguh hugatsaag hemjine.
+//   npm run perf            — barimt nemeed hemjine (ur dun: perf-result.json, perf-result.md)
+//   npm run perf -- --clean — turshiltaar nemsen barimtuudiig (PERF-) ustgana
+// `npm run dev` ajillaj baiwal huudasnii buten hariu (HTTP) hugatsaag mun hemjine.
 import { PrismaClient, type Prisma } from "@prisma/client";
 import { writeFile } from "fs/promises";
 import { performance } from "perf_hooks";
@@ -76,7 +76,7 @@ async function asUser(username: string): Promise<CurrentUser> {
   };
 }
 
-/** Баримтын жагсаалтын хуудастай ижил асуулга: нийт тоо + 10 мөр (src/app/(main)/documents/page.tsx) */
+/** Barimtiin jagsaaltiin huudastai ijil asuulga: niit too + 10 mur (src/app/(main)/documents/page.tsx) */
 async function listQuery(user: CurrentUser, f: DocFilter, page = 1) {
   const where = buildWhere(user, f);
   await Promise.all([
@@ -94,7 +94,7 @@ const stats = (xs: number[]) => {
   return { median: +q(0.5).toFixed(1), p95: +q(0.95).toFixed(1), max: +s[s.length - 1].toFixed(1) };
 };
 async function measure(fn: () => Promise<unknown>) {
-  for (let i = 0; i < 3; i++) await fn(); // халаалт
+  for (let i = 0; i < 3; i++) await fn(); // halaalt
   const xs: number[] = [];
   for (let i = 0; i < RUNS; i++) {
     const t = performance.now();
@@ -118,7 +118,7 @@ async function main() {
   console.log(`\n   Нийт баримт: ${total} (өмнө ${gen.existing}, нэмсэн ${gen.added})`);
 
   const boss = await asUser(process.env.PERF_ADMIN_USER ?? "sukhbat"); // document.view_all
-  const staff = await asUser(process.env.PERF_STAFF_USER ?? "employee"); // нууцлалын хүрээгээр шүүгдэнэ
+  const staff = await asUser(process.env.PERF_STAFF_USER ?? "employee"); // nuutslaliin hureegeer shuugdene
   const anyType = (await prisma.documentType.findFirstOrThrow({ where: { code: "ORDER_B" } })).id;
 
   const cases: [string, () => Promise<unknown>][] = [
@@ -137,7 +137,7 @@ async function main() {
     console.log(`   ${name}: дундаж ${db[name].median}, 95% ${db[name].p95}, хамгийн их ${db[name].max}`);
   }
 
-  // Хуудасны бүтэн хариу (сервер ажиллаж байвал): нэвтэрсэн хэрэглэгчийн күүкитэй GET хүсэлт
+  // Huudasnii buten hariu (serwer ajillaj baiwal): newtersen hereglegchiin kuukitei GET huselt
   const http: Record<string, ReturnType<typeof stats>> = {};
   try {
     const cookie = `${SESSION_COOKIE}=${await encryptSession({ userId: boss.id, username: boss.username })}`;
@@ -146,7 +146,7 @@ async function main() {
       ["/documents?q=%D1%82%D0%BE%D0%BC%D0%B8%D0%BB%D0%BE%D1%85", "Хайлтын үр дүнгийн хуудас ('томилох')"],
       [`/documents?q=%D1%82%D0%B0%D0%B9%D0%BB%D0%B0%D0%BD&type=${anyType}&status=ARCHIVED`, "Хайлт + шүүлтүүрийн хуудас"],
     ];
-    await fetch(BASE + "/documents", { headers: { cookie } }); // эхний хөрвүүлэлт
+    await fetch(BASE + "/documents", { headers: { cookie } }); // ehnii hurwuulelt
     for (const [path, name] of pages) {
       http[name] = await measure(async () => {
         const r = await fetch(BASE + path, { headers: { cookie } });

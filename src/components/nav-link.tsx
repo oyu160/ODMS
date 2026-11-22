@@ -1,2 +1,2 @@
-// Хуучин файл — ашиглагдахгүй. Устгаж болно.
+// Huuchin fail — ashiglagdahgui. Ustgaj bolno.
 export {};

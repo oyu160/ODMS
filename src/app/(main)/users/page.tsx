@@ -3,7 +3,7 @@ import { RefreshCw, AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import { orphanedAssignments } from "@/lib/hr";
-import { fmtDateTime, shortName, initials } from "@/lib/format";
+import { fmtDateTime, shortName, initials, avatarUrl } from "@/lib/format";
 import { PageHeader, Card, Tabs, Pill, Avatar } from "@/components/ui";
 import { toggleUser, setRoles, resetPassword, createUser, runHrSync } from "./actions";
 import { SubmitButton, Toast } from "@/components/feedback";
@@ -68,7 +68,7 @@ export default async function UsersPage({ searchParams }: { searchParams: SP }) 
                 <tr key={u.id} className={u.isActive ? "" : "bg-slate-50 text-slate-400"}>
                   <td className="td">
                     <div className="flex items-center gap-3">
-                      <Avatar text={initials(u.employee)} size={32} />
+                      <Avatar text={initials(u.employee)} size={32} src={avatarUrl(u)} />
                       <div><div className="font-medium">{shortName(u.employee)}</div><div className="text-xs text-slate-500">{u.employee.positionName ?? ""} · {u.employee.code}</div></div>
                     </div>
                   </td>

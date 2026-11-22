@@ -27,7 +27,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   if (!user) return { error: "Нэвтрэх нэр эсвэл нууц үг буруу байна" };
 
-  // ФБШ-01: 5 удаа дараалан буруу оруулбал бүртгэл 15 минут түгжигдэнэ
+  // FBSh-01: 5 udaa daraalan buruu oruulbal burtgel 15 minut tugjigdene
   const now = new Date();
   if (user.lockedUntil && user.lockedUntil > now) {
     const min = Math.ceil((user.lockedUntil.getTime() - now.getTime()) / 60000);
@@ -36,7 +36,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
-    const failed = (user.lockedUntil ? 0 : user.failedLoginCount) + 1; // түгжээ дууссан бол тоолуурыг шинээр эхлүүлнэ
+    const failed = (user.lockedUntil ? 0 : user.failedLoginCount) + 1; // tugjee duussan bol tooluuriig shineer ehluulne
     const lock = failed >= MAX_FAILED;
     await prisma.user.update({
       where: { id: user.id },

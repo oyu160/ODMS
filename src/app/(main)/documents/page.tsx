@@ -11,7 +11,7 @@ const PAGE_SIZE = 10;
 
 type SP = Promise<Record<string, string | undefined>>;
 
-/** Түгээмэл харагдацууд — нэг даралтаар шүүнэ (төлөв ба «миний» шүүлтүүрийн хослол) */
+/** Tugeemel haragdatsuud — neg daraltaar shuune (tuluw ba «minii» shuultuuriin hoslol) */
 const VIEWS: { key: string; label: string; status?: string; mine?: string; creatorOnly?: boolean }[] = [
   { key: "all", label: "Бүгд" },
   { key: "mine", label: "Миний үүсгэсэн", mine: "1", creatorOnly: true },
@@ -27,7 +27,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
   const page = Math.max(1, Number(sp.page) || 1);
   const where = buildWhere(user, f);
 
-  // Таб бүрийн тоо нь бусад шүүлтүүрийг (түлхүүр үг, төрөл, огноо) хадгална
+  // Tab buriin too ni busad shuultuuriig (tulhuur ug, turul, ognoo) hadgalna
   const base: DocFilter = { q: f.q, type: f.type, direction: f.direction, from: f.from, to: f.to, assignee: f.assignee };
   const views = VIEWS.filter((v) => !v.creatorOnly || can(user, "document.create"));
   const activeView = views.find((v) => v.status === f.status && v.mine === f.mine)?.key ?? "";
@@ -53,13 +53,13 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
   const exportHref = makeHref("/api/export/documents", { ...f }, {});
   const without = (...keys: string[]) => makeHref("/documents", sp, Object.fromEntries([...keys, "page"].map((k) => [k, undefined])));
 
-  // Эрэмбэ: идэвхтэй багана дээр дахин дарахад чиглэл солигдоно
+  // Erembe: idewhtei bagana deer dahin darahad chiglel soligdono
   const sortKey: SortKey = f.sort ?? "date";
   const sortDir = f.dir ?? (f.sort && f.sort !== "date" ? "asc" : "desc");
   const sortHref = (k: SortKey) => makeHref("/documents", sp, { sort: k, dir: sortKey === k ? (sortDir === "asc" ? "desc" : "asc") : k === "date" ? "desc" : "asc", page: undefined });
   const SORT_LABEL: Record<SortKey, string> = { number: "Дугаараар", title: "Гарчгаар", date: "Огноогоор" };
 
-  // Идэвхтэй шүүлтүүрийн chip-ууд
+  // Idewhtei shuultuuriin chip-uud
   const statusName = statuses.find((s) => s.code === f.status)?.name;
   const typeName = types.find((t) => t.id === f.type)?.name;
   const assigneeName =
@@ -199,7 +199,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
                     <td className="td font-medium"><Link href={`/documents/${d.id}`} className="link">{d.title}</Link></td>
                     <td className="td text-slate-600">{d.documentType.name}</td>
                     <td className="td text-slate-600">{DIRECTION_LABELS[d.direction]}</td>
-                    <td className="td whitespace-nowrap text-slate-600">{shortName(d.createdBy.employee)}</td>
+                    <td className="td text-slate-600"><div className="whitespace-nowrap">{shortName(d.createdBy.employee)}</div>{d.createdBy.employee.positionName && <div className="text-xs text-slate-400">{d.createdBy.employee.positionName}</div>}</td>
                     <td className="td whitespace-nowrap text-slate-600">{fmtDate(d.documentDate ?? d.createdAt)}</td>
                     <td className="td"><StatusBadge code={d.status.code} name={d.status.name} /></td>
                     <td className="td">

@@ -1,7 +1,7 @@
 #!/bin/sh
-# ФБШ-05: өгөгдлийн сангийн өдөр тутмын нөөцлөлт (сүүлийн 30 хоногийнхыг хадгална)
-# Docker-д `backup` сервис өдөр бүр автоматаар ажиллуулна. Гараар: sh scripts/backup.sh
-# Сэргээх: gunzip -c backups/dms_2026-11-16.sql.gz | psql "$DATABASE_URL"
+# FBSh-05: ugugdliin sangiin udur tutmiin nuutslult (suuliin 30 honogiinhiig hadgalna)
+# Docker-d `backup` serwis udur bur awtomataar ajilluulna. Garaar: sh scripts/backup.sh
+# Sergeeh: gunzip -c backups/dms_2026-11-16.sql.gz | psql "$DATABASE_URL"
 set -eu
 DIR="${BACKUP_DIR:-./backups}"
 KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"

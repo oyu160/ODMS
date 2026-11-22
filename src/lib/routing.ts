@@ -1,5 +1,5 @@
-// Мета өгөгдлөөр автоматаар чиглүүлэх: баримтын төрөл, нууцлал, чиглэл, нэгж, талбарын утгаас
-// хамаарч хянагчийг routing_rules хүснэгтийн дүрмээр сонгоно. Дүрмийг код өөрчлөхгүйгээр тохиргооноос нэмнэ.
+// Meta ugugdluur awtomataar chigluuleh: barimtiin turul, nuutslal, chiglel, negj, talbariin utgaas
+// hamaarch hyanagchiig routing_rules husnegtiin durmeer songono. Durmiig kod uurchluhguigeer tohirgoonoos nemne.
 import type { Prisma } from "@prisma/client";
 
 export type RuleLike = {
@@ -26,7 +26,7 @@ export type DocMeta = {
 
 const norm = (s: string) => s.trim().toLowerCase();
 
-/** Нэг дүрэм баримтад тохирох эсэх (хоосон нөхцөл = ямар ч) — клиент болон сервер хоёуланд ашиглана */
+/** Neg durem barimtad tohiroh eseh (hooson nuhtsul = yamar ch) — klient bolon serwer hoyouland ashiglana */
 export function ruleMatches(rule: RuleLike, doc: DocMeta) {
   if (rule.documentTypeId && rule.documentTypeId !== doc.documentTypeId) return false;
   if (rule.confidentiality && rule.confidentiality !== doc.confidentiality) return false;
@@ -37,19 +37,19 @@ export function ruleMatches(rule: RuleLike, doc: DocMeta) {
     if (!v) return false;
     if (rule.fieldValue && norm(v) !== norm(rule.fieldValue)) return false;
   }
-  // БД-05: үүсгэгч өөрөө хянагч болохгүй — дараагийн дүрэм рүү шилжинэ
+  // BD-05: uusgegch uuruu hyanagch bolohgui — daraagiin durem ruu shiljine
   if (rule.reviewerId === doc.createdById) return false;
   return true;
 }
 
-/** Тохирох эхний дүрэм (priority бага нь түрүүлнэ, тэнцүү бол илүү олон нөхцөлтэй нь) */
+/** Tohiroh ehnii durem (priority baga ni turuulne, tentsuu bol iluu olon nuhtsultei ni) */
 export function pickRule<R extends RuleLike>(rules: R[], doc: DocMeta): R | null {
   const specificity = (r: RuleLike) => [r.documentTypeId, r.confidentiality, r.direction, r.departmentId, r.fieldId].filter(Boolean).length;
   const sorted = [...rules].sort((a, b) => a.priority - b.priority || specificity(b) - specificity(a));
   return sorted.find((r) => ruleMatches(r, doc)) ?? null;
 }
 
-/** Сервер тал: идэвхтэй дүрмүүдээс тохирохыг олж, хянагч батлах эрхтэй, идэвхтэй эсэхийг шалгана */
+/** Serwer tal: idewhtei durmuudees tohirohiig olj, hyanagch batlah erhtei, idewhtei esehiig shalgana */
 export async function resolveRoute(db: { routingRule: Pick<Prisma.TransactionClient["routingRule"], "findMany"> }, doc: DocMeta) {
   const rules = await db.routingRule.findMany({
     where: {

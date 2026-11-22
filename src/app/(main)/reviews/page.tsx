@@ -3,14 +3,14 @@ import { Search, Paperclip, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import { availableActions } from "@/lib/workflow";
-import { fmtShort, fmtDate, shortName, daysBetween, startOfToday, DECISION_LABELS } from "@/lib/format";
+import { fmtShort, fmtDate, shortName, personLabel, daysBetween, startOfToday, DECISION_LABELS } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, Tabs, Pill } from "@/components/ui";
 import { ActionPanel } from "../documents/[id]/action-panel";
 import { ReviewerEdit } from "../documents/[id]/reviewer-edit";
 
 export const dynamic = "force-dynamic";
 
-/** Шийдвэр бүрийн өнгө — FORWARDED-ийг «Засварт буцаасан» гэж харуулдаг байсан алдааг засав */
+/** Shiidwer buriin ungu — FORWARDED-iig «Zaswart butsaasan» gej haruuldag baisan aldaag zasaw */
 const DECISION_TONE: Record<string, "green" | "orange" | "navy" | "slate"> = { APPROVED: "green", RETURNED: "orange", FORWARDED: "navy", CANCELLED: "slate" };
 
 type SP = Promise<{ tab?: string; id?: string; q?: string }>;
@@ -55,7 +55,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
         })
       : null;
   const actions = doc ? await availableActions(user, doc) : [];
-  // «Дараагийн хянагч руу шилжүүлэх» цонхонд харагдах хянагчид (БД-03, БД-04)
+  // «Daraagiin hyanagch ruu shiljuuleh» tsonhond haragdah hyanagchid (BD-03, BD-04)
   const reviewers =
     doc && actions.some((a) => a.code === "forward")
       ? await prisma.user.findMany({
@@ -110,7 +110,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
                 <Link key={a.id} href={`/reviews?id=${a.documentId}`} className={`block rounded-xl border bg-white p-4 transition ${active ? "border-navy-800 ring-1 ring-navy-800" : "border-slate-200 hover:border-slate-300"}`}>
                   <div className="flex justify-between text-xs text-slate-500"><span className="font-semibold text-slate-700">{a.document.internalNumber}</span><span>Илгээсэн: {fmtShort(a.document.updatedAt ?? a.document.createdAt)}</span></div>
                   <div className="mt-1 font-semibold">{a.document.title}</div>
-                  <div className="text-xs text-slate-500">{a.document.documentType.name} · {shortName(a.document.createdBy.employee)}</div>
+                  <div className="text-xs text-slate-500">{a.document.documentType.name} · {personLabel(a.document.createdBy.employee)}</div>
                   <div className="mt-1 text-xs font-medium text-orange-700">{Math.max(wait, 0)} хоног хүлээж байна{a.stepOrder > 1 && " · дахин илгээсэн"}</div>
                 </Link>
               );
@@ -124,7 +124,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
               <Card title={`${doc.internalNumber} · ${doc.title}`} right={<StatusBadge code={doc.status.code} name={doc.status.name} />}>
                 <dl className="grid gap-x-6 gap-y-2 text-sm md:grid-cols-[130px_1fr_130px_1fr]">
                   <dt className="text-slate-500">Төрөл</dt><dd className="font-medium">{doc.documentType.name} · Хувилбар {doc.currentVersionNo}</dd>
-                  <dt className="text-slate-500">Үүсгэсэн</dt><dd className="font-medium">{shortName(doc.createdBy.employee)}</dd>
+                  <dt className="text-slate-500">Үүсгэсэн</dt><dd className="font-medium">{personLabel(doc.createdBy.employee)}</dd>
                   {doc.fieldValues.slice(0, 4).map((v) => (
                     <div key={v.id} className="contents"><dt className="text-slate-500">{v.field.label}</dt><dd className="font-medium">{v.field.dataType === "employee" ? "Хүний нөөцөөс" : v.valueText}</dd></div>
                   ))}

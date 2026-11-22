@@ -1,8 +1,8 @@
 "use client";
 
-// Хэрэглэгчид үйлдлийн үр дүнг мэдрүүлэх жижиг хэсгүүд:
-// Toast — баруун доод буланд гарч 4 секундэд алга болох мэдэгдэл
-// SubmitButton — илгээж байх үед эргэлдэх дүрс харуулдаг товч
+// Hereglegchid uildliin ur dung medruuleh jijig hesguud:
+// Toast — baruun dood buland garch 4 sekunded alga boloh medegdel
+// SubmitButton — ilgeej baih ued ergeldeh durs haruuldag towch
 import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { CircleCheck, CircleAlert, LoaderCircle, X } from "lucide-react";
@@ -30,7 +30,7 @@ export function Spinner({ size = 16 }: { size?: number }) {
   return <LoaderCircle size={size} className="animate-spin" />;
 }
 
-/** Серверийн form-д ашиглах товч: дарсны дараа идэвхгүй болж, эргэлдэх дүрс харуулна */
+/** Serweriin form-d ashiglah towch: darsnii daraa idewhgui bolj, ergeldeh durs haruulna */
 export function SubmitButton({ children, className = "btn-primary", pendingText }: { children: React.ReactNode; className?: string; pendingText?: string }) {
   const { pending } = useFormStatus();
   return (

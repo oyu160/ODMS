@@ -1,14 +1,14 @@
-// Дугаар олгох (дипломын 3.3-ын алгоритм, БД-07)
-// Тоологчийг transaction дотор түгжиж нэмэгдүүлдэг тул зэрэг батлахад давхардсан,
-// алгассан дугаар үүсэхгүй. Transaction амжилтгүй болбол тоологч ч буцаагдана.
+// Dugaar olgoh (diplomiin 3.3-iin algoritm, BD-07)
+// Toologchiig transaction dotor tugjij nemegduuldeg tul zereg batlahad dawhardsan,
+// algassan dugaar uusehgui. Transaction amjiltgui bolbol toologch ch butsaagdana.
 import type { Prisma } from "@prisma/client";
 
 type Tx = Prisma.TransactionClient;
 
-/** (дүрэм, нэгж, жил)-ийн тоологчийг 1-ээр нэмж шинэ утгыг буцаана */
+/** (durem, negj, jil)-iin toologchiig 1-eer nemj shine utgiig butsaana */
 async function nextValue(tx: Tx, ruleId: string | null, departmentId: string | null, year: number) {
-  // Ижил түлхүүртэй зэрэгцээ transaction-уудыг дараалуулна (SELECT … FOR UPDATE-тэй ижил үр дүн,
-  // гэхдээ тоологчийн мөр анх үүсэх үед ч ажилладаг)
+  // Ijil tulhuurtei zeregtsee transaction-uudiig daraaluulna (SELECT … FOR UPDATE-tei ijil ur dun,
+  // gehdee toologchiin mur anh uuseh ued ch ajilladag)
   const key = `${ruleId ?? "internal"}:${departmentId ?? "-"}:${year}`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
 
@@ -28,7 +28,7 @@ async function nextValue(tx: Tx, ruleId: string | null, departmentId: string | n
   return 1;
 }
 
-/** Хэлбэр: {TYPE} {DEPT} {YYYY} {YY} {SEQ} {SEQ:4} */
+/** Helber: {TYPE} {DEPT} {YYYY} {YY} {SEQ} {SEQ:4} */
 export function formatNumber(pattern: string, v: { typeCode: string; deptCode: string; year: number; seq: number }) {
   return pattern
     .replace(/\{SEQ(?::(\d+))?\}/g, (_m, w?: string) => String(v.seq).padStart(Number(w ?? 0), "0"))
@@ -38,19 +38,19 @@ export function formatNumber(pattern: string, v: { typeCode: string; deptCode: s
     .replace(/\{DEPT\}/g, v.deptCode);
 }
 
-/** Системийн дотоод дугаар: Д-0125 (үүсгэх мөчид олгоно) */
+/** Sistemiin dotood dugaar: D-0125 (uusgeh muchid olgono) */
 export async function issueInternalNumber(tx: Tx) {
   const v = await nextValue(tx, null, null, 0);
   return `Д-${String(v).padStart(4, "0")}`;
 }
 
-/** Албан ёсны дугаар — зөвхөн батлах/бүртгэх үед дуудагдана */
+/** Alban yosnii dugaar — zuwhun batlah/burtgeh ued duudagdana */
 export async function issueOfficialNumber(tx: Tx, documentId: string) {
   const doc = await tx.document.findUniqueOrThrow({
     where: { id: documentId },
     include: { documentType: { include: { numberingRule: true } }, ownerDepartment: true },
   });
-  if (doc.documentNumber) return doc.documentNumber; // нэг баримтад хоёр дахь дугаар олгохгүй
+  if (doc.documentNumber) return doc.documentNumber; // neg barimtad hoyor dahi dugaar olgohgui
 
   const rule = doc.documentType.numberingRule;
   if (!rule) throw new Error(`«${doc.documentType.name}» төрөлд дугаарлалтын дүрэм тохируулаагүй байна`);

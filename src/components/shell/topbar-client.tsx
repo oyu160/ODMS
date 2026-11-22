@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Menu } from "lucide-react";
 import { SIDEBAR_TOGGLE } from "./sidebar";
 
-/** Жижиг дэлгэцэд цэсийг нээх товч */
+/** Jijig delgetsed tsesiig neeh towch */
 export function MenuButton() {
   return (
     <button type="button" onClick={() => window.dispatchEvent(new Event(SIDEBAR_TOGGLE))} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Цэс нээх">
@@ -13,7 +13,7 @@ export function MenuButton() {
   );
 }
 
-/** «/» товч дарахад хайлтын талбар руу шилжинэ (маягт бөглөж байх үед ажиллахгүй) */
+/** «/» towch darahad hailtiin talbar ruu shiljine (mayagt bugluj baih ued ajillahgui) */
 export function SearchShortcut() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

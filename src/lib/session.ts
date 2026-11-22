@@ -1,8 +1,8 @@
-// Сешн: JWT-г httpOnly cookie-д хадгална (middleware-д ч ажиллана)
+// Seshn: JWT-g httpOnly cookie-d hadgalna (middleware-d ch ajillana)
 import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "dms_session";
-const MAX_AGE_SEC = 60 * 60 * 8; // 8 цаг
+const MAX_AGE_SEC = 60 * 60 * 8; // 8 tsag
 
 export type SessionPayload = { userId: string; username: string };
 

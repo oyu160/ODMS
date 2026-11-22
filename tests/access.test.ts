@@ -1,4 +1,4 @@
-// Нууцлалын түвшний хандалтын тест (lib/access.ts documentScope)
+// Nuutslaliin tuwshnii handaltiin test (lib/access.ts documentScope)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { documentScope } from "../src/lib/access";

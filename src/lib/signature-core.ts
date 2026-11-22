@@ -1,7 +1,7 @@
-// Цахим гарын үсгийн криптографийн цөм (өгөгдлийн сангаас хамааралгүй — тестлэхэд хялбар)
+// Tsahim gariin usgiin kriptografiin tsum (ugugdliin sangaas hamaaralgui — testlehed hyalbar)
 import { createCipheriv, createDecipheriv, createHash, createPrivateKey, createPublicKey, randomBytes, scryptSync } from "crypto";
 
-/* ---------- Түлхүүрийн шифрлэлт ---------- */
+/* ---------- Tulhuuriin shifrlelt ---------- */
 
 export function sealPrivateKey(pkcs8: Buffer, password: string) {
   const salt = randomBytes(16);
@@ -28,7 +28,7 @@ export function fingerprintOf(publicKeyPem: string) {
 
 export const sha256 = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 
-/** Зурах мессеж: агуулгын хэш + баримт + зурсан хүн + цаг (дахин ашиглахаас сэргийлнэ) */
+/** Zurah messej: aguulgiin hesh + barimt + zursan hun + tsag (dahin ashiglahaas sergiilne) */
 export const signingMessage = (hash: string, documentId: string, userId: string, signedAt: Date) => Buffer.from(`${hash}|${documentId}|${userId}|${signedAt.toISOString()}`, "utf8");
 
 
@@ -46,7 +46,7 @@ export type CanonicalDoc = {
   attachments: { id: string; fileName: string; checksumSha256: string }[];
 };
 
-/** Батлагдсан агуулгыг тогтмол дараалалтай JSON болгоно (талбар, хавсралтыг ID-аар эрэмбэлнэ) */
+/** Batlagdsan aguulgiig togtmol daraalaltai JSON bolgono (talbar, hawsraltiig ID-aar erembelne) */
 export function canonicalJson(d: CanonicalDoc) {
   return JSON.stringify({
     id: d.id,

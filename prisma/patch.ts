@@ -1,5 +1,5 @@
-// Одоо байгаа өгөгдлийг устгахгүйгээр шинэ шилжилт, эрхийг нэмнэ (дахин ажиллуулахад аюулгүй)
-// Ажиллуулах: npm run db:patch
+// Odoo baigaa ugugdliig ustgahguigeer shine shiljilt, erhiig nemne (dahin ajilluulahad ayuulgui)
+// Ajilluulah: npm run db:patch
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -11,7 +11,7 @@ const TRANSITIONS: [string, string, string, string, string][] = [
 ];
 
 async function main() {
-  // Батлагдсан → Засварт (revoke) шилжилтийг хасна (Зураг 2.3-т байхгүй)
+  // Batlagdsan → Zaswart (revoke) shiljiltiig hasna (Zurag 2.3-t baihgui)
   const removed = await prisma.statusTransition.deleteMany({ where: { actionCode: "revoke" } });
   if (removed.count) console.log(`- Батлалтыг цуцлах шилжилт хасагдлаа (${removed.count})`);
 
@@ -30,7 +30,7 @@ async function main() {
     console.log(`+ ${label} (${from} → ${to}) нэмэгдлээ`);
   }
 
-  // Удирдлага баримт цуцлах эрхтэй (Хүснэгт 2.4)
+  // Udirdlaga barimt tsutslah erhtei (Husnegt 2.4)
   const [role, perm] = await Promise.all([
     prisma.role.findUniqueOrThrow({ where: { code: "MANAGER" } }),
     prisma.permission.findUniqueOrThrow({ where: { code: "document.cancel" } }),
@@ -41,7 +41,7 @@ async function main() {
     console.log("+ Удирдлага: document.cancel эрх нэмэгдлээ");
   }
 
-  // Дугаарлалтын хэлбэрт он нэмэх (жил бүр тэглэгддэг дүрэм)
+  // Dugaarlaltiin helbert on nemeh (jil bur teglegddeg durem)
   const rules = await prisma.numberingRule.findMany({ where: { resetPeriod: "YEARLY" } });
   for (const r of rules) {
     if (/\{YYYY\}|\{YY\}/.test(r.pattern)) continue;

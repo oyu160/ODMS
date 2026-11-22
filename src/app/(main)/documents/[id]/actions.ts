@@ -20,7 +20,7 @@ export async function runAction(_prev: ActionState, formData: FormData): Promise
   const user = await requireUser();
   const documentId = String(formData.get("documentId"));
   const action = String(formData.get("action"));
-  const assignee = s(formData, "assignee"); // "u:<id>" эсвэл "d:<id>"
+  const assignee = s(formData, "assignee"); // "u:<id>" eswel "d:<id>"
   try {
     const doc = await performAction(user, documentId, action, {
       comment: s(formData, "comment"),
@@ -59,9 +59,9 @@ export async function remind(formData: FormData) {
 }
 
 /**
- * Хянагч жижиг засвар оруулах: баримтыг үүсгэгч рүү буцаалгүйгээр гарчиг, агуулга,
- * талбарын утгыг засаж шинэ хувилбар үүсгэнэ. Сонгосон бол засварын дараа шууд батална.
- * Зөвхөн тухайн баримтын хяналт хүлээж буй хянагч хийнэ; засвар бүр хувилбар, аудитад үлдэнэ.
+ * Hyanagch jijig zaswar oruulah: barimtiig uusgegch ruu butsaalguigeer garchig, aguulga,
+ * talbariin utgiig zasaj shine huwilbar uusgene. Songoson bol zaswariin daraa shuud batalna.
+ * Zuwhun tuhain barimtiin hyanalt huleej bui hyanagch hiine; zaswar bur huwilbar, auditad uldene.
  */
 export async function reviewerEdit(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
@@ -92,7 +92,7 @@ export async function reviewerEdit(_prev: ActionState, formData: FormData): Prom
   }
   const summary = s(formData, "summary") ?? null;
 
-  // Юу өөрчлөгдсөнийг аудитад хадгална
+  // Yuu uurchlugdsuniig auditad hadgalna
   const changed: string[] = [];
   if (title !== doc.title) changed.push("гарчиг");
   if ((summary ?? "") !== (doc.summary ?? "")) changed.push("агуулга");
@@ -139,9 +139,9 @@ export async function reviewerEdit(_prev: ActionState, formData: FormData): Prom
 }
 
 /**
- * ФШ-22: баримт хооронд хамаарал үүсгэх (Үндэслэсэн, Хариу, Өөрчилсөн, Хүчингүй болгосон).
- * Баримт бичгийн ажилтан эсвэл баримтын үүсгэгч нэмнэ. Хоёр баримт хоёулаа хэрэглэгчийн харах хүрээнд байх ёстой.
- * Батлагдсан баримтыг өөрчлөх бол шинэ баримт үүсгэж «Өөрчилсөн» хамаарлаар холбоно (БД-12).
+ * FSh-22: barimt hoorond hamaaral uusgeh (Undeslesen, Hariu, Uurchilsun, Huchingui bolgoson).
+ * Barimt bichgiin ajiltan eswel barimtiin uusgegch nemne. Hoyor barimt hoyoulaa hereglegchiin harah hureend baih yostoi.
+ * Batlagdsan barimtiig uurchluh bol shine barimt uusgej «Uurchilsun» hamaarlaar holbono (BD-12).
  */
 export async function addRelation(formData: FormData) {
   const user = await requireUser();
@@ -167,7 +167,7 @@ export async function addRelation(formData: FormData) {
   revalidatePath(`/documents/${targetId}`);
 }
 
-/** Буруу үүсгэсэн хамаарлыг хасах (үүсгэгч эсвэл баримт бичгийн ажилтан). Аудитад үлдэнэ. */
+/** Buruu uusgesen hamaarliig hasah (uusgegch eswel barimt bichgiin ajiltan). Auditad uldene. */
 export async function removeRelation(formData: FormData) {
   const user = await requireUser();
   const id = String(formData.get("relationId"));

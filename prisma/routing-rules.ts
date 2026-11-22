@@ -1,5 +1,5 @@
-// Мета өгөгдлөөр автоматаар чиглүүлэх жишээ дүрмүүд (seed болон тусдаа ажиллуулж болно)
-// Тусад нь: npm run db:routing   — одоо байгаа өгөгдлийг устгахгүй, ижил нэртэй дүрмийг шинэчилнэ
+// Meta ugugdluur awtomataar chigluuleh jishee durmuud (seed bolon tusdaa ajilluulj bolno)
+// Tusad ni: npm run db:routing   — odoo baigaa ugugdliig ustgahgui, ijil nertei durmiig shinechilne
 import { PrismaClient } from "@prisma/client";
 
 type Rule = {

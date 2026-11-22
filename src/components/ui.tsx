@@ -1,4 +1,4 @@
-// Нийтлэг UI хэсгүүд (дипломын 3.2-ын зохиомжийн дагуу)
+// Niitleg UI hesguud (diplomiin 3.2-iin zohiomjiin daguu)
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react";
 
@@ -59,7 +59,7 @@ export function StatCard({ label, value, hint, tone = "default", icon, href }: {
       {hint && <div className={`mt-1 text-xs ${danger ? "text-red-700" : "text-slate-500"}`}>{hint}</div>}
     </>
   );
-  // href өгвөл карт дээр дарахад тухайн жагсаалт шүүгдэж гарна
+  // href ugwul kart deer darahad tuhain jagsaalt shuugdej garna
   return href ? <Link href={href} className={cls}>{body}</Link> : <div className={cls}>{body}</div>;
 }
 
@@ -74,7 +74,7 @@ const STATUS_STYLE: Record<string, string> = {
   ARCHIVED: "bg-slate-200 text-slate-700",
   CANCELLED: "bg-red-100 text-red-700",
 };
-/** Төлөв бүрийн үндсэн өнгө — график, цэг, түүхэнд. Батлагдсан / Бүртгэгдсэн / Хуваарилагдсан нь teal / blue / violet тул тод ялгагдана */
+/** Tuluw buriin undsen ungu — grafik, tseg, tuuhend. Batlagdsan / Burtgegdsen / Huwaarilagdsan ni teal / blue / violet tul tod yalgagdana */
 export const STATUS_COLOR: Record<string, string> = {
   DRAFT: "#94a3b8",
   IN_REVIEW: "#d97706",
@@ -87,7 +87,7 @@ export const STATUS_COLOR: Record<string, string> = {
   CANCELLED: "#dc2626",
 };
 
-/** Баримтын төлөв: өнгөт тэмдэг + цэг (өнгөнөөс гадна хэлбэрээр ч ялгагдана) */
+/** Barimtiin tuluw: ungut temdeg + tseg (ungunuus gadna helbereer ch yalgagdana) */
 export function StatusBadge({ code, name }: { code: string; name: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[code] ?? "bg-slate-100 text-slate-700"}`}>
@@ -113,7 +113,7 @@ export function EmptyRow({ cols, text, action }: { cols: number; text: string; a
   );
 }
 
-/** Холбоос дээр суурилсан таб */
+/** Holboos deer suurilsan tab */
 export function Tabs({ tabs, active }: { tabs: { key: string; label: React.ReactNode; href: string }[]; active: string }) {
   return (
     <nav className="mb-5 flex gap-6 overflow-x-auto border-b border-slate-200">
@@ -131,7 +131,7 @@ export function Tabs({ tabs, active }: { tabs: { key: string; label: React.React
   );
 }
 
-/** Дугаартай хуудаслалт: 1 2 3 … 13 */
+/** Dugaartai huudaslalt: 1 2 3 … 13 */
 export function Pagination({ page, pages, total, from, to, href }: { page: number; pages: number; total: number; from: number; to: number; href: (p: number) => string }) {
   const nums = Array.from(new Set([1, page - 1, page, page + 1, pages].filter((n) => n >= 1 && n <= pages))).sort((a, b) => a - b);
   const cls = "inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm";
@@ -154,7 +154,11 @@ export function Pagination({ page, pages, total, from, to, href }: { page: numbe
   );
 }
 
-export function Avatar({ text, size = 40 }: { text: string; size?: number }) {
+export function Avatar({ text, size = 40, src }: { text: string; size?: number; src?: string | null }) {
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={text} width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />;
+  }
   return (
     <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-navy-800 font-semibold text-white" style={{ width: size, height: size, fontSize: size * 0.36 }}>
       {text}
@@ -162,14 +166,14 @@ export function Avatar({ text, size = 40 }: { text: string; size?: number }) {
   );
 }
 
-/** URL хайлтын параметр бүтээгч */
+/** URL hailtiin parametr buteegch */
 export function makeHref(base: string, params: Record<string, string | undefined>, patch: Record<string, string | undefined>) {
   const merged = { ...params, ...patch };
   const qs = new URLSearchParams(Object.entries(merged).filter(([, v]) => v) as [string, string][]).toString();
   return qs ? `${base}?${qs}` : base;
 }
 
-/** Эрэмбэлэх боломжтой баганын толгой: дарахад өсөх ↔ буурах дарааллаар солигдоно */
+/** Erembeleh bolomjtoi baganiin tolgoi: darahad usuh ↔ buurah daraallaar soligdono */
 export function SortTh({ label, active, dir, href, className = "" }: { label: string; active: boolean; dir: "asc" | "desc"; href: string; className?: string }) {
   const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
   return (
@@ -182,7 +186,7 @@ export function SortTh({ label, active, dir, href, className = "" }: { label: st
   );
 }
 
-/** Идэвхтэй шүүлтүүрийн шошго — × дарахад тухайн шүүлтүүр арилна */
+/** Idewhtei shuultuuriin shoshgo — × darahad tuhain shuultuur arilna */
 export function FilterChip({ label, href }: { label: string; href: string }) {
   return (
     <Link href={href} className="inline-flex items-center gap-1.5 rounded-full bg-navy-50 py-1 pl-3 pr-2 text-xs font-semibold text-navy-800 hover:bg-navy-100" aria-label={`${label} — шүүлтүүрийг арилгах`}>

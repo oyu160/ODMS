@@ -1,4 +1,4 @@
-// Баримтын жагсаалтыг Excel (.xlsx) болгон татах — дэлгэцийн шүүлтүүртэй ижил
+// Barimtiin jagsaaltiig Excel (.xlsx) bolgon tatah — delgetsiin shuultuurtei ijil
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";

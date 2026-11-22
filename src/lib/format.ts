@@ -1,4 +1,4 @@
-// Огноо, нэр, шошгыг нэг маягаар харуулах туслах функцууд
+// Ognoo, ner, shoshgiig neg mayagaar haruulah tuslah funktsuud
 export const TZ = "Asia/Ulaanbaatar";
 
 function parts(d: Date) {
@@ -14,7 +14,7 @@ export function fmtDateTime(d: Date | null | undefined) {
   const p = parts(d);
   return `${p.date} ${p.time}`;
 }
-/** 10.13 хэлбэр */
+/** 10.13 helber */
 export function fmtShort(d: Date | null | undefined) {
   return d ? parts(d).date.slice(5) : "—";
 }
@@ -26,7 +26,7 @@ export function todayLabel() {
   return `${parts(now).date}, ${WEEKDAYS[wd]}`;
 }
 
-/** Улаанбаатарын цагаар өнөөдрийн 00:00 (UTC огноо болгон) — DATE баганатай харьцуулахад */
+/** Ulaanbaatariin tsagaar unuudriin 00:00 (UTC ognoo bolgon) — DATE baganatai haritsuulahad */
 export function startOfToday() {
   return new Date(`${parts(new Date()).date.replace(/\./g, "-")}T00:00:00.000Z`);
 }
@@ -37,6 +37,12 @@ export function daysBetween(a: Date, b: Date) {
 
 export type PersonName = { lastName: string; firstName: string };
 export const shortName = (e: PersonName) => `${e.lastName.charAt(0)}.${e.firstName}`;
+/** Ner + alban tushaal — barimt henees irsen ni oilgomjtoi haragdana (hereglegchiin turshiltiin sanal) */
+export const personLabel = (e: PersonName & { positionName?: string | null }) =>
+  e.positionName ? `${shortName(e)} (${e.positionName})` : shortName(e);
+/** Profailiin zurgiin hayag; zuraggui bol null */
+export const avatarUrl = (u: { id: string; avatarMime?: string | null; avatarUpdatedAt?: Date | null }) =>
+  u.avatarMime ? `/api/avatar/${u.id}?v=${u.avatarUpdatedAt?.getTime() ?? 0}` : null;
 export const initials = (e: PersonName) => `${e.lastName.charAt(0)}${e.firstName.charAt(0)}`.toUpperCase();
 
 export const DIRECTION_LABELS: Record<string, string> = { INTERNAL: "Дотоод", INCOMING: "Ирсэн", OUTGOING: "Явсан" };
@@ -64,7 +70,7 @@ export function fileSize(bytes: number | bigint) {
   return n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} МБ` : `${Math.max(1, Math.round(n / 1024))} КБ`;
 }
 
-/** Аудитын бичлэгийн newValue (JSON)-ийн түлхүүрийн нэр */
+/** Auditiin bichlegiin newValue (JSON)-iin tulhuuriin ner */
 const AUDIT_KEY_LABELS: Record<string, string> = {
   comment: "Тайлбар",
   routing: "Чиглүүлэлт",
@@ -98,7 +104,7 @@ const AUDIT_KEY_LABELS: Record<string, string> = {
   note: "Тэмдэглэл",
 };
 
-/** Аудитын объектын төрөл */
+/** Auditiin obiektiin turul */
 export const ENTITY_LABELS: Record<string, string> = {
   document: "Баримт",
   user: "Хэрэглэгч",
@@ -116,8 +122,8 @@ export const ENTITY_LABELS: Record<string, string> = {
 };
 
 /**
- * Аудитын newValue-г хүн уншихуйц «Түлхүүр: утга» хос болгоно.
- * ID (…Id, uuid) утгыг харуулахгүй — тэдгээр нь хэрэглэгчид утга агуулахгүй.
+ * Auditiin newValue-g hun unshihuits «Tulhuur: utga» hos bolgono.
+ * ID (…Id, uuid) utgiig haruulahgui — tedgeer ni hereglegchid utga aguulahgui.
  */
 export function describeAuditValue(value: unknown): { label: string; value: string }[] {
   if (value === null || value === undefined) return [];
@@ -131,9 +137,9 @@ export function describeAuditValue(value: unknown): { label: string; value: stri
     }));
 }
 
-/** ФШ-22: баримт хоорондын хамаарлын төрөл (эх баримтаас харахад) */
+/** FSh-22: barimt hoorondiin hamaarliin turul (eh barimtaas harahad) */
 export const RELATION_TYPES = ["Үндэслэсэн", "Хариу", "Өөрчилсөн", "Хүчингүй болгосон"];
-/** Холбогдсон (зорилтот) баримтаас харахад хамаарлыг эсрэг утгаар нь уншина */
+/** Holbogdson (zoriltot) barimtaas harahad hamaarliig esreg utgaar ni unshina */
 export const RELATION_INVERSE: Record<string, string> = {
   "Үндэслэсэн": "Үндэслэл болсон",
   "Хариу": "Хариу ирүүлсэн",

@@ -1,6 +1,6 @@
-// Анхны болон туршилтын өгөгдөл
-// Ажиллуулах: npx prisma db seed
-// АНХААР: баримт, хуваарилалт, аудит зэрэг гүйлгээний өгөгдлийг бүрэн цэвэрлээд дахин үүсгэнэ.
+// Anhnii bolon turshiltiin ugugdul
+// Ajilluulah: npx prisma db seed
+// ANHAAR: barimt, huwaarilalt, audit zereg guilgeenii ugugdliig buren tsewerleed dahin uusgene.
 import { PrismaClient, type Prisma, type ApprovalDecision } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { writeFile } from "fs/promises";
@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 const DAY = 86_400_000;
 const NOW = Date.now();
 
-// ── Тогтмол санамсаргүй тоо (seed бүрт ижил үр дүн) ──
+// ── Togtmol sanamsargui too (seed burt ijil ur dun) ──
 let rngState = 20261016;
 function rnd() {
   rngState = (rngState * 1664525 + 1013904223) % 4294967296;
@@ -27,7 +27,7 @@ function weighted<T>(items: [T, number][]): T {
   return items[items.length - 1][0];
 }
 
-// ═════════════ 1. Эрх, үүрэг, төлөв ═════════════
+// ═════════════ 1. Erh, uureg, tuluw ═════════════
 const PERMISSIONS: [string, string][] = [
   ["document.create", "Баримт үүсгэх"],
   ["document.view_all", "Бүх баримт харах"],
@@ -83,11 +83,11 @@ const TRANSITIONS: [string, string, string, string][] = [
   ["RESOLVED", "ARCHIVED", "archive", "document.archive"],
   ["DRAFT", "CANCELLED", "cancel", "document.cancel"],
   ["RETURNED", "CANCELLED", "cancel", "document.cancel"],
-  ["IN_REVIEW", "IN_REVIEW", "forward", "document.approve"], // олон шатлалт хяналт: дараагийн хянагч руу
-  ["IN_REVIEW", "CANCELLED", "cancel", "document.cancel"], // хянагч цуцлах (шалтгаантай)
+  ["IN_REVIEW", "IN_REVIEW", "forward", "document.approve"], // olon shatlalt hyanalt: daraagiin hyanagch ruu
+  ["IN_REVIEW", "CANCELLED", "cancel", "document.cancel"], // hyanagch tsutslah (shaltgaantai)
 ];
 
-// ═════════════ 2. Байгууллагын бүтэц (HR системийн өгөгдөлтэй ижил) ═════════════
+// ═════════════ 2. Baiguullagiin butets (HR sistemiin ugugdultei ijil) ═════════════
 const DEPARTMENTS: [string, string][] = [
   ["MGMT", "Удирдлага"],
   ["ADM", "Захиргааны хэлтэс"],
@@ -101,7 +101,7 @@ const DEPARTMENTS: [string, string][] = [
   ["PROC", "Худалдан авах ажиллагааны алба"],
 ];
 
-// [код, овог, нэр, албан тушаал, нэгж, нэвтрэх нэр | null, үүрэг]
+// [kod, owog, ner, alban tushaal, negj, newtreh ner | null, uureg]
 const PEOPLE: [string, string, string, string, string, string | null, string][] = [
   ["E001", "Төмөр", "Ганбат", "Системийн администратор", "IT", "admin", "ADMIN"],
   ["E002", "Нямдорж", "Номин", "Архив, бичиг хэргийн ажилтан", "ADM", "records", "RECORDS_OFFICER"],
@@ -127,7 +127,7 @@ const PEOPLE: [string, string, string, string, string, string | null, string][] 
   ["E022", "Алтанхуяг", "Мөнх-Очир", "Жолооч", "ADM", null, "EMPLOYEE"],
 ];
 
-// ── Нэмэлт ажилтнууд (бодит байгууллагын хэмжээнд ойртуулах) ──
+// ── Nemelt ajiltnuud (bodit baiguullagiin hemjeend oirtuulah) ──
 const LAST = ["Батболд", "Ганболд", "Энхбаатар", "Мөнхбат", "Цогтбаяр", "Даваасүрэн", "Пүрэвдорж", "Оюунбилэг", "Төмөрбаатар", "Сэргэлэн", "Баярмагнай", "Нарантуяа", "Отгонбаатар", "Алтангэрэл", "Чинзориг", "Лхагвасүрэн", "Ганзул", "Эрдэнэбат", "Батжаргал", "Цэцэгмаа"];
 const FIRST = ["Анар", "Билэгт", "Дөлгөөн", "Есүй", "Жавхлан", "Зоригт", "Ингэрэл", "Лхамаа", "Марал", "Наран", "Одгэрэл", "Пагма", "Саруул", "Тэнүүн", "Уянга", "Халиун", "Цэлмэг", "Чимэг", "Энхжин", "Ялалт", "Мишээл", "Номуун", "Хангай", "Солонго", "Тэмүүлэн", "Мөнхжин", "Ариун", "Бямбаа", "Гэрэлт", "Дэлгэр"];
 const POS: Record<string, [string, string][]> = {
@@ -150,7 +150,7 @@ const latin = (x: string) => x.toLowerCase().split("").map((c) => LAT[c] ?? (/[a
   for (const [dept, cnt] of Object.entries(COUNTS)) {
     const roles = POS[dept];
     for (let k = 0; k < cnt; k++) {
-      // Тухайн нэгжид дарга байхгүй бол эхний хүн нь дарга болно
+      // Tuhain negjid darga baihgui bol ehnii hun ni darga bolno
       const [pos, role] = k < roles.length ? roles[k] : roles[roles.length - 1];
       const ln = LAST[(n * 7) % LAST.length], fn = FIRST[(n * 11) % FIRST.length];
       let un = latin(fn);
@@ -163,7 +163,7 @@ const latin = (x: string) => x.toLowerCase().split("").map((c) => LAT[c] ?? (/[a
   }
 }
 
-// ═════════════ 3. Баримтын төрөл ═════════════
+// ═════════════ 3. Barimtiin turul ═════════════
 type FieldSeed = { name: string; label: string; dataType: string; isRequired?: boolean; options?: string[] };
 type TypeSeed = { code: string; name: string; cat: string; pattern: string; years: number; fields: FieldSeed[]; titles: string[]; weight: number; flow: "review" | "incoming" };
 
@@ -252,7 +252,7 @@ const PARTIES = ["Номин трейд ХХК", "Юнител ХХК", "Моб�
 const RETURN_REASONS = ["Үндэслэлийг тодруулж, хуулийн заалтыг нэмнэ үү.", "Огноог хөдөлмөрийн гэрээтэй ижил болгоно уу.", "Хавсралтын хувилбар буруу байна.", "Гарчгийг албан бичгийн стандартад нийцүүлнэ үү.", "Санхүүгийн хэлтсийн санал шаардлагатай."];
 const RESULTS = ["Хариу хүргүүлсэн.", "Мэдээллийг бэлтгэж илгээсэн.", "Шаардлагатай арга хэмжээ авч хэрэгжүүлсэн.", "Танилцаж, холбогдох нэгжид үүрэг өгсөн.", "Саналыг нэгтгэн хүргүүлсэн."];
 
-// ═════════════ Туслах функцууд ═════════════
+// ═════════════ Tuslah funktsuud ═════════════
 function minimalPdf(text: string) {
   const content = `BT /F1 18 Tf 72 720 Td (${text.replace(/[()\\]/g, "")}) Tj ET`;
   const objs = [
@@ -277,7 +277,7 @@ const dateOnly = (t: number) => new Date(new Date(t).toISOString().slice(0, 10) 
 const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
 
 async function main() {
-  // ── Эрх ──
+  // ── Erh ──
   const perm: Record<string, string> = {};
   for (const [code, name] of PERMISSIONS) perm[code] = (await prisma.permission.upsert({ where: { code }, update: { name }, create: { code, name } })).id;
 
@@ -294,13 +294,13 @@ async function main() {
     st[code] = (await prisma.documentStatus.upsert({ where: { code }, update: { name, isFinal, displayOrder: i + 1 }, create: { code, name, isFinal, displayOrder: i + 1 } })).id;
   }
 
-  // ── Гүйлгээний өгөгдлийг цэвэрлэх ──
+  // ── Guilgeenii ugugdliig tsewerleh ──
   await prisma.notification.deleteMany();
-  // audit_logs-ийн хамгаалалтын триггер зөвхөн энэ гүйлгээнд устгахыг зөвшөөрнө (db-extras.sql)
+  // audit_logs-iin hamgaalaltiin trigger zuwhun ene guilgeend ustgahiig zuwshuurnu (db-extras.sql)
   await prisma.$transaction([
     prisma.$executeRaw`SELECT set_config('app.allow_audit_purge', 'on', true)`,
     prisma.auditLog.deleteMany(),
-    prisma.signature.deleteMany(), // гарын үсгийн хамгаалалтын триггер (migration 20261115100000)
+    prisma.signature.deleteMany(), // gariin usgiin hamgaalaltiin trigger (migration 20261115100000)
   ]);
   await prisma.archive.deleteMany();
   await prisma.assignment.deleteMany();
@@ -316,7 +316,7 @@ async function main() {
 
   await prisma.statusTransition.createMany({ data: TRANSITIONS.map(([f, t, a, p]) => ({ fromStatusId: st[f], toStatusId: st[t], actionCode: a, permissionId: perm[p] })) });
 
-  // ── Нэгж, ажилтан, хэрэглэгч ──
+  // ── Negj, ajiltan, hereglegch ──
   const dep: Record<string, string> = {};
   for (const [code, name] of DEPARTMENTS) dep[code] = (await prisma.department.upsert({ where: { code }, update: { name, hrRefId: code, isActive: true }, create: { code, name, hrRefId: code } })).id;
   for (const [code] of DEPARTMENTS.filter(([c]) => c !== "MGMT")) await prisma.department.update({ where: { code }, data: { parentId: dep.MGMT } });
@@ -337,17 +337,17 @@ async function main() {
       emp[code].userId = u.id;
     }
   }
-  // Хуучин seed-ээс үлдсэн хэрэглэгчдийг идэвхгүй болгоно
+  // Huuchin seed-ees uldsen hereglegchdiig idewhgui bolgono
   await prisma.user.updateMany({ where: { username: { notIn: PEOPLE.map((p) => p[5]).filter((x): x is string => !!x) } }, data: { isActive: false } });
 
   const U = (code: string) => emp[code].userId!;
   const usersBy = (roleCode: string) => PEOPLE.filter((p) => p[5] && p[6] === roleCode).map((p) => p[0]);
 
-  // ── Ангилал, дугаарлалт, төрөл ──
+  // ── Angilal, dugaarlalt, turul ──
   const cat: Record<string, string> = {};
   for (const [code, name] of CATEGORIES) cat[code] = (await prisma.documentCategory.upsert({ where: { code }, update: { name, isActive: true }, create: { code, name } })).id;
 
-  // Хэрэглэгдэхгүй болсон хуучин төрлүүдийг устгах
+  // Hereglegdehgui bolson huuchin turluudiig ustgah
   const keep = TYPES.map((t) => t.code);
   await prisma.fieldDefinition.deleteMany({ where: { documentType: { code: { notIn: keep } } } });
   await prisma.documentType.deleteMany({ where: { code: { notIn: keep } } });
@@ -375,14 +375,14 @@ async function main() {
   }
   await prisma.numberingRule.deleteMany({ where: { types: { none: {} } } });
 
-  // ═════════════ 4. Туршилтын баримтууд ═════════════
+  // ═════════════ 4. Turshiltiin barimtuud ═════════════
   const withUser = PEOPLE.filter((p) => p[5]);
   const recordsOfficers = withUser.filter((p) => p[6] === "RECORDS_OFFICER").map((p) => p[0]);
   const creatorsReview = withUser.filter((p) => p[6] === "UNIT_STAFF" || p[6] === "RECORDS_OFFICER").map((p) => p[0]);
   const assignees = withUser.filter((p) => p[6] === "UNIT_STAFF" || p[6] === "EMPLOYEE").map((p) => p[0]);
   const headOf: Record<string, string> = {};
   for (const p of withUser) if (p[6] === "MANAGER" && !headOf[p[4]]) headOf[p[4]] = p[0];
-  // Хянагч: хүний нөөцийн баримтыг ХН-ийн дарга, санхүүгийнхийг санхүүгийн дарга, бусдыг үүсгэгчийн нэгжийн дарга
+  // Hyanagch: hunii nuutsiin barimtiig HN-iin darga, sanhuugiinhiig sanhuugiin darga, busdiig uusgegchiin negjiin darga
   const reviewerFor = (typeCode: string, creator: string) => {
     const dept = emp[creator].dept;
     const pref = typeCode === "ORDER_B" || typeCode === "CERT" ? headOf.HR : typeCode === "CONTRACT" || typeCode === "DECISION" ? headOf.FIN : headOf[dept] ?? headOf.ADM;
@@ -420,7 +420,7 @@ async function main() {
   for (let i = 0; i < N; i++) {
     const tCode = weighted(TYPES.map((t) => [t.code, t.weight] as [string, number]));
     const t = typeRow[tCode].seed;
-    // Сүүлийн өдрүүдэд илүү олон баримт үүснэ
+    // Suuliin udruuded iluu olon barimt uusne
     const age = Math.pow(rnd(), 1.15) * 360 + 0.2;
     const createdAt = NOW - age * DAY - between(0, 8) * 3600_000;
     const creator = t.flow === "incoming" ? pick(recordsOfficers) : tCode === "OUTGOING" ? pick(["E002", "E009", "E008", "E011"]) : pick(creatorsReview);
@@ -474,7 +474,7 @@ async function main() {
       }
     }
 
-    // Хуваарилалт ба шийдвэрлэлт
+    // Huwaarilalt ba shiidwerlelt
     const needsAssign = ["ASSIGNED", "RESOLVED"].includes(target) || (target === "ARCHIVED" && (t.flow === "incoming" || rnd() < 0.4));
     if (needsAssign) {
       const by = t.flow === "incoming" || rnd() < 0.6 ? pick(recordsOfficers) : "E003";
@@ -483,7 +483,7 @@ async function main() {
       const userCode = toDept ? undefined : pick(assignees);
       const dept = toDept ? pick(["FIN", "HR", "IT", "LEGAL", "PLAN"]) : undefined;
       let due = at + between(4, 14) * DAY;
-      // Идэвхтэй хуваарилалтын ихэнх нь хугацаандаа байна, цөөн нь хэтэрсэн
+      // Idewhtei huwaarilaltiin ihenh ni hugatsaandaa baina, tsuun ni hetersen
       if (target === "ASSIGNED" && rnd() < 0.65) due = Math.max(due, NOW + between(1, 10) * DAY);
       const a = { userCode, dept, by, at, due, status: "ACTIVE" as string, done: undefined as number | undefined, note: undefined as string | undefined };
       p.assignments.push(a);
@@ -505,7 +505,7 @@ async function main() {
       p.events.push({ t: at, user: p.archive.by, action: "ARCHIVE", to: "ARCHIVED" });
     }
 
-    // Талбарын утга
+    // Talbariin utga
     for (const f of t.fields) {
       let v = "";
       if (f.dataType === "employee") v = emp[pick(PEOPLE.slice(0, 20).map((x) => x[0]))].id;
@@ -528,7 +528,7 @@ async function main() {
     plans.push(p);
   }
 
-  // Хуучин архив (хадгалах хугацаа дууссан / дуусах гэж буй) — архивын хяналтыг харуулах
+  // Huuchin arhiw (hadgalah hugatsaa duussan / duusah gej bui) — arhiwiin hyanaltiig haruulah
   const legacy: [string, string, number][] = [
     ["INCOMING", "Мэдээлэл ирүүлэх тухай (2016)", 3650 + 200],
     ["OUTGOING", "Тайлан хүргүүлэх тухай (2016)", 3650 + 20],
@@ -548,7 +548,7 @@ async function main() {
     });
   }
 
-  // ── Дугаар олгох: огнооны дарааллаар, дүрэм+он бүрээр ──
+  // ── Dugaar olgoh: ognoonii daraallaar, durem+on bureer ──
   plans.sort((a, b) => a.createdAt - b.createdAt);
   const internalNo = new Map<Plan, string>();
   plans.forEach((p, i) => internalNo.set(p, `Д-${String(i + 1).padStart(4, "0")}`));
@@ -569,7 +569,7 @@ async function main() {
     );
   }
 
-  // ── Өгөгдлийн санд бичих ──
+  // ── Ugugdliin sand bichih ──
   const docIds: string[] = [];
 
   for (const p of plans) {
@@ -597,7 +597,7 @@ async function main() {
     });
     docIds.push(doc.id);
 
-    // Хувилбар, хавсралт
+    // Huwilbar, hawsralt
     let lastVersion = "";
     for (let v = 1; v <= p.versions; v++) {
       const ver = await prisma.documentVersion.create({
@@ -636,7 +636,7 @@ async function main() {
       });
     }
 
-    // Аудит (төлөвийн түүх)
+    // Audit (tuluwiin tuuh)
     let prev: string | undefined;
     for (const e of p.events.sort((a, b) => a.t - b.t)) {
       await prisma.auditLog.create({
@@ -645,7 +645,7 @@ async function main() {
       if (e.to) prev = e.to;
     }
 
-    // Мэдэгдэл
+    // Medegdel
     const pending = p.approvals.find((a) => a.decision === "PENDING");
     if (pending) await prisma.notification.create({ data: { userId: U(pending.reviewer), documentId: doc.id, type: "REVIEW_REQUESTED", message: `«${p.title}» баримт таны хяналтад ирлээ`, createdAt: new Date(p.events.at(-1)!.t) } });
     const active = p.assignments.find((a) => a.status === "ACTIVE");
@@ -656,22 +656,22 @@ async function main() {
     if (p.target === "RETURNED") await prisma.notification.create({ data: { userId: U(p.creator), documentId: doc.id, type: "RETURNED", message: `«${p.title}» засварт буцлаа`, createdAt: new Date(p.events.at(-1)!.t) } });
   }
 
-  // Холбоотой баримт: хариу бичгийг ирсэн бичигтэй холбоно
+  // Holbootoi barimt: hariu bichgiig irsen bichigtei holbono
   const incomingDocs = await prisma.document.findMany({ where: { direction: "INCOMING", documentNumber: { not: null } }, take: 15 });
   const outgoingDocs = await prisma.document.findMany({ where: { direction: "OUTGOING", documentNumber: { not: null } }, take: 15 });
   for (let i = 0; i < Math.min(incomingDocs.length, outgoingDocs.length, 8); i++) {
     await prisma.documentRelation.create({ data: { sourceDocumentId: outgoingDocs[i].id, targetDocumentId: incomingDocs[i].id, relationType: "Хариу", createdById: U("E002") } });
   }
 
-  // Тоологчдыг бодит утгатай нь тааруулах (дараагийн дугаар зөв үргэлжилнэ)
+  // Toologchdiig bodit utgatai ni taaruulah (daraagiin dugaar zuw urgeljilne)
   for (const [key, value] of seqs) {
     const [ruleId, year] = key.split(":");
     await prisma.numberSequence.create({ data: { numberingRuleId: ruleId, departmentId: null, periodYear: Number(year), currentValue: value } });
   }
   await prisma.numberSequence.create({ data: { numberingRuleId: null, departmentId: null, periodYear: 0, currentValue: plans.length } });
 
-  // ═════════════ 5. Туршилтын HR API өгөгдөл ═════════════
-  // Синк хийхэд: 2 шинэ ажилтан нэмэгдэж, 1 ажилтан ажлаас гарсан болно (БД-11-ийг харуулна)
+  // ═════════════ 5. Turshiltiin HR API ugugdul ═════════════
+  // Sink hiihed: 2 shine ajiltan nemegdej, 1 ajiltan ajlaas garsan bolno (BD-11-iig haruulna)
   const hr = {
     departments: DEPARTMENTS.map(([code, name]) => ({ code, name, parentCode: code === "MGMT" ? null : "MGMT" })),
     employees: [
@@ -684,7 +684,7 @@ async function main() {
   };
   await writeFile(path.join(process.cwd(), "prisma", "hr-data.json"), JSON.stringify(hr, null, 2));
 
-  // ═════════════ 6. Мета өгөгдлөөр автоматаар чиглүүлэх жишээ дүрмүүд ═════════════
+  // ═════════════ 6. Meta ugugdluur awtomataar chigluuleh jishee durmuud ═════════════
   await seedRoutingRules(prisma);
 
   const counts = await prisma.document.groupBy({ by: ["statusId"], _count: true });

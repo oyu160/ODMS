@@ -1,4 +1,4 @@
-// Одоогийн хэрэглэгч, эрхийн шалгалт (сервер талд)
+// Odoogiin hereglegch, erhiin shalgalt (serwer tald)
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
@@ -11,6 +11,7 @@ export type CurrentUser = {
   username: string;
   fullName: string;
   initials: string;
+  avatarUrl?: string | null;
   employeeId: string;
   positionName: string | null;
   departmentId: string;
@@ -19,7 +20,7 @@ export type CurrentUser = {
   permissions: Set<string>;
 };
 
-/** Нэг хүсэлтийн дотор нэг л удаа DB-ээс уншина */
+/** Neg huseltiin dotor neg l udaa DB-ees unshina */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const session = await decryptSession((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) return null;
@@ -31,7 +32,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } },
     },
   });
-  // Идэвхгүй хэрэглэгч эсвэл ажлаас гарсан ажилтан нэвтэрч чадахгүй
+  // Idewhgui hereglegch eswel ajlaas garsan ajiltan newterch chadahgui
   if (!user || !user.isActive || user.employee.employmentStatus !== "ACTIVE") return null;
 
   const activeRoles = user.roles.map((ur) => ur.role).filter((r) => r.isActive);
@@ -40,6 +41,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     username: user.username,
     fullName: `${user.employee.lastName.charAt(0)}.${user.employee.firstName}`,
     initials: `${user.employee.lastName.charAt(0)}${user.employee.firstName.charAt(0)}`.toUpperCase(),
+    avatarUrl: user.avatarMime ? `/api/avatar/${user.id}?v=${user.avatarUpdatedAt?.getTime() ?? 0}` : null,
     employeeId: user.employeeId,
     positionName: user.employee.positionName,
     departmentId: user.employee.departmentId,
@@ -58,10 +60,10 @@ export async function requireUser() {
 export { can } from "./permissions";
 import { can } from "./permissions";
 
-/** Эрхгүй бол алдаа шиднэ — server action бүрийн эхэнд дуудна */
+/** Erhgui bol aldaa shidne — server action buriin ehend duudna */
 export async function requirePermission(permission: string) {
   const user = await requireUser();
-  // ФБШ-02: эрхгүй хүсэлтэд HTTP 403 буцаана (src/app/forbidden.tsx)
+  // FBSh-02: erhgui huselted HTTP 403 butsaana (src/app/forbidden.tsx)
   if (!can(user, permission)) forbidden();
   return user;
 }

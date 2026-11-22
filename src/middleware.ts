@@ -1,4 +1,4 @@
-// Нэвтрээгүй хэрэглэгчийг /login руу шилжүүлнэ
+// Newtreegui hereglegchiig /login ruu shiljuulne
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, decryptSession } from "@/lib/session";
 

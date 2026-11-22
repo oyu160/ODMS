@@ -1,9 +1,9 @@
 "use client";
 
-// Хүртээмжтэй цонх (dialog) ба буцаах боломжгүй үйлдлийн өмнөх баталгаажуулалт.
-// - role="dialog" / "alertdialog", aria-modal, гарчиг ба тайлбартай холбогдоно
-// - Нээгдэхэд цонх доторх эхний талбар руу focus шилжиж, Tab цонхноос гарахгүй
-// - Esc эсвэл гадна дарахад хаагдана; хаагдахад өмнөх элемент рүү focus буцна
+// Hurteemjtei tsonh (dialog) ba butsaah bolomjgui uildliin umnuh batalgaajuulalt.
+// - role="dialog" / "alertdialog", aria-modal, garchig ba tailbartai holbogdono
+// - Neegdehed tsonh dotorh ehnii talbar ruu focus shiljij, Tab tsonhnoos garahgui
+// - Esc eswel gadna darahad haagdana; haagdahad umnuh element ruu focus butsna
 import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { X, TriangleAlert } from "lucide-react";
@@ -18,9 +18,9 @@ type ModalProps = {
   description?: React.ReactNode;
   icon?: React.ReactNode;
   iconTone?: "brand" | "danger";
-  /** alert — буцаах боломжгүй үйлдлийн баталгаажуулалт (role="alertdialog") */
+  /** alert — butsaah bolomjgui uildliin batalgaajuulalt (role="alertdialog") */
   variant?: "dialog" | "alert";
-  /** Илгээж байх үед хаахыг хориглоно */
+  /** Ilgeej baih ued haahiig horiglono */
   busy?: boolean;
   size?: "md" | "lg";
   children?: React.ReactNode;
@@ -35,7 +35,7 @@ export function Modal({ open, onClose, title, description, icon, iconTone = "bra
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     const el = ref.current;
-    // autoFocus-тэй талбар өөрөө focus авсан бол хэвээр үлдээнэ; үгүй бол агуулгын эхний талбар (эсвэл хаах товч)
+    // autoFocus-tei talbar uuruu focus awsan bol heweer uldeene; ugui bol aguulgiin ehnii talbar (eswel haah towch)
     if (el && !el.contains(document.activeElement)) {
       const first = el.querySelector<HTMLElement>(`[data-modal-body] :is(${FOCUSABLE})`) ?? el.querySelector<HTMLElement>(FOCUSABLE);
       first?.focus();
@@ -62,7 +62,7 @@ export function Modal({ open, onClose, title, description, icon, iconTone = "bra
       document.body.style.overflow = overflow;
       prev?.focus?.();
     };
-    // onClose-ийг хамааралд оруулбал render бүрт focus үсэрнэ
+    // onClose-iig hamaarald oruulbal render burt focus userne
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, busy]);
 
@@ -93,12 +93,12 @@ export function Modal({ open, onClose, title, description, icon, iconTone = "bra
   );
 }
 
-/** Цонхны доод хэсгийн товчнууд: «Болих» зүүн, үндсэн үйлдэл баруун талд */
+/** Tsonhnii dood hesgiin towchnuud: «Bolih» zuun, undsen uildel baruun tald */
 export function ModalFooter({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap justify-end gap-3 border-t border-slate-100 px-6 py-4">{children}</div>;
 }
 
-/** Form илгээгдэж дуусахад (redirect орсон ч) цонхыг хаана */
+/** Form ilgeegdej duusahad (redirect orson ch) tsonhiig haana */
 function CloseWhenDone({ onDone, onPending }: { onDone: () => void; onPending: (p: boolean) => void }) {
   const { pending } = useFormStatus();
   const was = useRef(false);
@@ -120,8 +120,8 @@ function ConfirmSubmit({ tone, children }: { tone: "danger" | "primary"; childre
 }
 
 /**
- * Буцаах боломжгүй үйлдлийн товч: дарахад баталгаажуулах цонх нээгдэж,
- * «Тийм» дарсны дараа л server action дуудагдана.
+ * Butsaah bolomjgui uildliin towch: darahad batalgaajuulah tsonh neegdej,
+ * «Tiim» darsnii daraa l server action duudagdana.
  */
 export function ConfirmButton({
   action,
@@ -170,12 +170,12 @@ export function ConfirmButton({
   );
 }
 
-/** ModalButton-ийн дотор байгаа form хадгалагдаж дуусахад цонхыг хаахад ашиглана */
+/** ModalButton-iin dotor baigaa form hadgalagdaj duusahad tsonhiig haahad ashiglana */
 const ModalCloseContext = createContext<(() => void) | null>(null);
 
 /**
- * Товч дарахад цонх нээгдэж, дотор нь өгсөн агуулга (ихэвчлэн server action form) харагдана.
- * Form дотор <ModalCloser /> байрлуулбал хадгалсны дараа цонх автоматаар хаагдана.
+ * Towch darahad tsonh neegdej, dotor ni ugsun aguulga (ihewchlen server action form) haragdana.
+ * Form dotor <ModalCloser /> bairluulbal hadgalsnii daraa tsonh awtomataar haagdana.
  */
 export function ModalButton({
   label,
@@ -205,7 +205,7 @@ export function ModalButton({
   );
 }
 
-/** Form-ын дотор байрлуулна: илгээгдэж дуусахад эх ModalButton-ийн цонхыг хаана (цонхгүй бол юу ч хийхгүй) */
+/** Form-iin dotor bairluulna: ilgeegdej duusahad eh ModalButton-iin tsonhiig haana (tsonhgui bol yuu ch hiihgui) */
 export function ModalCloser() {
   const close = useContext(ModalCloseContext);
   const { pending } = useFormStatus();

@@ -1,4 +1,4 @@
-// Баримт урсгалын аль шатанд байгааг харуулах алхамын мөр + «Дараагийн алхам» тайлбар
+// Barimt ursgaliin ali shatand baigaag haruulah alhamiin mur + «Daraagiin alham» tailbar
 import { Check, ArrowRight, Ban, Hourglass } from "lucide-react";
 
 const REVIEW_FLOW = ["DRAFT", "IN_REVIEW", "APPROVED", "REGISTERED", "ASSIGNED", "RESOLVED", "ARCHIVED"];
@@ -47,7 +47,7 @@ export function WorkflowSteps({ status, direction }: { status: string; direction
   );
 }
 
-/** Одоо хэн, юу хийх ёстойг энгийн өгүүлбэрээр */
+/** Odoo hen, yuu hiih yostoig engiin uguulbereer */
 export function NextStep({ text, mine }: { text: string | null; mine: boolean }) {
   if (!text) return null;
   return (

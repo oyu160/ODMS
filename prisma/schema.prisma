@@ -1,5 +1,5 @@
-// Байгууллагын баримт бичгийн удирдлагын систем — физик загвар
-// Дипломын ажлын Хүснэгт 3.3–3.30-ын дагуу (28 хүснэгт)
+// Baiguullagiin barimt bichgiin udirdlagiin sistem — fizik zagwar
+// Diplomiin ajliin Husnegt 3.3–3.30-iin daguu (28 husnegt)
 
 generator client {
   provider = "prisma-client-js"
@@ -10,9 +10,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ───────────── Байгууллага, хэрэглэгч, эрх ─────────────
+// ───────────── Baiguullaga, hereglegch, erh ─────────────
 
-/// Хүснэгт 3.3. Нэгж
+/// Husnegt 3.3. Negj
 model Department {
   id             String       @id @default(uuid()) @map("department_id") @db.Uuid
   parentId       String?      @map("parent_department_id") @db.Uuid
@@ -33,7 +33,7 @@ model Department {
   @@map("departments")
 }
 
-/// Хүснэгт 3.4. Ажилтан (HR системээс синхрончлогдоно)
+/// Husnegt 3.4. Ajiltan (HR sistemees sinhronchlogdono)
 model Employee {
   id               String     @id @default(uuid()) @map("employee_id") @db.Uuid
   code             String     @unique @map("employee_code") @db.VarChar(50)
@@ -53,7 +53,7 @@ model Employee {
   @@map("employees")
 }
 
-/// Хүснэгт 3.5. Хэрэглэгч
+/// Husnegt 3.5. Hereglegch
 model User {
   id           String    @id @default(uuid()) @map("user_id") @db.Uuid
   employeeId   String    @unique @map("employee_id") @db.Uuid
@@ -61,8 +61,11 @@ model User {
   passwordHash String    @map("password_hash") @db.VarChar(255)
   isActive     Boolean   @default(true) @map("is_active")
   lastLoginAt  DateTime? @map("last_login_at")
-  failedLoginCount Int   @default(0) @map("failed_login_count") // ФБШ-01: дараалан буруу оролдлого
-  lockedUntil  DateTime? @map("locked_until") // ФБШ-01: түгжээ дуусах хугацаа
+  failedLoginCount Int   @default(0) @map("failed_login_count") // FBSh-01: daraalan buruu oroldlogo
+  lockedUntil  DateTime? @map("locked_until") // FBSh-01: tugjee duusah hugatsaa
+  avatar       Bytes?    @db.ByteA // profailiin zurag (hereglegchiin turshiltiin sanal)
+  avatarMime   String?   @map("avatar_mime") @db.VarChar(50)
+  avatarUpdatedAt DateTime? @map("avatar_updated_at")
   createdAt    DateTime  @default(now()) @map("created_at")
 
   employee            Employee           @relation(fields: [employeeId], references: [id])
@@ -85,7 +88,7 @@ model User {
   @@map("users")
 }
 
-/// Хүснэгт 3.6. Үүрэг
+/// Husnegt 3.6. Uureg
 model Role {
   id          String           @id @default(uuid()) @map("role_id") @db.Uuid
   code        String           @unique @map("role_code") @db.VarChar(50)
@@ -98,7 +101,7 @@ model Role {
   @@map("roles")
 }
 
-/// Хүснэгт 3.7. Хэрэглэгч–үүрэг
+/// Husnegt 3.7. Hereglegch–uureg
 model UserRole {
   userId     String   @map("user_id") @db.Uuid
   roleId     String   @map("role_id") @db.Uuid
@@ -111,7 +114,7 @@ model UserRole {
   @@map("user_roles")
 }
 
-/// Хүснэгт 3.8. Эрх
+/// Husnegt 3.8. Erh
 model Permission {
   id          String             @id @default(uuid()) @map("permission_id") @db.Uuid
   code        String             @unique @map("permission_code") @db.VarChar(100)
@@ -123,7 +126,7 @@ model Permission {
   @@map("permissions")
 }
 
-/// Хүснэгт 3.9. Үүрэг–эрх
+/// Husnegt 3.9. Uureg–erh
 model RolePermission {
   roleId       String @map("role_id") @db.Uuid
   permissionId String @map("permission_id") @db.Uuid
@@ -135,9 +138,9 @@ model RolePermission {
   @@map("role_permissions")
 }
 
-// ───────────── Баримтын тохиргоо ─────────────
+// ───────────── Barimtiin tohirgoo ─────────────
 
-/// Хүснэгт 3.10. Баримтын ангилал
+/// Husnegt 3.10. Barimtiin angilal
 model DocumentCategory {
   id       String         @id @default(uuid()) @map("category_id") @db.Uuid
   code     String         @unique @map("category_code") @db.VarChar(50)
@@ -149,7 +152,7 @@ model DocumentCategory {
   @@map("document_categories")
 }
 
-/// Хүснэгт 3.11. Баримтын төрөл
+/// Husnegt 3.11. Barimtiin turul
 model DocumentType {
   id                    String           @id @default(uuid()) @map("document_type_id") @db.Uuid
   categoryId            String           @map("category_id") @db.Uuid
@@ -169,7 +172,7 @@ model DocumentType {
   @@map("document_types")
 }
 
-/// Хүснэгт 3.12. Талбарын тодорхойлолт (төрлөөс хамаарах нэмэлт талбар)
+/// Husnegt 3.12. Talbariin todorhoilolt (turluus hamaarah nemelt talbar)
 model FieldDefinition {
   id             String   @id @default(uuid()) @map("field_id") @db.Uuid
   documentTypeId String   @map("document_type_id") @db.Uuid
@@ -189,10 +192,10 @@ model FieldDefinition {
   @@map("field_definitions")
 }
 
-/// Хүснэгт 3.13. Дугаарлалтын дүрэм
+/// Husnegt 3.13. Dugaarlaltiin durem
 model NumberingRule {
   id            String           @id @default(uuid()) @map("numbering_rule_id") @db.Uuid
-  pattern       String           @db.VarChar(100) // жишээ: {TYPE}/{YYYY}-{SEQ:4}
+  pattern       String           @db.VarChar(100) // jishee: {TYPE}/{YYYY}-{SEQ:4}
   resetPeriod   String           @default("YEARLY") @map("reset_period") @db.VarChar(20) // YEARLY | NEVER
   perDepartment Boolean          @default(false) @map("per_department")
 
@@ -202,7 +205,7 @@ model NumberingRule {
   @@map("numbering_rules")
 }
 
-/// Хүснэгт 3.14. Дугаарын тоологч
+/// Husnegt 3.14. Dugaariin toologch
 model NumberSequence {
   id              String         @id @default(uuid()) @map("sequence_id") @db.Uuid
   numberingRuleId String?        @map("numbering_rule_id") @db.Uuid
@@ -217,7 +220,7 @@ model NumberSequence {
   @@map("number_sequences")
 }
 
-/// Хүснэгт 3.15. Төлөв
+/// Husnegt 3.15. Tuluw
 model DocumentStatus {
   id           String  @id @default(uuid()) @map("status_id") @db.Uuid
   code         String  @unique @map("status_code") @db.VarChar(50)
@@ -234,10 +237,10 @@ model DocumentStatus {
   @@map("document_statuses")
 }
 
-/// Хүснэгт 3.16. Төлөвийн шилжилт
+/// Husnegt 3.16. Tuluwiin shiljilt
 model StatusTransition {
   id             String  @id @default(uuid()) @map("transition_id") @db.Uuid
-  documentTypeId String? @map("document_type_id") @db.Uuid // NULL бол бүх төрөлд хамаарна
+  documentTypeId String? @map("document_type_id") @db.Uuid // NULL bol buh turuld hamaarna
   fromStatusId   String  @map("from_status_id") @db.Uuid
   toStatusId     String  @map("to_status_id") @db.Uuid
   actionCode     String  @map("action_code") @db.VarChar(50)
@@ -252,14 +255,14 @@ model StatusTransition {
   @@map("status_transitions")
 }
 
-// ───────────── Баримт бичиг ─────────────
+// ───────────── Barimt bichig ─────────────
 
-/// Хүснэгт 3.17. Баримт бичиг
+/// Husnegt 3.17. Barimt bichig
 model Document {
   id                String    @id @default(uuid()) @map("document_id") @db.Uuid
   internalNumber    String    @unique @map("internal_number") @db.VarChar(30)
   documentTypeId    String    @map("document_type_id") @db.Uuid
-  documentNumber    String?   @map("document_number") @db.VarChar(100) // БД-07: батлагдахаас өмнө NULL
+  documentNumber    String?   @map("document_number") @db.VarChar(100) // BD-07: batlagdahaas umnu NULL
   title             String    @db.VarChar(255)
   summary           String?   @db.Text
   direction         String    @db.VarChar(20) // INCOMING | OUTGOING | INTERNAL
@@ -299,7 +302,7 @@ model Document {
   @@map("documents")
 }
 
-/// Хүснэгт 3.18. Талбарын утга
+/// Husnegt 3.18. Talbariin utga
 model DocumentFieldValue {
   id         String @id @default(uuid()) @map("value_id") @db.Uuid
   documentId String @map("document_id") @db.Uuid
@@ -313,7 +316,7 @@ model DocumentFieldValue {
   @@map("document_field_values")
 }
 
-/// Хүснэгт 3.19. Баримтын хувилбар
+/// Husnegt 3.19. Barimtiin huwilbar
 model DocumentVersion {
   id          String   @id @default(uuid()) @map("version_id") @db.Uuid
   documentId  String   @map("document_id") @db.Uuid
@@ -331,7 +334,7 @@ model DocumentVersion {
   @@map("document_versions")
 }
 
-/// Хүснэгт 3.20. Хавсралт
+/// Husnegt 3.20. Hawsralt
 model Attachment {
   id             String   @id @default(uuid()) @map("attachment_id") @db.Uuid
   documentId     String   @map("document_id") @db.Uuid
@@ -341,7 +344,7 @@ model Attachment {
   mimeType       String   @map("mime_type") @db.VarChar(100)
   fileSize       BigInt   @map("file_size")
   checksumSha256 String   @map("checksum_sha256") @db.Char(64)
-  content        Bytes?   @db.ByteA // файлын агуулга — өгөгдлийн сан дотор хадгална
+  content        Bytes?   @db.ByteA // failiin aguulga — ugugdliin san dotor hadgalna
   isMain         Boolean  @default(false) @map("is_main")
   uploadedById   String   @map("uploaded_by") @db.Uuid
   uploadedAt     DateTime @default(now()) @map("uploaded_at")
@@ -354,7 +357,7 @@ model Attachment {
   @@map("attachments")
 }
 
-/// Хүснэгт 3.21. Баримт–ажилтан (тушаал, гэрээнд хамаарах ажилтан)
+/// Husnegt 3.21. Barimt–ajiltan (tushaal, gereend hamaarah ajiltan)
 model DocumentEmployee {
   documentId   String @map("document_id") @db.Uuid
   employeeId   String @map("employee_id") @db.Uuid
@@ -367,7 +370,7 @@ model DocumentEmployee {
   @@map("document_employees")
 }
 
-/// Хүснэгт 3.22. Баримт–баримт хамаарал
+/// Husnegt 3.22. Barimt–barimt hamaaral
 model DocumentRelation {
   id               String   @id @default(uuid()) @map("relation_id") @db.Uuid
   sourceDocumentId String   @map("source_document_id") @db.Uuid
@@ -383,15 +386,15 @@ model DocumentRelation {
   @@map("document_relations")
 }
 
-// ───────────── Ажлын урсгал ─────────────
+// ───────────── Ajliin ursgal ─────────────
 
-/// Хүснэгт 3.23. Хяналт, батлалт
+/// Husnegt 3.23. Hyanalt, batlalt
 model Approval {
   id         String    @id @default(uuid()) @map("approval_id") @db.Uuid
   documentId String    @map("document_id") @db.Uuid
   stepOrder  Int       @default(1) @map("step_order")
   reviewerId String    @map("reviewer_id") @db.Uuid
-  decision   ApprovalDecision @default(PENDING) // зөвхөн жагсаасан 5 утгын аль нэг (enum)
+  decision   ApprovalDecision @default(PENDING) // zuwhun jagsaasan 5 utgiin ali neg (enum)
   comment    String?   @db.Text
   dueDate    DateTime? @map("due_date") @db.Date
   decidedAt  DateTime? @map("decided_at")
@@ -403,17 +406,17 @@ model Approval {
   @@map("approvals")
 }
 
-/// Хүснэгт 3.24. Гарын үсэг
+/// Husnegt 3.24. Gariin useg
 model Signature {
   id                String    @id @default(uuid()) @map("signature_id") @db.Uuid
   documentId        String    @map("document_id") @db.Uuid
   attachmentId      String?   @map("attachment_id") @db.Uuid
   signedById        String    @map("signed_by") @db.Uuid
   method            String    @db.VarChar(30) // SCAN | DIGITAL
-  certificateSerial String?   @map("certificate_serial") @db.VarChar(100) // DIGITAL: нийтийн түлхүүрийн хурууны хээ
+  certificateSerial String?   @map("certificate_serial") @db.VarChar(100) // DIGITAL: niitiin tulhuuriin huruunii hee
   keyId             String?   @map("key_id") @db.Uuid
-  contentHash       String?   @map("content_hash") @db.Char(64) // гарын үсэг зурах үеийн агуулгын SHA-256
-  signatureValue    String?   @map("signature_value") @db.Text // Ed25519 гарын үсэг (base64)
+  contentHash       String?   @map("content_hash") @db.Char(64) // gariin useg zurah ueiin aguulgiin SHA-256
+  signatureValue    String?   @map("signature_value") @db.Text // Ed25519 gariin useg (base64)
   signedAt          DateTime  @default(now()) @map("signed_at")
 
   document   Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
@@ -425,14 +428,14 @@ model Signature {
   @@map("signatures")
 }
 
-/// Хүснэгт 3.25. Хуваарилалт (БД-09: нэг хэрэглэгч ЭСВЭЛ нэг нэгж)
+/// Husnegt 3.25. Huwaarilalt (BD-09: neg hereglegch ESWEL neg negj)
 model Assignment {
   id                   String    @id @default(uuid()) @map("assignment_id") @db.Uuid
   documentId           String    @map("document_id") @db.Uuid
   assigneeUserId       String?   @map("assignee_user_id") @db.Uuid
   assigneeDepartmentId String?   @map("assignee_department_id") @db.Uuid
   assignedById         String    @map("assigned_by") @db.Uuid
-  dueDate              DateTime  @map("due_date") @db.Date // БД-09: хугацааг заавал тогтооно
+  dueDate              DateTime  @map("due_date") @db.Date // BD-09: hugatsaag zaawal togtoono
   status               String    @default("ACTIVE") @db.VarChar(30) // ACTIVE | DONE | REASSIGNED
   resultNote           String?   @map("result_note") @db.Text
   assignedAt           DateTime  @default(now()) @map("assigned_at")
@@ -448,7 +451,7 @@ model Assignment {
   @@map("assignments")
 }
 
-/// Хүснэгт 3.26. Архив
+/// Husnegt 3.26. Arhiw
 model Archive {
   id              String    @id @default(uuid()) @map("archive_id") @db.Uuid
   documentId      String    @unique @map("document_id") @db.Uuid
@@ -458,7 +461,7 @@ model Archive {
   retentionUntil  DateTime? @map("retention_until") @db.Date
   disposalAction  String?   @map("disposal_action") @db.VarChar(30) // DESTROY | TRANSFER
   storageLocation String?   @map("storage_location") @db.Text
-  // Хадгалах хугацаа дууссаны дараах шийдвэр (устгасан / улсын архивт шилжүүлсэн)
+  // Hadgalah hugatsaa duussanii daraah shiidwer (ustgasan / ulsiin arhiwt shiljuulsen)
   disposedAt      DateTime? @map("disposed_at")
   disposedById    String?   @map("disposed_by") @db.Uuid
   disposalNote    String?   @map("disposal_note") @db.Text
@@ -470,7 +473,7 @@ model Archive {
   @@map("archives")
 }
 
-/// Хүснэгт 3.27. Аудитын түүх
+/// Husnegt 3.27. Auditiin tuuh
 model AuditLog {
   id          String    @id @default(uuid()) @map("audit_id") @db.Uuid
   userId      String    @map("user_id") @db.Uuid
@@ -495,7 +498,7 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-/// Хүснэгт 3.28. Мэдэгдэл
+/// Husnegt 3.28. Medegdel
 model Notification {
   id         String   @id @default(uuid()) @map("notification_id") @db.Uuid
   userId     String   @map("user_id") @db.Uuid
@@ -512,15 +515,15 @@ model Notification {
   @@map("notifications")
 }
 
-/// Мета өгөгдлөөр автоматаар чиглүүлэх дүрэм: нөхцөл бүрдвэл хянагчийг автоматаар сонгоно.
-/// Хоосон (NULL) нөхцөл нь «ямар ч» гэсэн утгатай. priority бага нь эхэлж шалгагдана.
+/// Meta ugugdluur awtomataar chigluuleh durem: nuhtsul burdwel hyanagchiig awtomataar songono.
+/// Hooson (NULL) nuhtsul ni «yamar ch» gesen utgatai. priority baga ni ehelj shalgagdana.
 model RoutingRule {
   id              String   @id @default(uuid()) @map("rule_id") @db.Uuid
   name            String   @map("rule_name") @db.VarChar(150)
   documentTypeId  String?  @map("document_type_id") @db.Uuid
   confidentiality String?  @db.VarChar(20) // NORMAL | INTERNAL | CONFIDENTIAL
   direction       String?  @db.VarChar(20) // OUTGOING | INTERNAL
-  departmentId    String?  @map("department_id") @db.Uuid // баримт эзэмшигч нэгж
+  departmentId    String?  @map("department_id") @db.Uuid // barimt ezemshigch negj
   fieldId         String?  @map("field_id") @db.Uuid
   fieldValue      String?  @map("field_value") @db.VarChar(255)
   reviewerId      String   @map("reviewer_id") @db.Uuid
@@ -537,8 +540,8 @@ model RoutingRule {
   @@map("routing_rules")
 }
 
-/// Цахим гарын үсгийн түлхүүр (Ed25519). Хувийн түлхүүрийг хэрэглэгчийн нууц үгээс
-/// scrypt-ээр гаргасан түлхүүрээр AES-256-GCM шифрлэж хадгална — сервер нууц үггүйгээр зурж чадахгүй.
+/// Tsahim gariin usgiin tulhuur (Ed25519). Huwiin tulhuuriig hereglegchiin nuuts ugees
+/// scrypt-eer gargasan tulhuureer AES-256-GCM shifrlej hadgalna — serwer nuuts ugguigeer zurj chadahgui.
 model SigningKey {
   id                  String    @id @default(uuid()) @map("key_id") @db.Uuid
   userId              String    @map("user_id") @db.Uuid
@@ -555,11 +558,11 @@ model SigningKey {
   @@map("signing_keys")
 }
 
-/// Хяналтын шийдвэр — өгөгдлийн сан зөвхөн эдгээр утгыг зөвшөөрнө
+/// Hyanaltiin shiidwer — ugugdliin san zuwhun edgeer utgiig zuwshuurnu
 enum ApprovalDecision {
-  PENDING   // хүлээгдэж буй
-  APPROVED  // баталсан
-  RETURNED  // засварт буцаасан
-  FORWARDED // дараагийн хянагч руу шилжүүлсэн
-  CANCELLED // цуцалсан
+  PENDING   // huleegdej bui
+  APPROVED  // batalsan
+  RETURNED  // zaswart butsaasan
+  FORWARDED // daraagiin hyanagch ruu shiljuulsen
+  CANCELLED // tsutsalsan
 }

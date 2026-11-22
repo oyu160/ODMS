@@ -1,6 +1,6 @@
 "use client";
 
-// Хуудас солигдох үед дээд талд гүйх шугам — дарсан нь мэдрэгдэхгүй байх асуудлыг шийднэ
+// Huudas soligdoh ued deed tald guih shugam — darsan ni medregdehgui baih asuudliig shiidne
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -9,7 +9,7 @@ export function NavProgress() {
   const search = useSearchParams();
   const [loading, setLoading] = useState(false);
 
-  // Шинэ хуудас ачаалагдмагц шугамыг дуусгана
+  // Shine huudas achaalagdmagts shugamiig duusgana
   useEffect(() => setLoading(false), [pathname, search]);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function NavProgress() {
     };
     const onSubmit = (e: SubmitEvent) => {
       const f = e.target as HTMLFormElement;
-      // Шүүлтүүрийн (GET) маягт илгээхэд
+      // Shuultuuriin (GET) mayagt ilgeehed
       if (!e.defaultPrevented && (f.method || "get").toLowerCase() === "get" && !f.getAttribute("action")?.startsWith("/api")) setLoading(true);
     };
     document.addEventListener("click", onClick, true);

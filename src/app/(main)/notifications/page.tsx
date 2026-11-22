@@ -7,7 +7,7 @@ import { markAllRead } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-/** Мэдэгдлийн төрөл — баримтын төлөвийн өнгөтэй уялдана */
+/** Medegdliin turul — barimtiin tuluwiin ungutei uyaldana */
 const TYPE: Record<string, { label: string; tone: "amber" | "teal" | "orange" | "navy" | "violet" | "green" | "red" | "slate" }> = {
   REVIEW_REQUESTED: { label: "Хяналт", tone: "amber" },
   APPROVED: { label: "Батлагдсан", tone: "teal" },

@@ -1,5 +1,5 @@
-// Баримтын төлөвийн шилжилт ба бизнесийн дүрэм
-// Шилжилт бүрийг status_transitions хүснэгтээс уншина — шинэ шилжилтийг код өөрчлөхгүйгээр нэмж болно.
+// Barimtiin tuluwiin shiljilt ba biznesiin durem
+// Shiljilt buriig status_transitions husnegtees unshina — shine shiljiltiig kod uurchluhguigeer nemj bolno.
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
@@ -30,7 +30,7 @@ export const ACTION_LABELS: Record<string, string> = {
   forward: "Дараагийн хянагч руу шилжүүлэх",
 };
 
-/** Аудитын бичлэгийн нэр (Үйлдлийн түүхэд харуулна) */
+/** Auditiin bichlegiin ner (Uildliin tuuhed haruulna) */
 export const AUDIT_LABELS: Record<string, string> = {
   CREATE: "Үүсгэсэн",
   UPDATE: "Зассан",
@@ -74,7 +74,7 @@ async function isAssignee(db: Db, user: CurrentUser, documentId: string) {
   return !!a;
 }
 
-/** Бизнесийн дүрэм — зөрчилтэй бол шалтгааныг буцаана */
+/** Biznesiin durem — zurchiltei bol shaltgaaniig butsaana */
 export async function ruleViolation(db: Db, user: CurrentUser, doc: DocLite, action: string): Promise<string | null> {
   switch (action) {
     case "submit":
@@ -109,7 +109,7 @@ async function findTransition(db: Db, doc: DocLite, action: string) {
   return list.find((t) => t.documentTypeId === doc.documentTypeId) ?? list[0] ?? null;
 }
 
-/** Хэрэглэгчид одоо харагдах үйлдлийн товчнууд */
+/** Hereglegchid odoo haragdah uildliin towchnuud */
 export async function availableActions(user: CurrentUser, doc: DocLite) {
   const transitions = await prisma.statusTransition.findMany({
     where: { fromStatusId: doc.statusId, OR: [{ documentTypeId: null }, { documentTypeId: doc.documentTypeId }] },
@@ -118,7 +118,7 @@ export async function availableActions(user: CurrentUser, doc: DocLite) {
   const result: { code: string; label: string }[] = [];
   for (const t of transitions) {
     if (result.some((r) => r.code === t.actionCode)) continue;
-    // resolve нь эрхээс гадна хариуцагч эсэхээр шийдэгдэнэ
+    // resolve ni erhees gadna hariutsagch eseheer shiidegdene
     if (t.actionCode !== "resolve" && !can(user, t.permission.code)) continue;
     if (await ruleViolation(prisma, user, doc, t.actionCode)) continue;
     result.push({ code: t.actionCode, label: ACTION_LABELS[t.actionCode] ?? t.actionCode });
@@ -135,7 +135,7 @@ export type ActionInput = {
   archiveCategory?: string;
   storageLocation?: string;
   disposalAction?: string;
-  /** Батлах үед цахим гарын үсэг зурахад нууц үгийг дахин оруулна */
+  /** Batlah ued tsahim gariin useg zurahad nuuts ugiig dahin oruulna */
   password?: string;
 };
 
@@ -144,7 +144,7 @@ async function notifyDepartment(tx: Tx, departmentId: string, documentId: string
   if (users.length) await tx.notification.createMany({ data: users.map((u) => ({ userId: u.id, documentId, type, message })) });
 }
 
-/** Хуваарилалтын оролтыг шалгана (БД-09: нэг хэрэглэгч ЭСВЭЛ нэг нэгж) */
+/** Huwaarilaltiin oroltiig shalgana (BD-09: neg hereglegch ESWEL neg negj) */
 async function readAssignee(tx: Tx, input: ActionInput) {
   const hasUser = !!input.assigneeUserId;
   const hasDept = !!input.assigneeDepartmentId;
@@ -163,7 +163,7 @@ async function readAssignee(tx: Tx, input: ActionInput) {
   return { assigneeUserId: null, assigneeDepartmentId: d.id, dueDate: due, label: d.name };
 }
 
-/** Хянагчийг шалгана: идэвхтэй, батлах эрхтэй, үүсгэгч биш (БД-03, БД-05) */
+/** Hyanagchiig shalgana: idewhtei, batlah erhtei, uusgegch bish (BD-03, BD-05) */
 async function readReviewer(tx: Tx, reviewerId: string | undefined, creatorId: string) {
   const reviewer = reviewerId
     ? await tx.user.findUnique({
@@ -178,10 +178,10 @@ async function readReviewer(tx: Tx, reviewerId: string | undefined, creatorId: s
   return reviewer;
 }
 
-/** Үйлдлийг нэг transaction-аар гүйцэтгэнэ: шалгах → өөрчлөх → аудит → мэдэгдэл */
+/** Uildliig neg transaction-aar guitsetgene: shalgah → uurchluh → audit → medegdel */
 export async function performAction(user: CurrentUser, documentId: string, action: string, input: ActionInput) {
   return prisma.$transaction(async (tx) => {
-    // Баримтын мөрийг түгжинэ: хоёр хэрэглэгч зэрэг үйлдэл хийхээс сэргийлнэ
+    // Barimtiin muriig tugjine: hoyor hereglegch zereg uildel hiihees sergiilne
     await tx.$executeRaw`SELECT 1 FROM documents WHERE document_id = ${documentId}::uuid FOR UPDATE`;
     const doc = await tx.document.findUnique({ where: { id: documentId }, include: { documentType: true } });
     if (!doc || doc.isDeleted) throw new WorkflowError("Баримт олдсонгүй");
@@ -200,7 +200,7 @@ export async function performAction(user: CurrentUser, documentId: string, actio
     switch (action) {
       case "submit":
       case "resubmit": {
-        // Хянагчийг гараар сонгоогүй бол мета өгөгдлийн дүрмээр автоматаар чиглүүлнэ
+        // Hyanagchiig garaar songoogui bol meta ugugdliin durmeer awtomataar chigluulne
         let routedBy: string | null = null;
         let reviewerId = input.reviewerId;
         if (!reviewerId) {
@@ -225,11 +225,11 @@ export async function performAction(user: CurrentUser, documentId: string, actio
           where: { documentId, reviewerId: user.id, decision: "PENDING" },
           data: { decision: "APPROVED", decidedAt: now, comment: comment ?? null },
         });
-        // БД-07: албан ёсны дугаарыг зөвхөн батлагдах үед олгоно
+        // BD-07: alban yosnii dugaariig zuwhun batlagdah ued olgono
         const num = await issueOfficialNumber(tx, documentId);
         data.documentNumber = num;
         data.approvedAt = now;
-        // Цахим гарын үсэг: нууц үгээр түлхүүрээ нээж, батлагдсан агуулгын SHA-256 хэшийг зурна
+        // Tsahim gariin useg: nuuts ugeer tulhuuree neej, batlagdsan aguulgiin SHA-256 heshiig zurna
         let signature;
         try {
           signature = await signDocument(tx, { documentId, userId: user.id, password: input.password, documentNumber: num });
@@ -255,7 +255,7 @@ export async function performAction(user: CurrentUser, documentId: string, actio
         break;
       }
       case "forward": {
-        // БД-04: олон шатлалт хяналт — одоогийн шатыг хааж, дараагийн хянагчид шинэ шат үүсгэнэ
+        // BD-04: olon shatlalt hyanalt — odoogiin shatiig haaj, daraagiin hyanagchid shine shat uusgene
         const next = await readReviewer(tx, input.reviewerId, doc.createdById);
         if (next.id === user.id) throw new WorkflowError("Өөр хянагч сонгоно уу");
         await tx.approval.updateMany({
@@ -287,7 +287,7 @@ export async function performAction(user: CurrentUser, documentId: string, actio
       case "reassign": {
         const a = await readAssignee(tx, input);
         if (action === "reassign") {
-          // БД-11: хариуцагч шилжсэн, гарсан үед өмнөх хуваарилалтыг хаагаад шинээр онооно
+          // BD-11: hariutsagch shiljsen, garsan ued umnuh huwaarilaltiig haagaad shineer onoono
           await tx.assignment.updateMany({ where: { documentId, status: "ACTIVE" }, data: { status: "REASSIGNED", completedAt: now, resultNote: comment ?? "Дахин хуваарилсан" } });
         }
         await tx.assignment.create({
@@ -347,7 +347,7 @@ export async function performAction(user: CurrentUser, documentId: string, actio
   });
 }
 
-/** Хугацаа хэтэрсэн хуваарилалтын хариуцагчид сануулга илгээх */
+/** Hugatsaa hetersen huwaarilaltiin hariutsagchid sanuulga ilgeeh */
 export async function remindAssignment(user: CurrentUser, assignmentId: string) {
   if (!can(user, "document.assign")) throw new WorkflowError("Танд эрх байхгүй");
   const a = await prisma.assignment.findUnique({ where: { id: assignmentId }, include: { document: true } });

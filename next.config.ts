@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
-  // Хөтчийн аюулгүй байдлын толгой (HTTPS-ийг Caddyfile-д HSTS-ээр албадна)
+  // Hutchiin ayuulgui baidliin tolgoi (HTTPS-iig Caddyfile-d HSTS-eer albadna)
   async headers() {
     return [
       {
@@ -18,8 +18,8 @@ const nextConfig: NextConfig = {
     ];
   },
   experimental: {
-    authInterrupts: true, // forbidden() → HTTP 403 (ФБШ-02)
-    serverActions: { bodySizeLimit: "20mb" }, // ФБШ-07: файлын дээд хэмжээ 20 MB
+    authInterrupts: true, // forbidden() → HTTP 403 (FBSh-02)
+    serverActions: { bodySizeLimit: "20mb" }, // FBSh-07: failiin deed hemjee 20 MB
   },
 };
 

@@ -263,7 +263,7 @@ type RuleRow = {
 };
 type Opt = { id: string; name: string };
 
-/** Мета өгөгдлөөр автоматаар чиглүүлэх дүрмүүд */
+/** Meta ugugdluur awtomataar chigluuleh durmuud */
 async function Routing({ types }: { types: Opt[] }) {
   const [rules, departments, fields, reviewers] = await Promise.all([
     prisma.routingRule.findMany({ orderBy: [{ isActive: "desc" }, { priority: "asc" }], include: { documentType: true, department: true, field: true, reviewer: { include: { employee: true } } } }),

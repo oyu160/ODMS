@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ShieldX } from "lucide-react";
 
-// ФБШ-02: эрхгүй хүсэлтэд HTTP 403 төлөвтэй энэ хуудас харагдана
+// FBSh-02: erhgui huselted HTTP 403 tuluwtei ene huudas haragdana
 export default function Forbidden() {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">

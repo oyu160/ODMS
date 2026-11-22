@@ -16,7 +16,7 @@ type SP = Promise<Record<string, string | undefined>>;
 
 export default async function ArchivePage({ searchParams }: { searchParams: SP }) {
   const user = await requireUser();
-  // ФБШ-02: эрхгүй бол 403 хуудас
+  // FBSh-02: erhgui bol 403 huudas
   if (!can(user, "document.archive") && !can(user, "document.view_all")) forbidden();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);

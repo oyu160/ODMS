@@ -1,4 +1,4 @@
-// Хуудасны өгөгдөл ачаалагдаж байх үед харагдах хэлбэр (skeleton)
+// Huudasnii ugugdul achaalagdaj baih ued haragdah helber (skeleton)
 export function PageSkeleton() {
   const bar = "animate-pulse rounded-lg bg-slate-200/80";
   return (

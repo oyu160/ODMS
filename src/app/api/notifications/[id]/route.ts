@@ -1,4 +1,4 @@
-// Мэдэгдэл дээр дарахад: уншсан болгоод холбогдох баримт руу шилжүүлнэ
+// Medegdel deer darahad: unshsan bolgood holbogdoh barimt ruu shiljuulne
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";

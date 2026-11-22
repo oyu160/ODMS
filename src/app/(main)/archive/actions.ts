@@ -8,10 +8,10 @@ import { writeAudit } from "@/lib/audit";
 import { startOfToday } from "@/lib/format";
 
 /**
- * БД-15: хадгалах хугацаа дууссан архивын баримтад шийдвэр гаргах.
- * DESTROY — баримтыг системээс устгасанд тооцно (is_deleted = true, өгөгдөл аудитын зорилгоор үлдэнэ).
- * TRANSFER — улсын архивт шилжүүлсэн гэж тэмдэглэнэ.
- * Шийдвэр нэг удаа гарна, буцаахгүй; тэмдэглэл (акт, тушаалын дугаар г.м.) заавал.
+ * BD-15: hadgalah hugatsaa duussan arhiwiin barimtad shiidwer gargah.
+ * DESTROY — barimtiig sistemees ustgasand tootsno (is_deleted = true, ugugdul auditiin zorilgoor uldene).
+ * TRANSFER — ulsiin arhiwt shiljuulsen gej temdeglene.
+ * Shiidwer neg udaa garna, butsaahgui; temdeglel (akt, tushaaliin dugaar g.m.) zaawal.
  */
 export async function disposeArchive(formData: FormData) {
   const user = await requireUser();

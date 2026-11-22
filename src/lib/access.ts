@@ -1,13 +1,13 @@
-// Баримтад хандах эрхийн хүрээ — бүх жагсаалт, тайлан энэ шүүлтүүрийг ашиглана
-// Нууцлалын түвшин (Хүснэгт 3.17-ийн тайлбар):
-//   NORMAL       — эрх бүхий бүх ажилтан харна
-//   INTERNAL     — хариуцах нэгжийн ажилтан болон баримтад оролцогч харна
-//   CONFIDENTIAL — зөвхөн баримтад оролцогч (үүсгэгч, хянагч, хариуцагч) болон document.view_all эрхтэй хэрэглэгч
+// Barimtad handah erhiin huree — buh jagsaalt, tailan ene shuultuuriig ashiglana
+// Nuutslaliin tuwshin (Husnegt 3.17-iin tailbar):
+//   NORMAL       — erh buhii buh ajiltan harna
+//   INTERNAL     — hariutsah negjiin ajiltan bolon barimtad oroltsogch harna
+//   CONFIDENTIAL — zuwhun barimtad oroltsogch (uusgegch, hyanagch, hariutsagch) bolon document.view_all erhtei hereglegch
 import type { Prisma } from "@prisma/client";
 import type { CurrentUser } from "./auth";
 import { can } from "./permissions";
 
-/** Боловсруулагдаж буй (бусдад харагдах ёсгүй) төлөвүүд */
+/** Bolowsruulagdaj bui (busdad haragdah yosgui) tuluwuud */
 const WORKING = ["DRAFT", "RETURNED"];
 
 export function documentScope(user: CurrentUser): Prisma.DocumentWhereInput {

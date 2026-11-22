@@ -1,5 +1,5 @@
-// Тайлангийн хөдөлгүүр (дипломын Хүснэгт 3.30)
-// Тайлан бүр баганын нэр, мөрүүд, нийт дүнг буцаана — дэлгэц, Excel, хэвлэх хувилбар бүгд үүнийг ашиглана.
+// Tailangiin hudulguur (diplomiin Husnegt 3.30)
+// Tailan bur baganiin ner, muruud, niit dung butsaana — delgets, Excel, hewleh huwilbar bugd uuniig ashiglana.
 import "server-only";
 import { prisma } from "./prisma";
 import { can, type CurrentUser } from "./auth";
@@ -18,7 +18,7 @@ type ReportDef = {
 };
 
 function range(p: ReportParams) {
-  // Огноо сонгоогүй бол энэ оны эхнээс өнөөдрийг хүртэл
+  // Ognoo songoogui bol ene onii ehnees unuudriig hurtel
   const from = p.from ? new Date(`${p.from}T00:00:00+08:00`) : new Date(`${new Date().getFullYear()}-01-01T00:00:00+08:00`);
   const to = p.to ? new Date(`${p.to}T23:59:59+08:00`) : new Date();
   return { from, to };

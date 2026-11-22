@@ -1,4 +1,4 @@
-// Дугаарлалтын хэлбэрийн тест (lib/numbering.ts — БД-07)
+// Dugaarlaltiin helberiin test (lib/numbering.ts — BD-07)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { formatNumber } from "../src/lib/numbering";

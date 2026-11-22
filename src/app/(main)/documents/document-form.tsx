@@ -38,7 +38,7 @@ type Props = {
 export function DocumentForm({ type, employees, departments, reviewers, related, rules = [], me, initial }: Props) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveDocument, undefined);
   const [files, setFiles] = useState<File[]>([]);
-  // Сервэрээс ирсэн талбар бүрийн алдаа. Хэрэглэгч тухайн талбарыг засмагц алдаа нь арилна.
+  // Serwerees irsen talbar buriin aldaa. Hereglegch tuhain talbariig zasmagts aldaa ni arilna.
   const [fixed, setFixed] = useState<string[]>([]);
   const fieldErrors = state?.fieldErrors ?? {};
   const errOf = (name: string) => (fixed.includes(name) ? undefined : fieldErrors[name]);
@@ -46,13 +46,13 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
   useEffect(() => {
     setFixed([]);
     if (state?.fieldErrors && Object.keys(state.fieldErrors).length) {
-      // Эхний алдаатай талбар руу шилжиж, фокуслана
+      // Ehnii aldaatai talbar ruu shiljij, fokuslana
       const el = document.querySelector<HTMLElement>('[aria-invalid="true"]');
       el?.scrollIntoView({ block: "center", behavior: "smooth" });
       el?.focus({ preventScroll: true });
     }
   }, [state]);
-  /** Алдаатай талбарт өгөх a11y шинж ба улаан хүрээ */
+  /** Aldaatai talbart uguh a11y shinj ba ulaan huree */
   const invalid = (name: string) => {
     const e = errOf(name);
     return {
@@ -66,12 +66,12 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
     const e = errOf(name);
     return e ? <p id={`doc-${name}-err`} className="mt-1 text-xs font-medium text-red-600">{e}</p> : null;
   };
-  // Хадгалсан хавсралтаас хасахаар тэмдэглэсэн файлууд (хадгалах үед устгагдана)
+  // Hadgalsan hawsraltaas hasahaar temdeglesen failuud (hadgalah ued ustgagdana)
   const [removed, setRemoved] = useState<string[]>([]);
   const [values, setValues] = useState<Record<string, string>>(initial.values ?? {});
   const [direction, setDirection] = useState(initial.direction ?? "INTERNAL");
   const [confidentiality, setConfidentiality] = useState(initial.confidentiality ?? "INTERNAL");
-  // Мета өгөгдлийн дүрэм: төрөл, нууцлал, чиглэл, талбарын утгаас хянагчийг автоматаар тодорхойлно
+  // Meta ugugdliin durem: turul, nuutslal, chiglel, talbariin utgaas hyanagchiig awtomataar todorhoilno
   const route = useMemo(
     () =>
       me
@@ -97,7 +97,7 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
     setFiles((prev) => [...prev, ...Array.from(list)]);
   };
 
-  // FormData-д файлуудыг гараар нэмнэ (жагсаалтаас устгах боломжтой)
+  // FormData-d failuudiig garaar nemne (jagsaaltaas ustgah bolomjtoi)
   const submit = (fd: FormData) => {
     fd.delete("files");
     files.forEach((f) => fd.append("files", f));

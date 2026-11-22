@@ -1,4 +1,4 @@
-// Цэсний тэмдэглэгээнд харагдах тоонууд
+// Tsesnii temdeglegeend haragdah toonuud
 import { prisma } from "./prisma";
 import { can, type CurrentUser } from "./auth";
 import { documentScope } from "./access";

@@ -1,4 +1,4 @@
-// Энгийн SVG график — нэмэлт сан шаардахгүй
+// Engiin SVG grafik — nemelt san shaardahgui
 
 export function Donut({ data, total, label }: { data: { name: string; value: number; color: string }[]; total: number; label: string }) {
   const r = 70;

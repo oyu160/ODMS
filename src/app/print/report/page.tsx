@@ -1,4 +1,4 @@
-// Тайлангийн хэвлэх (PDF) хувилбар — дипломын Зураг 3.19-ийн загвараар
+// Tailangiin hewleh (PDF) huwilbar — diplomiin Zurag 3.19-iin zagwaraar
 import { notFound } from "next/navigation";
 import { requireUser, can } from "@/lib/auth";
 import { findReport, periodLabel } from "@/lib/reports";
@@ -21,7 +21,7 @@ export default async function PrintReport({ searchParams }: { searchParams: SP }
 
   return (
     <div className="min-h-screen bg-slate-200 py-8 print:bg-white print:py-0">
-      {/* 3.4: PDF/хэвлэмэлд хуудас бүрийн доод баруун буланд «Хуудас N / M». Chrome, Edge 131+ дэмжинэ. */}
+      {/* 3.4: PDF/hewlemeld huudas buriin dood baruun buland «Huudas N / M». Chrome, Edge 131+ demjine. */}
       <style>{`
         @page {
           size: A4 landscape;

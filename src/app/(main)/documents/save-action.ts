@@ -11,7 +11,7 @@ import { saveFile } from "@/lib/storage";
 import { writeAudit } from "@/lib/audit";
 import { performAction, WorkflowError } from "@/lib/workflow";
 
-/** fieldErrors: талбарын нэр (title, documentDate, f_<id>) → алдааны бичвэр — маягт дээр тухайн талбарын доор харагдана */
+/** fieldErrors: talbariin ner (title, documentDate, f_<id>) → aldaanii bichwer — mayagt deer tuhain talbariin door haragdana */
 export type SaveState = { error?: string; fieldErrors?: Record<string, string> } | undefined;
 
 const Schema = z.object({
@@ -60,7 +60,7 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
   const type = await prisma.documentType.findUnique({ where: { id: v.documentTypeId }, include: { fields: { where: { isActive: true } } } });
   if (!type || !type.isActive) return { error: "Баримтын төрөл олдсонгүй" };
 
-  // Төрлөөс хамаарах талбар — БД-02: бүх дутуу/буруу талбарыг нэг дор цуглуулж, талбар бүрийн доор харуулна
+  // Turluus hamaarah talbar — BD-02: buh dutuu/buruu talbariig neg dor tsugluulj, talbar buriin door haruulna
   const values: { fieldId: string; valueText: string }[] = [];
   const fieldErrors: Record<string, string> = {};
   if (v.intent !== "draft" && !v.documentDate) fieldErrors.documentDate = "Баримтын огноог оруулна уу";
@@ -78,9 +78,9 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
   }
   const errCount = Object.keys(fieldErrors).length;
   if (errCount) return { error: `${errCount} талбар дутуу эсвэл буруу байна. Улаанаар тэмдэглэсэн талбаруудыг засна уу.`, fieldErrors };
-  // Хянагч сонгоогүй бол хяналтад илгээх үед мета өгөгдлийн дүрмээр автоматаар чиглүүлнэ (lib/routing.ts)
+  // Hyanagch songoogui bol hyanaltad ilgeeh ued meta ugugdliin durmeer awtomataar chigluulne (lib/routing.ts)
 
-  // Файлууд
+  // Failuud
   const files = formData.getAll("files").filter((x): x is File => x instanceof File && x.size > 0);
   const stored: Awaited<ReturnType<typeof saveFile>>[] = [];
   try {
@@ -89,10 +89,10 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
     return { error: (e as Error).message };
   }
 
-  // Хадгалсан хавсралтаас хасах (зөвхөн засах үед)
+  // Hadgalsan hawsraltaas hasah (zuwhun zasah ued)
   const removeIds = formData.getAll("removeAttachment").map(String).filter(Boolean);
 
-  // Засах үед: зөвхөн үүсгэгч, зөвхөн Ноорог/Засварт буцаасан төлөвт
+  // Zasah ued: zuwhun uusgegch, zuwhun Noorog/Zaswart butsaasan tuluwt
   let existing: { id: string; currentVersionNo: number; statusCode: string } | null = null;
   if (v.documentId) {
     const d = await prisma.document.findUnique({ where: { id: v.documentId }, include: { status: true, _count: { select: { attachments: true } } } });
@@ -123,7 +123,7 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
         },
       });
       id = existing.id;
-      // Хавсралт хасах: зөвхөн энэ баримтынх, цахим гарын үсэггүй файлыг. Хассан файлын нэр аудитад үлдэнэ
+      // Hawsralt hasah: zuwhun ene barimtiinh, tsahim gariin useggui failiig. Hassan failiin ner auditad uldene
       if (removeIds.length) {
         const toRemove = await tx.attachment.findMany({ where: { id: { in: removeIds }, documentId: id, signatures: { none: {} } }, select: { id: true, fileName: true } });
         if (toRemove.length) {
@@ -153,7 +153,7 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
       id = created.id;
     }
 
-    // ФШ-21: «ажилтан» төрлийн талбарын утгыг баримт–ажилтан холбоос болгон хадгална (үүрэг = талбарын нэр)
+    // FSh-21: «ajiltan» turliin talbariin utgiig barimt–ajiltan holboos bolgon hadgalna (uureg = talbariin ner)
     const empLinks = type.fields
       .filter((f) => f.dataType === "employee")
       .flatMap((f) => values.filter((x) => x.fieldId === f.id).map((x) => ({ documentId: id, employeeId: x.valueText, relationRole: f.label.slice(0, 50) })));
@@ -167,7 +167,7 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
     for (const [i, s] of stored.entries()) {
       await tx.attachment.create({ data: { ...s, documentId: id, versionId: version.id, isMain: !hasMain && i === 0, uploadedById: user.id } });
     }
-    // Үндсэн файлыг хассан бөгөөд шинэ файл нэмээгүй бол үлдсэн хамгийн эхний файлыг үндсэн болгоно
+    // Undsen failiig hassan buguud shine fail nemeegui bol uldsen hamgiin ehnii failiig undsen bolgono
     if (!hasMain && stored.length === 0) {
       const first = await tx.attachment.findFirst({ where: { documentId: id }, orderBy: { uploadedAt: "asc" }, select: { id: true } });
       if (first) await tx.attachment.update({ where: { id: first.id }, data: { isMain: true } });
@@ -183,7 +183,7 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
     return id;
   });
 
-  // Дараагийн алхам: хяналтад илгээх эсвэл ирсэн бичгийг шууд бүртгэх
+  // Daraagiin alham: hyanaltad ilgeeh eswel irsen bichgiig shuud burtgeh
   if (v.intent !== "draft") {
     try {
       const action = v.intent === "register" ? "register_incoming" : existing?.statusCode === "RETURNED" ? "resubmit" : "submit";

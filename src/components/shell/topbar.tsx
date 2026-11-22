@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, Search, LogOut } from "lucide-react";
+import { Bell, Search, LogOut, UserRound } from "lucide-react";
 import { Avatar } from "@/components/ui";
 import { fmtShort, todayLabel } from "@/lib/format";
 import { logout } from "@/app/login/actions";
@@ -10,12 +10,13 @@ import { MenuButton, SearchShortcut } from "./topbar-client";
 type Props = {
   name: string;
   initials: string;
+  avatarUrl?: string | null;
   subtitle: string;
   unread: number;
   notifications: { id: string; message: string; isRead: boolean; createdAt: Date; documentId: string | null }[];
 };
 
-export function Topbar({ name, initials, subtitle, unread, notifications }: Props) {
+export function Topbar({ name, initials, avatarUrl, subtitle, unread, notifications }: Props) {
   return (
     <header className="no-print sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4 sm:gap-6 lg:px-8">
       <MenuButton />
@@ -52,7 +53,7 @@ export function Topbar({ name, initials, subtitle, unread, notifications }: Prop
               {notifications.length === 0 && <li className="px-4 py-6 text-center text-sm text-slate-500">Мэдэгдэл алга</li>}
               {notifications.map((n) => (
                 <li key={n.id} className={n.isRead ? "" : "bg-navy-50/50"}>
-                  {/* Дарахад уншсан болж, баримт руу шилжинэ */}
+                  {/* Darahad unshsan bolj, barimt ruu shiljine */}
                   <a href={`/api/notifications/${n.id}`} className="flex gap-2.5 px-4 py-3 text-sm hover:bg-slate-50">
                     <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.isRead ? "bg-transparent" : "bg-red-500"}`} />
                     <span>
@@ -70,7 +71,7 @@ export function Topbar({ name, initials, subtitle, unread, notifications }: Prop
         <Dropdown
           trigger={
             <span className="flex cursor-pointer items-center gap-3 rounded-lg px-1.5 py-1 hover:bg-slate-100">
-              <Avatar text={initials} />
+              <Avatar text={initials} src={avatarUrl} />
               <span className="hidden text-left sm:block">
                 <span className="block text-sm font-semibold text-slate-900">{name}</span>
                 <span className="block text-xs text-slate-500">{subtitle}</span>
@@ -79,6 +80,9 @@ export function Topbar({ name, initials, subtitle, unread, notifications }: Prop
           }
         >
           <div className="absolute right-0 mt-3 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+            <Link href="/profile" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              <UserRound size={16} /> Миний профайл
+            </Link>
             <form action={logout}>
               <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
                 <LogOut size={16} /> Гарах

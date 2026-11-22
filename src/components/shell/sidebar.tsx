@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, FileText, CircleCheck, UserPlus, Archive, BarChart3, Settings, Users, Lock, Clock, FileStack, X } from "lucide-react";
 
-/** Жижиг дэлгэцэд (утас, таблет) цэсийг нээх/хаах — Topbar-ын цэсний товч энэ үйл явдлыг дуудна */
+/** Jijig delgetsed (utas, tablet) tsesiig neeh/haah — Topbar-iin tsesnii towch ene uil yawdliig duudna */
 export const SIDEBAR_TOGGLE = "dms:sidebar-toggle";
 
 const ICONS = { LayoutGrid, FileText, CircleCheck, UserPlus, Archive, BarChart3, Settings, Users, Lock, Clock };

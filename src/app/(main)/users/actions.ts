@@ -68,7 +68,7 @@ export async function runHrSync() {
     msg = `HR синк: ${r.departments} нэгж, ${r.added} шинэ ажилтан, ${r.updated} шинэчлэгдсэн, ${r.left} ажлаас гарсан (${r.deactivatedUsers} эрх хаагдсан)`;
   } catch (e) {
     if (e instanceof HrTimeoutError) {
-      // Систем зогсохгүй: өмнө синхрончилсон ажилтны мэдээллээр үргэлжлүүлэн ажиллана
+      // Sistem zogsohgui: umnu sinhronchilson ajiltnii medeelleer urgeljluulen ajillana
       const last = await prisma.employee.aggregate({ _max: { syncedAt: true } });
       msg = `Анхааруулга: ${e.message}. Сүүлд синхрончилсон (${fmtDateTime(last._max.syncedAt)}) мэдээллийг ашиглаж байна.`;
     } else {

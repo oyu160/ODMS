@@ -1,7 +1,7 @@
 "use client";
 
-// Унждаг цонх (мэдэгдэл, хэрэглэгчийн цэс): гадна дарах, Esc дарах,
-// дотор нь холбоос дарах эсвэл хуудас солигдоход автоматаар хаагдана
+// Unjdag tsonh (medegdel, hereglegchiin tses): gadna darah, Esc darah,
+// dotor ni holboos darah eswel huudas soligdohod awtomataar haagdana
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
@@ -30,7 +30,7 @@ export function Dropdown({ trigger, children, className = "" }: { trigger: React
   return (
     <details ref={ref} className={`relative ${className}`}>
       <summary className="list-none [&::-webkit-details-marker]:hidden">{trigger}</summary>
-      {/* Дотор нь холбоос эсвэл товч дарахад хаагдана */}
+      {/* Dotor ni holboos eswel towch darahad haagdana */}
       <div onClick={(e) => (e.target as HTMLElement).closest("a,button") && setTimeout(close, 0)}>{children}</div>
     </details>
   );

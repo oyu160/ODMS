@@ -1,8 +1,8 @@
-# Хөгжүүлэлт: зөвхөн өгөгдлийн сан   → docker compose up -d db
-# Байгууллагын сервер: бүх систем     → docker compose up -d --build   (https://localhost эсвэл https://<DMS_DOMAIN>)
-# HTTPS: Caddy урвуу прокси TLS-ийг дуусгаж, програм руу дотоод сүлжээгээр дамжуулна.
-#        Програм (3000) болон өгөгдлийн сан гаднаас шууд хандагдахгүй.
-# Хавсралт файл өгөгдлийн сан дотор хадгалагдана (тусдаа файлын сан шаардлагагүй)
+# Hugjuulelt: zuwhun ugugdliin san   → docker compose up -d db
+# Baiguullagiin serwer: buh sistem     → docker compose up -d --build   (https://localhost eswel https://<DMS_DOMAIN>)
+# HTTPS: Caddy urwuu proksi TLS-iig duusgaj, program ruu dotood suljeegeer damjuulna.
+#        Program (3000) bolon ugugdliin san gadnaas shuud handagdahgui.
+# Hawsralt fail ugugdliin san dotor hadgalagdana (tusdaa failiin san shaardlagagui)
 services:
   db:
     image: postgres:17
@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: dms_password
       POSTGRES_DB: dms
     ports:
-      - "127.0.0.1:5433:5432" # зөвхөн серверийн өөрөөс; 5433 — компьютер дээрх PostgreSQL (5432)-тэй давхцахгүй
+      - "127.0.0.1:5433:5432" # zuwhun serweriin uuruus; 5433 — kompiyuter deerh PostgreSQL (5432)-tei dawhtsahgui
     volumes:
       - dms_pgdata:/var/lib/postgresql/data
 
@@ -29,10 +29,10 @@ services:
       HR_API_URL: ${HR_API_URL:-}
       HR_API_KEY: ${HR_API_KEY:-}
     expose:
-      - "3000" # зөвхөн дотоод сүлжээнд — гаднаас Caddy-ээр (HTTPS) дамжина
+      - "3000" # zuwhun dotood suljeend — gadnaas Caddy-eer (HTTPS) damjina
 
   backup:
-    # ФБШ-05: өгөгдлийн санг өдөр бүр нөөцөлж, сүүлийн 30 хоногийнхыг ./backups хавтсанд хадгална
+    # FBSh-05: ugugdliin sang udur bur nuutsulj, suuliin 30 honogiinhiig ./backups hawtsand hadgalna
     image: postgres:17
     container_name: dms-backup
     restart: unless-stopped
@@ -54,13 +54,13 @@ services:
     depends_on:
       - app
     environment:
-      # Домэйн нэр. Дотоод сүлжээнд: localhost эсвэл серверийн IP/нэр
+      # Domein ner. Dotood suljeend: localhost eswel serweriin IP/ner
       DMS_DOMAIN: ${DMS_DOMAIN:-localhost}
-      # internal = байгууллагын дотоод гэрчилгээ (Caddy-ийн өөрийн CA).
-      # Интернэтэд нээлттэй домэйнд имэйл хаяг өгвөл Let's Encrypt гэрчилгээ автоматаар авна.
+      # internal = baiguullagiin dotood gerchilgee (Caddy-iin uuriin CA).
+      # Interneted neelttei domeind imeil hayag ugwul Let's Encrypt gerchilgee awtomataar awna.
       DMS_TLS: ${DMS_TLS:-internal}
     ports:
-      - "80:80" # HTTP хүсэлтийг HTTPS руу автоматаар шилжүүлнэ
+      - "80:80" # HTTP huseltiig HTTPS ruu awtomataar shiljuulne
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

@@ -1,4 +1,4 @@
-// Хүний нөөцийн системтэй REST API-аар синхрончлох (дипломын 3.5-ын API гэрээ)
+// Hunii nuutsiin sistemtei REST API-aar sinhronchloh (diplomiin 3.5-iin API geree)
 // GET {HR_API_URL}/departments → [{ code, name, parentCode }]
 // GET {HR_API_URL}/employees   → [{ code, lastName, firstName, position, departmentCode, email, status: "ACTIVE" | "LEFT" }]
 import "server-only";
@@ -7,7 +7,7 @@ import { prisma } from "./prisma";
 type HrDept = { code: string; name: string; parentCode?: string | null };
 type HrEmp = { code: string; lastName: string; firstName: string; position?: string; departmentCode: string; email?: string; status: "ACTIVE" | "LEFT" };
 
-/** ФБШ-10: хүний нөөцийн систем 5 секундэд хариу өгөхгүй бол хүлээхээ зогсооно */
+/** FBSh-10: hunii nuutsiin sistem 5 sekunded hariu uguhgui bol huleehee zogsoono */
 export const HR_TIMEOUT_MS = 5000;
 export class HrTimeoutError extends Error {}
 
@@ -34,7 +34,7 @@ export async function syncFromHR() {
   const now = new Date();
   let added = 0, updated = 0, left = 0, deactivatedUsers = 0;
 
-  // 1) Нэгж
+  // 1) Negj
   for (const d of depts) {
     await prisma.department.upsert({ where: { code: d.code }, update: { name: d.name, hrRefId: d.code }, create: { code: d.code, name: d.name, hrRefId: d.code } });
   }
@@ -44,7 +44,7 @@ export async function syncFromHR() {
   }
   const deptByCode = new Map((await prisma.department.findMany()).map((d) => [d.code, d.id]));
 
-  // 2) Ажилтан
+  // 2) Ajiltan
   for (const e of emps) {
     const departmentId = deptByCode.get(e.departmentCode);
     if (!departmentId) continue;
@@ -56,7 +56,7 @@ export async function syncFromHR() {
     } else {
       await prisma.employee.update({ where: { id: existing.id }, data });
       updated++;
-      // БД-11: ажлаас гарсан ажилтны эрхийг хаана
+      // BD-11: ajlaas garsan ajiltnii erhiig haana
       if (e.status === "LEFT" && existing.employmentStatus !== "LEFT") {
         left++;
         if (existing.user?.isActive) {
@@ -69,7 +69,7 @@ export async function syncFromHR() {
   return { departments: depts.length, added, updated, left, deactivatedUsers };
 }
 
-/** Ажлаас гарсан / идэвхгүй хариуцагчтай идэвхтэй хуваарилалт (дахин хуваарилах шаардлагатай) */
+/** Ajlaas garsan / idewhgui hariutsagchtai idewhtei huwaarilalt (dahin huwaarilah shaardlagatai) */
 export function orphanedAssignments() {
   return prisma.assignment.findMany({
     where: { status: "ACTIVE", assigneeUser: { OR: [{ isActive: false }, { employee: { employmentStatus: "LEFT" } }] } },

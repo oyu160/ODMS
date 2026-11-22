@@ -1,4 +1,4 @@
-// Аудитын бүртгэл (Хүснэгт 3.27)
+// Auditiin burtgel (Husnegt 3.27)
 import { headers } from "next/headers";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
@@ -24,7 +24,7 @@ export async function writeAudit(
     const h = await headers();
     ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? undefined;
   } catch {
-    // хүсэлтийн гадна (seed, script) дуудагдвал IP-гүй бичнэ
+    // huseltiin gadna (seed, script) duudagdwal IP-gui bichne
   }
   await db.auditLog.create({ data: { ...entry, ipAddress: ip } });
 }

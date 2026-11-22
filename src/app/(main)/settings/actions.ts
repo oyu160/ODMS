@@ -90,7 +90,7 @@ export async function deleteField(fd: FormData) {
   const user = await requirePermission("settings.manage");
   const id = s(fd, "id");
   const f = await prisma.fieldDefinition.findUniqueOrThrow({ where: { id }, include: { _count: { select: { values: true } } } });
-  // Утга бүртгэгдсэн талбарыг устгахгүй, идэвхгүй болгоно (түүх алдагдахгүй)
+  // Utga burtgegdsen talbariig ustgahgui, idewhgui bolgono (tuuh aldagdahgui)
   if (f._count.values > 0) await prisma.fieldDefinition.update({ where: { id }, data: { isActive: false } });
   else await prisma.fieldDefinition.delete({ where: { id } });
   await audit(user.id, "field_definition", f.documentTypeId, { removed: f.name });
@@ -114,7 +114,7 @@ export async function saveRule(fd: FormData) {
   const id = s(fd, "id");
   const data = { pattern: s(fd, "pattern"), resetPeriod: s(fd, "resetPeriod") || "YEARLY", perDepartment: fd.get("perDepartment") === "on" };
   if (!data.pattern.includes("{SEQ")) back("/settings?tab=numbering", "Хэлбэрт {SEQ} эсвэл {SEQ:3} заавал орно");
-  // 3.3.4: өөр жил, өөр нэгжид ижил дугаар давтагдахгүйн тулд
+  // 3.3.4: uur jil, uur negjid ijil dugaar dawtagdahguin tuld
   if (data.resetPeriod === "YEARLY" && !/\{YYYY\}|\{YY\}/.test(data.pattern))
     back("/settings?tab=numbering", "Тоологч жил бүр тэглэгдэх тул хэлбэрт {YY} эсвэл {YYYY} заавал орно");
   if (data.perDepartment && !data.pattern.includes("{DEPT}"))
@@ -125,7 +125,7 @@ export async function saveRule(fd: FormData) {
   back("/settings?tab=numbering", "Хадгаллаа");
 }
 
-/** Мета өгөгдлөөр автоматаар чиглүүлэх дүрэм хадгалах */
+/** Meta ugugdluur awtomataar chigluuleh durem hadgalah */
 export async function saveRoutingRule(fd: FormData) {
   const user = await requirePermission("settings.manage");
   const id = s(fd, "id");

@@ -1,5 +1,5 @@
-// Туршилтын HR API — бодит хүний нөөцийн систем холбогдоогүй үед ашиглана.
-// prisma/hr-data.json файлаас уншина. Бодит системд HR_API_URL-ийг .env-д тохируулна.
+// Turshiltiin HR API — bodit hunii nuutsiin sistem holbogdoogui ued ashiglana.
+// prisma/hr-data.json failaas unshina. Bodit sistemd HR_API_URL-iig .env-d tohiruulna.
 import { readFile } from "fs/promises";
 import path from "path";
 

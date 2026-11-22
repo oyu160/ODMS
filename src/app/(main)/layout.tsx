@@ -35,6 +35,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         <Topbar
           name={user.fullName}
           initials={user.initials}
+          avatarUrl={user.avatarUrl}
           subtitle={`${user.roles.map((r) => r.name).join(", ")} · ${user.departmentName}`}
           unread={c.unread}
           notifications={c.notifications}

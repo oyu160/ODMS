@@ -7,10 +7,10 @@ next-env.d.ts
 uploads
 check.txt
 
-# Түр үүсгэсэн шалгалтын файлууд
+# Tur uusgesen shalgaltiin failuud
 .gen/
 
-# Өгөгдлийн сангийн нөөц (нууц мэдээлэлтэй тул git-д оруулахгүй)
+# Ugugdliin sangiin nuuts (nuuts medeeleltei tul git-d oruulahgui)
 backups/
 perf-result.json
 

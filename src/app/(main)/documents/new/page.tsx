@@ -14,7 +14,7 @@ export default async function NewDocumentPage({ searchParams }: { searchParams: 
   const user = await requirePermission("document.create");
   const sp = await searchParams;
 
-  // 1-р алхам: төрөл сонгох
+  // 1-r alham: turul songoh
   if (!sp.type) {
     const cats = await prisma.documentCategory.findMany({
       where: { isActive: true },

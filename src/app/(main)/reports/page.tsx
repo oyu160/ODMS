@@ -7,7 +7,7 @@ import { PageHeader, Card, makeHref } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-/** Түгээмэл хугацааны сонголт: энэ сар, өмнөх сар, энэ улирал, энэ жил */
+/** Tugeemel hugatsaanii songolt: ene sar, umnuh sar, ene uliral, ene jil */
 function presets() {
   const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ulaanbaatar" }));
   const y = d.getFullYear(), m = d.getMonth();

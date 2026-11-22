@@ -1,10 +1,10 @@
-// БД-10: хугацаа хэтэрсэн хуваарилалтын автомат сануулга
-// Сервер ажиллаж байх хугацаанд цаг тутам шалгана (src/instrumentation.ts).
+// BD-10: hugatsaa hetersen huwaarilaltiin awtomat sanuulga
+// Serwer ajillaj baih hugatsaand tsag tutam shalgana (src/instrumentation.ts).
 import { prisma } from "./prisma";
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
-/** Хугацаа нь өнгөрсөн, шийдвэрлэгдээгүй хуваарилалт бүрд нэг удаа мэдэгдэл илгээнэ */
+/** Hugatsaa ni ungursun, shiidwerlegdeegui huwaarilalt burd neg udaa medegdel ilgeene */
 export async function notifyOverdueAssignments(now = new Date()) {
   const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   const overdue = await prisma.assignment.findMany({
@@ -13,7 +13,7 @@ export async function notifyOverdueAssignments(now = new Date()) {
   });
   let sent = 0;
   for (const a of overdue) {
-    // Энэ хуваарилалтад өмнө нь автомат сануулга явсан бол давтахгүй
+    // Ene huwaarilaltad umnu ni awtomat sanuulga yawsan bol dawtahgui
     const already = await prisma.notification.findFirst({
       where: { documentId: a.documentId, type: "OVERDUE", createdAt: { gte: a.assignedAt } },
       select: { id: true },
@@ -29,7 +29,7 @@ export async function notifyOverdueAssignments(now = new Date()) {
           where: { isActive: true, employee: { departmentId: a.assigneeDepartmentId!, employmentStatus: "ACTIVE" } },
           select: { id: true },
         })).map((u) => u.id);
-    // Хариуцагч болон хуваарилсан ажилтанд мэдэгдэнэ
+    // Hariutsagch bolon huwaarilsan ajiltand medegdene
     const to = [...new Set([...users, a.assignedById])];
     await prisma.notification.createMany({
       data: to.map((userId) => ({ userId, documentId: a.documentId, type: "OVERDUE", message: msg })),

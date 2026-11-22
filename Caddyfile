@@ -1,5 +1,5 @@
-# HTTPS урвуу прокси (ФБШ-03: өгөгдлийг сүлжээгээр шифрлэж дамжуулна)
-# Гэрчилгээ /data дотор хадгалагдаж, хугацаа дуусахаас өмнө автоматаар шинэчлэгдэнэ.
+# HTTPS urwuu proksi (FBSh-03: ugugdliig suljeegeer shifrlej damjuulna)
+# Gerchilgee /data dotor hadgalagdaj, hugatsaa duusahaas umnu awtomataar shinechlegdene.
 {$DMS_DOMAIN:localhost} {
 	tls {$DMS_TLS:internal}
 	encode zstd gzip
@@ -12,7 +12,7 @@
 		-Server
 	}
 
-	# Файлын дээд хэмжээ 20 МБ + маягтын өгөгдөл (ФБШ-07)
+	# Failiin deed hemjee 20 MB + mayagtiin ugugdul (FBSh-07)
 	request_body {
 		max_size 25MB
 	}

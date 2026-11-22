@@ -1,4 +1,4 @@
-// Бизнесийн дүрмийн тест (lib/workflow.ts ruleViolation) — өгөгдлийн санг хуурмаг объектоор орлуулна
+// Biznesiin durmiin test (lib/workflow.ts ruleViolation) — ugugdliin sang huurmag obiektoor orluulna
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ruleViolation } from "../src/lib/workflow";
@@ -8,7 +8,7 @@ const user = (id: string, perms: string[] = []): CurrentUser => ({
   id, username: id, fullName: id, initials: "XX", employeeId: "e-" + id, positionName: null, departmentId: "dep", departmentName: "dep", roles: [], permissions: new Set(perms),
 });
 const doc = { id: "d1", statusId: "s", documentTypeId: "t", createdById: "creator", direction: "INTERNAL" };
-// approval.findFirst: зөвхөн «reviewer» хэрэглэгчид хүлээгдэж буй хяналт байна
+// approval.findFirst: zuwhun «reviewer» hereglegchid huleegdej bui hyanalt baina
 const db = {
   approval: { findFirst: async ({ where }: { where: { reviewerId: string } }) => (where.reviewerId === "reviewer" ? { id: "ap1" } : null) },
   assignment: { findFirst: async () => null },

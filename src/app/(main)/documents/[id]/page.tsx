@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { documentScope } from "@/lib/access";
 import { availableActions, AUDIT_LABELS } from "@/lib/workflow";
-import { CONF_LABELS, DIRECTION_LABELS, ASSIGNMENT_LABELS, DECISION_LABELS, fmtDate, fmtDateTime, fmtShort, shortName, fileSize, startOfToday, daysBetween, describeAuditValue, RELATION_TYPES, RELATION_INVERSE } from "@/lib/format";
+import { CONF_LABELS, DIRECTION_LABELS, ASSIGNMENT_LABELS, DECISION_LABELS, fmtDate, fmtDateTime, fmtShort, shortName, personLabel, fileSize, startOfToday, daysBetween, describeAuditValue, RELATION_TYPES, RELATION_INVERSE } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, Tabs, Pill, STATUS_COLOR } from "@/components/ui";
 import { ActionPanel } from "./action-panel";
 import { WorkflowSteps, NextStep } from "@/components/workflow-steps";
@@ -44,7 +44,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
     },
   });
   if (!doc) {
-    // ФБШ-02: баримт байгаа боловч хэрэглэгчийн эрхийн хүрээнд биш бол 403
+    // FBSh-02: barimt baigaa bolowch hereglegchiin erhiin hureend bish bol 403
     const exists = await prisma.document.count({ where: { id, isDeleted: false } });
     if (exists) forbidden();
     notFound();
@@ -77,19 +77,19 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
     codes.has("assign") || codes.has("reassign") ? prisma.department.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }) : [],
   ]);
 
-  // Мета өгөгдлийн дүрмээр автоматаар сонгогдох хянагч (хяналтад илгээх цонхонд харуулна)
+  // Meta ugugdliin durmeer awtomataar songogdoh hyanagch (hyanaltad ilgeeh tsonhond haruulna)
   const autoRule =
     codes.has("submit") || codes.has("resubmit")
       ? await resolveRoute(prisma, { ...doc, fields: doc.fieldValues.map((v) => ({ fieldId: v.fieldId, valueText: v.valueText })) })
       : null;
   const autoReviewer = autoRule ? reviewers.find((r) => r.id === autoRule.reviewerId) : undefined;
 
-  // Цахим гарын үсгийн шалгалт: агуулга өөрчлөгдөөгүй, гарын үсэг жинхэнэ эсэх
+  // Tsahim gariin usgiin shalgalt: aguulga uurchlugduugui, gariin useg jinhene eseh
   const signatures = doc.approvedAt ? await verifyDocumentSignatures(doc.id) : [];
   const sigOk = signatures.length > 0 && signatures.every((x) => x.status === "VALID");
 
   const editable = doc.createdById === user.id && ["DRAFT", "RETURNED"].includes(doc.status.code);
-  // ФШ-22: баримт бичгийн ажилтан эсвэл үүсгэгч хамаарал нэмнэ
+  // FSh-22: barimt bichgiin ajiltan eswel uusgegch hamaaral nemne
   const canRelate = can(user, "document.register") || doc.createdById === user.id;
   const relationCandidates = canRelate
     ? await prisma.document.findMany({
@@ -100,7 +100,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
       })
     : [];
 
-  // Дараагийн алхам: хэн, юу хийх вэ
+  // Daraagiin alham: hen, yuu hiih we
   const pendingReview = doc.approvals.find((a) => a.decision === "PENDING");
   const activeAssign = doc.assignments.find((a) => a.status === "ACTIVE");
   const creatorName = shortName(doc.createdBy.employee);
@@ -131,7 +131,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
     ["Чиглэл", DIRECTION_LABELS[doc.direction]],
     ...doc.fieldValues.map((v) => [v.field.label, showValue(v.field.dataType, v.valueText)] as [string, React.ReactNode]),
     ["Баримтын огноо", fmtDate(doc.documentDate)],
-    ["Үүсгэсэн", `${shortName(doc.createdBy.employee)} · ${fmtDate(doc.createdAt)}`],
+    ["Үүсгэсэн", `${personLabel(doc.createdBy.employee)} · ${fmtDate(doc.createdAt)}`],
     ["Хариуцах нэгж", doc.ownerDepartment.name],
     ["Нууцлалын түвшин", CONF_LABELS[doc.confidentiality] ?? doc.confidentiality],
   ];
@@ -268,7 +268,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
                     <li key={v.id} className="rounded-lg border border-slate-200 p-4">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold">Хувилбар {v.versionNo}{v.versionNo === doc.currentVersionNo && <Pill tone="navy">одоогийн</Pill>}</span>
-                        <span className="text-xs text-slate-500">{shortName(v.createdBy.employee)} · {fmtDateTime(v.createdAt)}</span>
+                        <span className="text-xs text-slate-500">{personLabel(v.createdBy.employee)} · {fmtDateTime(v.createdAt)}</span>
                       </div>
                       <div className="mt-1 text-sm text-slate-600">{v.changeNote}</div>
                       {snap.title && <div className="mt-2 text-sm"><span className="text-slate-500">Гарчиг:</span> {snap.title}</div>}
@@ -305,7 +305,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
               documentId={doc.id}
               actions={actions}
               reviewers={[...reviewers]
-                // БД-03: анхдагчаар үүсгэгчийн нэгжийн удирдлага эхэнд
+                // BD-03: anhdagchaar uusgegchiin negjiin udirdlaga ehend
                 .sort((a, b) => Number(b.employee.departmentId === doc.createdBy.employee.departmentId) - Number(a.employee.departmentId === doc.createdBy.employee.departmentId))
                 .map((r) => ({ id: r.id, name: `${shortName(r.employee)} — ${r.employee.department.name}` }))}
               users={users.map((u) => ({ id: u.id, name: `${shortName(u.employee)} — ${u.employee.department.name}` }))}

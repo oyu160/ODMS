@@ -1,2 +1,2 @@
-// Хуучирсан: prisma/patch.ts-ийг ашиглана (npm run db:patch)
+// Huuchirsan: prisma/patch.ts-iig ashiglana (npm run db:patch)
 export {};

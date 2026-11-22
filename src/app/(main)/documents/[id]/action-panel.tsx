@@ -1,7 +1,7 @@
 "use client";
 
-// Үйлдлийн товчнууд: товч дарахад тухайн үйлдлийн цонх (modal) нээгдэж,
-// шаардлагатай мэдээллээ бөглөөд үндсэн товчийг дарна.
+// Uildliin towchnuud: towch darahad tuhain uildliin tsonh (modal) neegdej,
+// shaardlagatai medeellee bugluud undsen towchiig darna.
 import { useActionState, useEffect, useState } from "react";
 import { ShieldCheck, Send, Undo2, UserPlus, Archive, CircleCheck, Ban, Inbox, FileCheck } from "lucide-react";
 import { runAction, type ActionState } from "./actions";
@@ -17,9 +17,9 @@ type Props = {
   departments?: Option[];
   defaultArchiveCategory?: string;
   compact?: boolean;
-  /** Мета өгөгдлийн дүрмээр автоматаар сонгогдох хянагч (байвал «Автоматаар» сонголт харагдана) */
+  /** Meta ugugdliin durmeer awtomataar songogdoh hyanagch (baiwal «Awtomataar» songolt haragdana) */
   autoReviewer?: { name: string; rule: string } | null;
-  /** Батлах цонхны дүгнэлтэд: гарын үсэг зурагч ба баримт */
+  /** Batlah tsonhnii dugnelted: gariin useg zuragch ba barimt */
   signer?: string;
   documentLabel?: string;
 };
@@ -27,7 +27,7 @@ type Props = {
 const PRIMARY = ["approve", "submit", "resubmit", "register", "register_incoming", "assign", "resolve", "archive"];
 const DANGER = new Set(["cancel"]);
 const COMMENT_REQUIRED = new Set(["return", "resolve", "cancel"]);
-/** Цонхны үндсэн товчны нэр — юу болохыг шууд хэлнэ */
+/** Tsonhnii undsen towchnii ner — yuu bolohiig shuud helne */
 const CONFIRM: Record<string, string> = {
   approve: "Батлах ба гарын үсэг зурах",
   submit: "Хяналтад илгээх",
@@ -67,7 +67,7 @@ export function ActionPanel({ documentId, actions, reviewers = [], users = [], d
   const [state, formAction, pending] = useActionState<ActionState, FormData>(runAction, undefined);
   const [open, setOpen] = useState<{ code: string; label: string } | null>(null);
 
-  // Амжилттай болмогц цонхыг хаана
+  // Amjilttai bolmogts tsonhiig haana
   useEffect(() => {
     if (state?.ok) setOpen(null);
   }, [state]);

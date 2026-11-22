@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 
-// Хөгжүүлэлтийн үед hot reload бүрт шинэ холболт нээгдэхээс сэргийлнэ
+// Hugjuuleltiin ued hot reload burt shine holbolt neegdehees sergiilne
 const globalForPrisma = globalThis as unknown as { prisma?: ReturnType<typeof createClient> };
 
-// Хавсралтын агуулга (content) том тул жагсаалт, дэлгэрэнгүйд анхдагчаар уншихгүй.
-// Зөвхөн файл татах үед `omit: { content: false }`-ээр авна.
+// Hawsraltiin aguulga (content) tom tul jagsaalt, delgerenguid anhdagchaar unshihgui.
+// Zuwhun fail tatah ued `omit: { content: false }`-eer awna. Profailiin zurag (avatar)-iig mun adil.
 function createClient() {
-  return new PrismaClient({ omit: { attachment: { content: true } } });
+  return new PrismaClient({ omit: { attachment: { content: true }, user: { avatar: true } } });
 }
 
 export const prisma = globalForPrisma.prisma ?? createClient();

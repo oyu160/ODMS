@@ -1,4 +1,4 @@
-// Цахим гарын үсгийн тест (lib/signature-core.ts): түлхүүр шифрлэлт, зурах, өөрчлөлт илрүүлэх
+// Tsahim gariin usgiin test (lib/signature-core.ts): tulhuur shifrlelt, zurah, uurchlult ilruuleh
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, sign, verify, createHash } from "crypto";

@@ -1,9 +1,9 @@
-// Цахим гарын үсэг (байгууллагын дотоод): Ed25519 + SHA-256
-// - Хэрэглэгч бүр өөрийн түлхүүрийн хостой. Хувийн түлхүүрийг нууц үгээс scrypt-ээр гаргасан
-//   түлхүүрээр AES-256-GCM шифрлэж хадгалдаг тул нууц үгийг дахин оруулахгүйгээр зурах боломжгүй.
-// - Баталсан агуулгыг (гарчиг, агуулга, талбар, хавсралтын хэш, дугаар) каноник JSON болгож
-//   SHA-256 хэш гаргаад тэр хэшийг зурна. Дараа нь агуулга өөрчлөгдвөл шалгалт амжилтгүй болно.
-// - Энэ нь итгэмжлэгдсэн гэрчилгээний төв (CA)-ийн гэрчилгээтэй хууль ёсны тоон гарын үсэг биш.
+// Tsahim gariin useg (baiguullagiin dotood): Ed25519 + SHA-256
+// - Hereglegch bur uuriin tulhuuriin hostoi. Huwiin tulhuuriig nuuts ugees scrypt-eer gargasan
+//   tulhuureer AES-256-GCM shifrlej hadgaldag tul nuuts ugiig dahin oruulahguigeer zurah bolomjgui.
+// - Batalsan aguulgiig (garchig, aguulga, talbar, hawsraltiin hesh, dugaar) kanonik JSON bolgoj
+//   SHA-256 hesh gargaad ter heshiig zurna. Daraa ni aguulga uurchlugdwul shalgalt amjiltgui bolno.
+// - Ene ni itgemjlegdsen gerchilgeenii tuw (CA)-iin gerchilgeetei huuli yosnii toon gariin useg bish.
 import "server-only";
 import { generateKeyPairSync, sign, verify } from "crypto";
 import bcrypt from "bcryptjs";
@@ -28,9 +28,9 @@ async function createKey(db: Db, userId: string, password: string) {
 }
 
 /**
- * Нууц үгийг шалгаад хэрэглэгчийн хувийн түлхүүрийг нээнэ. Түлхүүр байхгүй бол шинээр үүсгэнэ.
- * Нууц үг солигдсон (админ сэргээсэн) бол хуучин түлхүүрийг хүчингүй болгож шинийг үүсгэнэ —
- * хуучин гарын үсгүүд хадгалсан нийтийн түлхүүрээрээ шалгагдсаар байна.
+ * Nuuts ugiig shalgaad hereglegchiin huwiin tulhuuriig neene. Tulhuur baihgui bol shineer uusgene.
+ * Nuuts ug soligdson (admin sergeesen) bol huuchin tulhuuriig huchingui bolgoj shiniig uusgene —
+ * huuchin gariin usguud hadgalsan niitiin tulhuureeree shalgagdsaar baina.
  */
 export async function unlockSigningKey(db: Db, userId: string, password: string | undefined) {
   if (!password) throw new SignatureError("Цахим гарын үсэг зурахын тулд нууц үгээ оруулна уу");
@@ -48,9 +48,9 @@ export async function unlockSigningKey(db: Db, userId: string, password: string 
   return createKey(db, userId, password);
 }
 
-/* ---------- Агуулгын хэш ---------- */
+/* ---------- Aguulgiin hesh ---------- */
 
-/** Баримтын батлагдсан агуулгыг тогтмол дараалалтай JSON болгоно */
+/** Barimtiin batlagdsan aguulgiig togtmol daraalaltai JSON bolgono */
 export async function canonicalContent(db: Db, documentId: string, documentNumber?: string | null) {
   const d = await db.document.findUniqueOrThrow({
     where: { id: documentId },
@@ -59,7 +59,7 @@ export async function canonicalContent(db: Db, documentId: string, documentNumbe
   return canonicalJson({ ...d, documentNumber: documentNumber !== undefined ? documentNumber : d.documentNumber });
 }
 
-/** Батлах үед transaction дотор дуудагдана */
+/** Batlah ued transaction dotor duudagdana */
 export async function signDocument(db: Db, opts: { documentId: string; userId: string; password?: string; documentNumber: string | null }) {
   const { row, privateKey } = await unlockSigningKey(db, opts.userId, opts.password);
   const hash = sha256(await canonicalContent(db, opts.documentId, opts.documentNumber));
@@ -89,7 +89,7 @@ export type SignatureCheck = {
   message: string;
 };
 
-/** Баримтын бүх цахим гарын үсгийг шалгана: (1) агуулга өөрчлөгдөөгүй эсэх, (2) гарын үсэг жинхэнэ эсэх */
+/** Barimtiin buh tsahim gariin usgiig shalgana: (1) aguulga uurchlugduugui eseh, (2) gariin useg jinhene eseh */
 export async function verifyDocumentSignatures(documentId: string): Promise<SignatureCheck[]> {
   const list = await prisma.signature.findMany({
     where: { documentId, method: "DIGITAL" },

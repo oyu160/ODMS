@@ -41,7 +41,7 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  // «Миний хийх ажил»: одоо энэ хэрэглэгчийн үйлдэл хүлээж буй зүйлс
+  // «Minii hiih ajil»: odoo ene hereglegchiin uildel huleej bui zuils
   const rec = can(user, "document.register");
   const [myActive, myOverdue, myReturned, myDraft, toRegister, toAssign, toArchive] = await Promise.all([
     prisma.assignment.count({ where: { status: "ACTIVE", OR: [{ assigneeUserId: user.id }, { assigneeDepartmentId: user.departmentId }] } }),
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
     rec ? prisma.document.count({ where: { isDeleted: false, status: { code: "REGISTERED" } } }) : 0,
     can(user, "document.archive") ? prisma.document.count({ where: { isDeleted: false, status: { code: "RESOLVED" } } }) : 0,
   ]);
-  // «Миний хийх ажил»: төлөвийн өнгөтэй, хэтэрсэн ажил улаанаар тодорно
+  // «Minii hiih ajil»: tuluwiin ungutei, hetersen ajil ulaanaar todorno
   const todo = [
     { n: myReviews, title: "Хянах", label: "таны хяналт хүлээж буй баримт", action: "Хянах", href: "/reviews", tone: "review" },
     { n: myOverdue, title: "Хугацаа хэтэрсэн", label: "танд хуваарилагдсан", action: "Шийдвэрлэх", href: "/assignments?tab=mine&due=overdue", tone: "danger" },

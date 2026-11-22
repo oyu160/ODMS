@@ -1,4 +1,4 @@
-// Тайланг Excel болгон татах
+// Tailang Excel bolgon tatah
 import ExcelJS from "exceljs";
 import { getCurrentUser, can } from "@/lib/auth";
 import { findReport, periodLabel } from "@/lib/reports";
@@ -10,7 +10,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   if (!user) return new Response("Нэвтрээгүй байна", { status: 401 });
   const report = findReport((await params).key);
   if (!report) return new Response("Тайлан олдсонгүй", { status: 404 });
-  if (!can(user, report.permission)) return new Response("Энэ тайланг харах эрхгүй байна", { status: 403 }); // ФБШ-02
+  if (!can(user, report.permission)) return new Response("Энэ тайланг харах эрхгүй байна", { status: 403 }); // FBSh-02
 
   const sp = new URL(req.url).searchParams;
   const p = { from: sp.get("from") || undefined, to: sp.get("to") || undefined, department: sp.get("department") || undefined };

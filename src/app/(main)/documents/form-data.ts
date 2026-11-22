@@ -1,4 +1,4 @@
-// Маягтад шаардлагатай өгөгдлийг нэг дор ачаална (шинэ болон засах хуудас)
+// Mayagtad shaardlagatai ugugdliig neg dor achaalna (shine bolon zasah huudas)
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { documentScope } from "@/lib/access";
@@ -19,13 +19,13 @@ export async function loadFormData(user: CurrentUser, typeId: string) {
       include: { employee: { include: { department: true } }, roles: { include: { role: true } } },
     }),
     prisma.document.findMany({
-      // Зөвхөн хэрэглэгчийн харах эрхтэй баримт (нууцлалын түвшин хамаарна)
+      // Zuwhun hereglegchiin harah erhtei barimt (nuutslaliin tuwshin hamaarna)
       where: { AND: [documentScope(user), { documentNumber: { not: null } }] },
       orderBy: { createdAt: "desc" },
       take: 200,
       select: { id: true, documentNumber: true, title: true },
     }),
-    // Энэ төрөлд хамаарах идэвхтэй чиглүүлэх дүрмүүд (маягт дээр автомат хянагчийг урьдчилан харуулна)
+    // Ene turuld hamaarah idewhtei chigluuleh durmuud (mayagt deer awtomat hyanagchiig uridchilan haruulna)
     prisma.routingRule.findMany({
       where: { isActive: true, OR: [{ documentTypeId: null }, { documentTypeId: typeId }], reviewerId: { not: user.id } },
       orderBy: { priority: "asc" },

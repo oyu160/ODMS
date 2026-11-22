@@ -7,7 +7,7 @@ import { Toast, Spinner } from "@/components/feedback";
 
 export type EditField = { id: string; label: string; dataType: string; value: string; options: string[] };
 
-/** Хянагч баримтыг үүсгэгч рүү буцаалгүйгээр жижиг засвар оруулах хэсэг */
+/** Hyanagch barimtiig uusgegch ruu butsaalguigeer jijig zaswar oruulah heseg */
 export function ReviewerEdit({ documentId, title, summary, fields }: { documentId: string; title: string; summary: string; fields: EditField[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(reviewerEdit, undefined);
   const [open, setOpen] = useState(false);

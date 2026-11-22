@@ -1,4 +1,4 @@
-// Мета өгөгдлөөр автоматаар чиглүүлэх дүрмийн тест (lib/routing.ts)
+// Meta ugugdluur awtomataar chigluuleh durmiin test (lib/routing.ts)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { pickRule, ruleMatches, type RuleLike, type DocMeta } from "../src/lib/routing";
