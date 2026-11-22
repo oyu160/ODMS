@@ -46,7 +46,7 @@ const PERMISSIONS: [string, string][] = [
 ];
 
 const ROLES: { code: string; name: string; perms: string[] }[] = [
-  { code: "ADMIN", name: "Администратор", perms: ["settings.manage", "user.manage", "audit.view", "report.view", "document.view_all"] },
+  { code: "ADMIN", name: "Админ", perms: ["settings.manage", "user.manage", "audit.view", "report.view", "document.view_all"] },
   {
     code: "RECORDS_OFFICER",
     name: "Баримт бичгийн ажилтан",
@@ -103,7 +103,7 @@ const DEPARTMENTS: [string, string][] = [
 
 // [kod, owog, ner, alban tushaal, negj, newtreh ner | null, uureg]
 const PEOPLE: [string, string, string, string, string, string | null, string][] = [
-  ["E001", "Төмөр", "Ганбат", "Системийн администратор", "IT", "admin", "ADMIN"],
+  ["E001", "Төмөр", "Ганбат", "Системийн админ", "IT", "admin", "ADMIN"],
   ["E002", "Нямдорж", "Номин", "Архив, бичиг хэргийн ажилтан", "ADM", "records", "RECORDS_OFFICER"],
   ["E003", "Сүхбаатар", "Энхтуяа", "Захиргааны хэлтсийн дарга", "ADM", "manager", "MANAGER"],
   ["E004", "Батсүх", "Бат-Эрдэнэ", "Хүний нөөцийн мэргэжилтэн", "HR", "unit", "UNIT_STAFF"],

@@ -46,7 +46,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { error: `Нэвтрэх нэр эсвэл нууц үг буруу байна. Үлдсэн оролдлого: ${MAX_FAILED - failed}` };
   }
   if (!user.isActive || user.employee.employmentStatus !== "ACTIVE") {
-    return { error: "Таны эрх идэвхгүй байна. Администраторт хандана уу" };
+    return { error: "Таны эрх идэвхгүй байна. Админд хандана уу" };
   }
 
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: now, failedLoginCount: 0, lockedUntil: null } });

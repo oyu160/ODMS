@@ -226,7 +226,7 @@ export const REPORTS: ReportDef[] = [
     key: "audit",
     title: "Үйлдлийн бүртгэлийн тайлан",
     description: "Хэрэглэгч бүрийн системд хийсэн үйлдэл: нэвтрэлт, үүсгэх, батлах, хуваарилах г.м.",
-    audience: "Администратор",
+    audience: "Админ",
     permission: "audit.view",
     async run(_user, p) {
       const { from, to } = range(p);

@@ -42,7 +42,7 @@ export default function LoginPage() {
           <button disabled={pending} className="btn-primary w-full py-2.5">{pending ? "Нэвтэрч байна…" : "Нэвтрэх"}</button>
 
           <p className="flex items-center gap-2 text-xs text-slate-500">
-            <ShieldCheck size={14} /> Нууц үгээ мартсан бол администраторт хандана уу
+            <ShieldCheck size={14} /> Нууц үгээ мартсан бол админд хандана уу
           </p>
         </form>
       </section>
