@@ -1,3 +1,4 @@
+import { ORG_NAME } from "@/lib/org";
 import Link from "next/link";
 import { Search, Paperclip, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -134,7 +135,8 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
                 </dl>
                 <div className="mt-4 rounded-xl bg-slate-100 p-4">
                   <div className="rounded border border-slate-200 bg-white px-8 py-6 font-serif text-[13px] leading-relaxed">
-                    <p className="text-center font-bold uppercase">[Байгууллагын нэр]-ын {doc.documentType.name.toLowerCase()}</p>
+                    <p className="text-center font-bold uppercase">{ORG_NAME}</p>
+                    <p className="text-center font-bold uppercase">{doc.documentType.name}</p>
                     <p className="mt-3 text-center font-bold">{doc.title}</p>
                     <p className="mt-3 whitespace-pre-wrap">{doc.summary || "—"}</p>
                   </div>

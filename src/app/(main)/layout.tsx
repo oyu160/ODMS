@@ -4,6 +4,7 @@ import { Sidebar, type NavItem } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
 import { NavProgress } from "@/components/shell/nav-progress";
 import { Suspense } from "react";
+import { ORG_NAME, ORG_HELP } from "@/lib/org";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -18,6 +19,13 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   if (can(user, "document.archive") || can(user, "document.view_all")) main.push({ href: "/archive", label: "Архив", icon: "Archive" });
   if (can(user, "report.view")) main.push({ href: "/reports", label: "Тайлан", icon: "BarChart3" });
 
+  // Ireh, yawsan, dotood bichgiin hawtas (albanii hereg hutlultiin unshlag butets)
+  const folders: NavItem[] = [
+    { href: "/documents?direction=INCOMING", label: "Ирсэн бичиг", icon: "Inbox", count: c.folders.incoming },
+    { href: "/documents?direction=OUTGOING", label: "Явсан бичиг", icon: "Send", count: c.folders.outgoing },
+    { href: "/documents?direction=INTERNAL", label: "Дотоод бичиг", icon: "FolderOpen", count: c.folders.internal },
+  ];
+
   const admin: NavItem[] = [];
   if (can(user, "settings.manage")) admin.push({ href: "/settings", label: "Баримтын тохиргоо", icon: "Settings" });
   if (can(user, "user.manage")) admin.push({ href: "/users", label: "Хэрэглэгч ба хэлтэс", icon: "Users" });
@@ -30,7 +38,9 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       <Suspense fallback={null}>
         <NavProgress />
       </Suspense>
-      <Sidebar main={main} admin={admin} />
+      <Suspense fallback={null}>
+        <Sidebar main={main} folders={folders} admin={admin} orgName={ORG_NAME} help={ORG_HELP} />
+      </Suspense>
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
           name={user.fullName}

@@ -3,10 +3,24 @@ import { Plus, Search, Download, Inbox, Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { buildOrderBy, buildWhere, readFilter, type DocFilter, type SortKey } from "@/lib/document-filters";
-import { DIRECTION_LABELS, fmtDate, shortName } from "@/lib/format";
+import { DIRECTION_LABELS, fmtDate, shortName, startOfToday, daysBetween } from "@/lib/format";
 import { PageHeader, StatusBadge, Pagination, EmptyRow, Tabs, SortTh, FilterChip, makeHref } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
+
+const FOLDER_TITLES: Record<string, string> = { INCOMING: "Ирсэн бичиг", OUTGOING: "Явсан бичиг", INTERNAL: "Дотоод бичиг" };
+
+/** Shiidwerleh hugatsaa: 3-aas tsoon honog uldsen bol shar, hetersen bol ulaan */
+function DueChip({ due }: { due?: Date | null }) {
+  if (!due) return null;
+  const left = daysBetween(startOfToday(), due);
+  const [text, cls] =
+    left < 0 ? [`${-left} хоног хэтэрсэн`, "bg-red-50 text-red-700 ring-red-200"]
+    : left === 0 ? ["Өнөөдөр дуусна", "bg-amber-50 text-amber-800 ring-amber-200"]
+    : left <= 3 ? [`${left} хоног үлдсэн`, "bg-amber-50 text-amber-800 ring-amber-200"]
+    : [`${left} хоног үлдсэн`, "bg-slate-50 text-slate-600 ring-slate-200"];
+  return <div className={`mt-1 inline-block whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${cls}`}>{text}</div>;
+}
 const PAGE_SIZE = 10;
 
 type SP = Promise<Record<string, string | undefined>>;
@@ -40,7 +54,11 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
       orderBy: buildOrderBy(f),
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: { status: true, documentType: true, createdBy: { include: { employee: true } }, attachments: { where: { isMain: true }, take: 1 } },
+      include: {
+        status: true, documentType: true, createdBy: { include: { employee: true } }, attachments: { where: { isMain: true }, take: 1 },
+        // Shiidwerleh hugatsaanii temdegt: idewhtei huwaarilaltiin hamgiin oir hugatsaa
+        assignments: { where: { status: "ACTIVE" }, orderBy: { dueDate: "asc" }, take: 1, select: { dueDate: true } },
+      },
     }),
     prisma.documentStatus.findMany({ orderBy: { displayOrder: "asc" } }),
     prisma.documentType.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
@@ -81,8 +99,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
   return (
     <div>
       <PageHeader
-        crumbs={[["Баримт бичиг"]]}
-        title="Баримт бичиг"
+        crumbs={f.direction ? [["Баримт бичиг", "/documents"], [FOLDER_TITLES[f.direction] ?? "Баримт бичиг"]] : [["Баримт бичиг"]]}
+        title={f.direction ? FOLDER_TITLES[f.direction] ?? "Баримт бичиг" : "Баримт бичиг"}
         subtitle="Таны харах эрхтэй бүх баримт. Нууцлалын түвшингээр шүүгдсэн."
         actions={
           <>
@@ -201,7 +219,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
                     <td className="td text-slate-600">{DIRECTION_LABELS[d.direction]}</td>
                     <td className="td text-slate-600"><div className="whitespace-nowrap">{shortName(d.createdBy.employee)}</div>{d.createdBy.employee.positionName && <div className="text-xs text-slate-400">{d.createdBy.employee.positionName}</div>}</td>
                     <td className="td whitespace-nowrap text-slate-600">{fmtDate(d.documentDate ?? d.createdAt)}</td>
-                    <td className="td"><StatusBadge code={d.status.code} name={d.status.name} /></td>
+                    <td className="td"><StatusBadge code={d.status.code} name={d.status.name} /><DueChip due={d.assignments[0]?.dueDate} /></td>
                     <td className="td">
                       <div className="flex justify-end gap-1">
                         {editable && (

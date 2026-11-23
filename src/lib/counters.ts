@@ -16,5 +16,10 @@ export async function shellCounts(user: CurrentUser) {
     prisma.notification.count({ where: { userId: user.id, isRead: false } }),
     prisma.notification.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 6 }),
   ]);
-  return { reviews, assignments: can(user, "document.assign") ? overdue : mine, unread, notifications };
+  // Hawtas: tuhain hereglegchiin harah erhtei barimtiin too chigleleer (jagsaaltiin niit totoi tentsuu)
+  const scope = documentScope(user);
+  const [incoming, outgoing, internal] = await Promise.all(
+    (["INCOMING", "OUTGOING", "INTERNAL"] as const).map((direction) => prisma.document.count({ where: { AND: [scope, { direction }] } })),
+  );
+  return { reviews, assignments: can(user, "document.assign") ? overdue : mine, unread, notifications, folders: { incoming, outgoing, internal } };
 }

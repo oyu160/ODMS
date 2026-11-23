@@ -1,3 +1,4 @@
+import { ORG_NAME } from "@/lib/org";
 // Tailangiin hewleh (PDF) huwilbar — diplomiin Zurag 3.19-iin zagwaraar
 import { notFound } from "next/navigation";
 import { requireUser, can } from "@/lib/auth";
@@ -34,7 +35,7 @@ export default async function PrintReport({ searchParams }: { searchParams: SP }
       <div className="no-print mx-auto mb-4 flex max-w-[297mm] justify-end"><PrintButton /></div>
       <div className="mx-auto max-w-[297mm] bg-white px-14 py-12 font-serif text-[13px] text-slate-900 shadow print:shadow-none">
         <div className="flex justify-between">
-          <b className="text-[15px]">[БАЙГУУЛЛАГЫН НЭР]</b>
+          <b className="text-[15px] uppercase">{ORG_NAME}</b>
           <span>Баримт бичгийн удирдлагын систем</span>
         </div>
         <h1 className="mt-6 text-center text-xl font-bold uppercase">{report.title}</h1>

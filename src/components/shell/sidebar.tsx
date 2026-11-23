@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { LayoutGrid, FileText, CircleCheck, UserPlus, Archive, BarChart3, Settings, Users, Lock, Clock, FileStack, X } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { LayoutGrid, FileText, CircleCheck, UserPlus, Archive, BarChart3, Settings, Users, Lock, Clock, Inbox, Send, FolderOpen, X } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 /** Jijig delgetsed (utas, tablet) tsesiig neeh/haah — Topbar-iin tsesnii towch ene uil yawdliig duudna */
 export const SIDEBAR_TOGGLE = "dms:sidebar-toggle";
 
-const ICONS = { LayoutGrid, FileText, CircleCheck, UserPlus, Archive, BarChart3, Settings, Users, Lock, Clock };
-export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; badge?: number; danger?: boolean };
+const ICONS = { LayoutGrid, FileText, CircleCheck, UserPlus, Archive, BarChart3, Settings, Users, Lock, Clock, Inbox, Send, FolderOpen };
+export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; badge?: number; danger?: boolean; count?: number };
 
-export function Sidebar({ main, admin }: { main: NavItem[]; admin: NavItem[] }) {
+export function Sidebar({ main, folders, admin, orgName, help }: { main: NavItem[]; folders: NavItem[]; admin: NavItem[]; orgName: string; help: string }) {
   const path = usePathname();
+  const sp = useSearchParams();
+  const dir = sp.get("direction");
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [path]);
   useEffect(() => {
@@ -25,7 +28,13 @@ export function Sidebar({ main, admin }: { main: NavItem[]; admin: NavItem[] }) 
       document.removeEventListener("keydown", onKey);
     };
   }, []);
-  const isActive = (href: string) => path === href || (href !== "/dashboard" && path.startsWith(href + "/")) || path === href;
+  const isActive = (href: string) => {
+    // Hawtas: /documents?direction=X — chiglel taarsan ued idewhtei
+    const [p, q] = href.split("?");
+    if (q) return path === p && dir === new URLSearchParams(q).get("direction");
+    if (href === "/documents" && dir) return false;
+    return path === href || (href !== "/dashboard" && path.startsWith(href + "/"));
+  };
 
   const render = (items: NavItem[]) =>
     items.map((it) => {
@@ -40,6 +49,7 @@ export function Sidebar({ main, admin }: { main: NavItem[]; admin: NavItem[] }) 
         >
           <Icon size={18} strokeWidth={1.8} />
           <span className="flex-1 leading-tight">{it.label}</span>
+          {it.count !== undefined && !it.badge && <span className="text-xs tabular-nums text-slate-400">{it.count}</span>}
           {!!it.badge && (
             <span className={`rounded-full px-2 py-0.5 text-xs font-bold text-white ${it.danger ? "bg-red-600" : "bg-navy-800"}`}>{it.badge}</span>
           )}
@@ -56,25 +66,25 @@ export function Sidebar({ main, admin }: { main: NavItem[]; admin: NavItem[] }) 
     >
       <button type="button" onClick={() => setOpen(false)} className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 lg:hidden" aria-label="Цэс хаах"><X size={18} /></button>
       <Link href="/dashboard" className="mb-8 flex items-start gap-3 px-1">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy-800 text-white">
-          <FileStack size={20} />
-        </span>
+        <Logo size={44} />
         <span>
           <span className="block text-[15px] font-bold leading-snug text-slate-900">Баримт бичгийн удирдлагын систем</span>
-          <span className="text-xs text-slate-500">[Байгууллагын нэр]</span>
+          <span className="text-xs text-slate-500">{orgName}</span>
         </span>
       </Link>
 
       <nav className="flex-1 space-y-1 overflow-y-auto">
         {main.length > 0 && <div className="px-3 pb-2 text-xs font-semibold tracking-wider text-slate-400">ҮНДСЭН</div>}
         {render(main)}
+        {folders.length > 0 && <div className="px-3 pb-2 pt-6 text-xs font-semibold tracking-wider text-slate-400">ХАВТАС</div>}
+        {render(folders)}
         {admin.length > 0 && <div className="px-3 pb-2 pt-6 text-xs font-semibold tracking-wider text-slate-400">ТОХИРГОО</div>}
         {render(admin)}
       </nav>
 
       <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
         <div className="font-semibold text-slate-900">Тусламж хэрэгтэй юу?</div>
-        <div className="mt-1 text-xs leading-relaxed text-slate-500">Мэдээллийн технологийн хэлтэс<br />Дотоод утас: [дугаар]</div>
+        <div className="mt-1 text-xs leading-relaxed text-slate-500">{help}</div>
       </div>
     </aside>
     </>

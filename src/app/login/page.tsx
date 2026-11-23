@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { FileStack, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/logo";
+import { ORG_NAME } from "@/lib/org";
 import { login } from "./actions";
 
 export default function LoginPage() {
@@ -11,8 +13,8 @@ export default function LoginPage() {
     <main className="grid min-h-screen lg:grid-cols-2">
       <section className="hidden flex-col justify-between bg-navy-800 p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10"><FileStack size={22} /></span>
-          <span className="text-sm text-white/70">[Байгууллагын нэр]</span>
+          <Logo size={44} tone="light" />
+          <span className="text-sm font-medium text-white/80">{ORG_NAME}</span>
         </div>
         <div>
           <h1 className="text-4xl font-bold leading-tight">Баримт бичгийн<br />удирдлагын систем</h1>

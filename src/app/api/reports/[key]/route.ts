@@ -1,3 +1,4 @@
+import { ORG_NAME } from "@/lib/org";
 // Tailang Excel bolgon tatah
 import ExcelJS from "exceljs";
 import { getCurrentUser, can } from "@/lib/auth";
@@ -18,7 +19,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(report.title.slice(0, 31));
-  ws.addRow(["[Байгууллагын нэр]"]).font = { bold: true };
+  ws.addRow([ORG_NAME]).font = { bold: true };
   ws.addRow([report.title]).font = { bold: true, size: 14 };
   ws.addRow([`Хамрах хугацаа: ${periodLabel(p)}`]);
   ws.addRow([`Гаргасан: ${user.fullName} · ${fmtDateTime(new Date())}`]);

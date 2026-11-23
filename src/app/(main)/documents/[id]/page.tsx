@@ -1,3 +1,4 @@
+import { ORG_NAME } from "@/lib/org";
 import Link from "next/link";
 import { notFound, forbidden } from "next/navigation";
 import { Download, Pencil, File as FileIcon, ShieldCheck, ShieldAlert, X } from "lucide-react";
@@ -193,7 +194,8 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
                 </dl>
                 <div className="mt-5 rounded-xl bg-slate-100 p-4">
                   <div className="rounded border border-slate-200 bg-white px-8 py-7 font-serif text-[13px] leading-relaxed text-slate-800">
-                    <p className="text-center font-bold uppercase">[Байгууллагын нэр]-ын {doc.documentType.name.toLowerCase()}</p>
+                    <p className="text-center font-bold uppercase">{ORG_NAME}</p>
+                    <p className="text-center font-bold uppercase">{doc.documentType.name}</p>
                     <div className="mt-3 flex justify-between text-xs">
                       <span>{fmtDate(doc.documentDate)}</span>
                       <span>Дугаар {doc.documentNumber ?? <i className="text-slate-400">[батлагдсаны дараа]</i>}</span>
