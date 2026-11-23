@@ -85,7 +85,7 @@ export type SignatureCheck = {
   signerName: string;
   signedAt: Date;
   fingerprint: string | null;
-  status: "VALID" | "TAMPERED" | "INVALID";
+  status: "VALID" | "TAMPERED" | "INVALID" | "REVOKED";
   message: string;
 };
 
@@ -97,6 +97,8 @@ export async function verifyDocumentSignatures(documentId: string): Promise<Sign
     orderBy: { signedAt: "asc" },
   });
   if (!list.length) return [];
+  // Batlamj tsutslagdsnaas umnu zursan gariin useg huchingui (ustgahgui, tuuhend uldene)
+  const lastRevoke = await prisma.auditLog.findFirst({ where: { documentId, action: "REVOKE" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } });
   const currentHash = sha256(await canonicalContent(prisma, documentId));
   return list.map((s) => {
     const signerName = `${s.signedBy.employee.lastName.charAt(0)}.${s.signedBy.employee.firstName}`;
@@ -108,6 +110,7 @@ export async function verifyDocumentSignatures(documentId: string): Promise<Sign
     } catch {
       authentic = false;
     }
+    if (lastRevoke && s.signedAt <= lastRevoke.createdAt) return { ...base, status: "REVOKED", message: "Батламж цуцлагдсан тул энэ гарын үсэг хүчингүй" } as const;
     if (!authentic) return { ...base, status: "INVALID", message: "Гарын үсэг нийтийн түлхүүртэй таарахгүй байна" } as const;
     if (s.contentHash !== currentHash) return { ...base, status: "TAMPERED", message: "Гарын үсэг зурсны дараа баримтын агуулга өөрчлөгдсөн байна" } as const;
     return { ...base, status: "VALID", message: "Агуулга өөрчлөгдөөгүй, гарын үсэг жинхэнэ" } as const;

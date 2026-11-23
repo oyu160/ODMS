@@ -101,7 +101,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
         <div className="grid gap-5 xl:grid-cols-[340px_1fr]">
           <div className="space-y-3">
             <form className="relative">
-              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input name="q" defaultValue={q} placeholder="Дугаар, гарчгаар хайх…" className="input pl-9" />
             </form>
             {pending.map((a) => {
@@ -117,7 +117,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
               );
             })}
             {pending.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">Хянах баримт алга</p>}
-            <p className="text-xs text-slate-400">Таны өөрийн үүсгэсэн баримт энэ жагсаалтад орохгүй.</p>
+            <p className="text-xs text-slate-500">Таны өөрийн үүсгэсэн баримт энэ жагсаалтад орохгүй.</p>
           </div>
 
           {doc ? (
@@ -134,7 +134,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: SP }
                   )}
                 </dl>
                 <div className="mt-4 rounded-xl bg-slate-100 p-4">
-                  <div className="rounded border border-slate-200 bg-white px-8 py-6 font-serif text-[13px] leading-relaxed">
+                  <div className="rounded border border-slate-200 bg-white px-8 py-6 font-serif text-sm leading-relaxed">
                     <p className="text-center font-bold uppercase">{ORG_NAME}</p>
                     <p className="text-center font-bold uppercase">{doc.documentType.name}</p>
                     <p className="mt-3 text-center font-bold">{doc.title}</p>

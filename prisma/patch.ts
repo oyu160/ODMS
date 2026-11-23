@@ -11,9 +11,7 @@ const TRANSITIONS: [string, string, string, string, string][] = [
 ];
 
 async function main() {
-  // Batlagdsan → Zaswart (revoke) shiljiltiig hasna (Zurag 2.3-t baihgui)
-  const removed = await prisma.statusTransition.deleteMany({ where: { actionCode: "revoke" } });
-  if (removed.count) console.log(`- Батлалтыг цуцлах шилжилт хасагдлаа (${removed.count})`);
+  // Batlagdsan → Zaswart (revoke) shiljiltiig migration 20261123100000 nemne (batalsan hun burtgegdehees umnu)
 
   for (const [from, to, action, permCode, label] of TRANSITIONS) {
     const [f, t, perm] = await Promise.all([

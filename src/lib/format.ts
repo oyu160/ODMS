@@ -73,6 +73,10 @@ export function fileSize(bytes: number | bigint) {
 /** Auditiin bichlegiin newValue (JSON)-iin tulhuuriin ner */
 const AUDIT_KEY_LABELS: Record<string, string> = {
   comment: "Тайлбар",
+  recipient: "Хүлээн авагч",
+  method: "Хэлбэр",
+  sentAt: "Илгээсэн огноо",
+  receiptRef: "Хүлээн авсан",
   routing: "Чиглүүлэлт",
   number: "Дугаар",
   signature: "Гарын үсэг",

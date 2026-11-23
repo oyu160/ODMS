@@ -185,7 +185,7 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
         </div>
         <Pagination page={page} pages={pages} total={total} from={(page - 1) * PAGE_SIZE + 1} to={Math.min(total, page * PAGE_SIZE)} href={href} />
       </div>
-      <p className="mt-3 text-xs text-slate-400">Хугацаа хэтэрсэн нь эхэндээ эрэмбэлэгдэнэ</p>
+      <p className="mt-3 text-xs text-slate-500">Хугацаа хэтэрсэн нь эхэндээ эрэмбэлэгдэнэ</p>
     </div>
   );
 }

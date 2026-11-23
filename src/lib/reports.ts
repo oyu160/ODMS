@@ -5,6 +5,7 @@ import { prisma } from "./prisma";
 import { can, type CurrentUser } from "./auth";
 import { documentScope } from "./access";
 import { fmtDate, shortName, startOfToday, daysBetween, TZ } from "./format";
+import { SEND_METHODS } from "./workflow";
 
 export type ReportParams = { from?: string; to?: string; department?: string };
 export type ReportResult = { columns: string[]; rows: (string | number)[][]; footer?: (string | number)[]; note?: string };
@@ -78,25 +79,28 @@ export const REPORTS: ReportDef[] = [
   {
     key: "outgoing",
     title: "Явсан бичгийн бүртгэл",
-    description: "Явуулсан огноо, дугаар, хүлээн авагч, гарчиг, гарын үсэг зурсан албан тушаалтан",
+    description: "Илгээсэн огноо, дугаар, хүлээн авагч, гарчиг, илгээсэн хэлбэр, гарын үсэг зурсан албан тушаалтан",
     audience: "Баримт бичгийн ажилтан",
     permission: "document.register",
     async run(user, p) {
       const { from, to } = range(p);
       const docs = await prisma.document.findMany({
         where: { AND: [documentScope(user), { direction: "OUTGOING", documentNumber: { not: null }, approvedAt: { gte: from, lte: to } }] },
-        include: { fieldValues: { include: { field: true } }, approvals: { where: { decision: "APPROVED" }, include: { reviewer: { include: { employee: true } } } } },
+        include: { dispatch: true, fieldValues: { include: { field: true } }, approvals: { where: { decision: "APPROVED" }, include: { reviewer: { include: { employee: true } } } } },
         orderBy: { approvedAt: "asc" },
       });
+      // Ilgeelt burtgegdeegui bichig «Ilgeegeegui» gej haragdana — hyanaltiin zoriulalttai
       const rows = docs.map((d, i) => [
         i + 1,
-        fmtDate(d.registeredAt ?? d.approvedAt),
+        d.dispatch ? fmtDate(d.dispatch.sentAt) : "Илгээгээгүй",
         d.documentNumber ?? "",
-        d.fieldValues.find((v) => v.field.name === "recipient_org")?.valueText ?? "—",
+        d.dispatch?.recipient ?? d.fieldValues.find((v) => v.field.name === "recipient_org")?.valueText ?? "—",
         d.title,
+        d.dispatch ? SEND_METHODS[d.dispatch.method] ?? d.dispatch.method : "—",
         name(d.approvals[0]?.reviewer.employee),
       ]);
-      return { columns: ["№", "Явуулсан огноо", "Дугаар", "Хүлээн авагч", "Гарчиг", "Гарын үсэг зурсан"], rows, footer: ["", `Нийт: ${rows.length}`, "", "", "", ""] };
+      const sent = docs.filter((d) => d.dispatch).length;
+      return { columns: ["№", "Илгээсэн огноо", "Дугаар", "Хүлээн авагч", "Гарчиг", "Хэлбэр", "Гарын үсэг зурсан"], rows, footer: ["", `Нийт: ${rows.length}`, "", `Илгээсэн: ${sent}`, "", "", ""] };
     },
   },
   {

@@ -15,6 +15,14 @@ type Db = Tx | typeof prisma;
 
 export class WorkflowError extends Error {}
 
+/** Yawsan bichgiin ilgeeh helber */
+export const SEND_METHODS: Record<string, string> = {
+  HAND: "Биечлэн гардуулсан",
+  POST: "Шуудангаар",
+  EMAIL: "Имэйлээр",
+  EDOC: "Цахим баримт солилцооны системээр",
+};
+
 export const ACTION_LABELS: Record<string, string> = {
   submit: "Хяналтад илгээх",
   resubmit: "Засаад дахин илгээх",
@@ -22,11 +30,13 @@ export const ACTION_LABELS: Record<string, string> = {
   return: "Засварт буцаах",
   register: "Бүртгэх",
   register_incoming: "Ирсэн бичгийг бүртгэх",
+  send: "Илгээсэн гэж бүртгэх",
   assign: "Хуваарилах",
   reassign: "Дахин хуваарилах",
   resolve: "Шийдвэрлэх",
   archive: "Архивлах",
   cancel: "Цуцлах",
+  revoke: "Батламжийг цуцлах",
   forward: "Дараагийн хянагч руу шилжүүлэх",
 };
 
@@ -41,11 +51,13 @@ export const AUDIT_LABELS: Record<string, string> = {
   RETURN: "Засварт буцаасан",
   REGISTER: "Бүртгэсэн",
   REGISTER_INCOMING: "Ирсэн бичгийг бүртгэсэн",
+  SEND: "Хүлээн авагч руу илгээсэн",
   ASSIGN: "Хуваарилсан",
   REASSIGN: "Дахин хуваарилсан",
   RESOLVE: "Шийдвэрлэсэн",
   ARCHIVE: "Архивласан",
   CANCEL: "Цуцалсан",
+  REVOKE: "Батламжийг цуцалсан",
   FORWARD: "Дараагийн хянагч руу шилжүүлсэн",
   REMIND: "Сануулга илгээсэн",
   DOWNLOAD: "Файл татсан",
@@ -92,8 +104,23 @@ export async function ruleViolation(db: Db, user: CurrentUser, doc: DocLite, act
       const pending = await db.approval.findFirst({ where: { documentId: doc.id, reviewerId: user.id, decision: "PENDING" } });
       return pending ? null : "Энэ баримт танд хяналтаар ирээгүй байна";
     }
+    // Batlamj tsutslah: zuwhun batalsan hun, burtgegdehees umnu (APPROVED tuluwt)
+    case "revoke": {
+      const approved = await db.approval.findFirst({ where: { documentId: doc.id, decision: "APPROVED" }, orderBy: { decidedAt: "desc" } });
+      return approved?.reviewerId === user.id ? null : "Зөвхөн баримтыг баталсан хүн батламжийг цуцална";
+    }
     case "register_incoming":
       return doc.direction === "INCOMING" ? null : "Зөвхөн ирсэн бичигт хамаарна";
+    // Yawsan bichig dotood hariutsagchid huwaarilagdahgui: burtgesnii daraa huleen awagch ruu ilgeegdene
+    case "send":
+      return doc.direction === "OUTGOING" ? null : "Зөвхөн явсан бичгийг илгээнэ";
+    case "assign":
+      return doc.direction === "OUTGOING" ? "Явсан бичгийг хуваарилахгүй, хүлээн авагч руу илгээнэ" : null;
+    case "archive": {
+      if (doc.direction !== "OUTGOING") return null;
+      const st = await db.documentStatus.findUnique({ where: { id: doc.statusId }, select: { code: true } });
+      return st?.code === "REGISTERED" ? "Явсан бичгийг эхлээд илгээж бүртгэнэ" : null;
+    }
     case "resolve":
       return (await isAssignee(db, user, doc.id)) ? null : "Зөвхөн хариуцагч шийдвэрлэнэ";
     default:
@@ -140,6 +167,11 @@ export type ActionInput = {
   disposalAction?: string;
   /** Batlah ued tsahim gariin useg zurahad nuuts ugiig dahin oruulna */
   password?: string;
+  /** Yawsan bichgiin ilgeelt */
+  sentAt?: string;
+  sendMethod?: string;
+  recipient?: string;
+  receiptRef?: string;
 };
 
 async function notifyDepartment(tx: Tx, departmentId: string, documentId: string, type: string, message: string) {
@@ -286,6 +318,23 @@ export async function performAction(user: CurrentUser, documentId: string, actio
         auditValue = { number: num };
         break;
       }
+      case "send": {
+        const recipient = input.recipient?.trim();
+        if (!recipient) throw new WorkflowError("Хүлээн авагчийг оруулна уу");
+        if (!input.sendMethod || !SEND_METHODS[input.sendMethod]) throw new WorkflowError("Илгээсэн хэлбэрийг сонгоно уу");
+        const sentAt = new Date(input.sentAt ?? "");
+        if (!input.sentAt || Number.isNaN(sentAt.getTime())) throw new WorkflowError("Илгээсэн огноог оруулна уу");
+        if (sentAt.getTime() > now.getTime()) throw new WorkflowError("Илгээсэн огноо ирээдүйд байж болохгүй");
+        if (doc.registeredAt && sentAt.getTime() < Date.UTC(doc.registeredAt.getUTCFullYear(), doc.registeredAt.getUTCMonth(), doc.registeredAt.getUTCDate()))
+          throw new WorkflowError("Илгээсэн огноо бүртгэсэн огнооноос өмнө байж болохгүй");
+        const receiptRef = input.receiptRef?.trim() || null;
+        await tx.dispatch.create({ data: { documentId, sentById: user.id, sentAt, method: input.sendMethod, recipient, receiptRef, note: comment ?? null } });
+        await tx.notification.create({
+          data: { userId: doc.createdById, documentId, type: "SENT", message: `«${doc.title}» ${recipient}-д илгээгдлээ (${SEND_METHODS[input.sendMethod].toLowerCase()})` },
+        });
+        auditValue = { recipient, method: SEND_METHODS[input.sendMethod], sentAt: input.sentAt, ...(receiptRef ? { receiptRef } : {}), ...(comment ? { comment } : {}) };
+        break;
+      }
       case "assign":
       case "reassign": {
         const a = await readAssignee(tx, input);
@@ -323,6 +372,15 @@ export async function performAction(user: CurrentUser, documentId: string, actio
             disposalAction: input.disposalAction || "DESTROY",
             retentionUntil: until,
           },
+        });
+        break;
+      }
+      case "revoke": {
+        // Albn dugaar hadgalagdana (dahin batlahad mun dugaar), gariin useg ustgagdahgui — «tsutslagdsan» gej haragdana
+        if (!comment) throw new WorkflowError("Батламжийг цуцлах шалтгааныг бичнэ үү");
+        data.approvedAt = null;
+        await tx.notification.create({
+          data: { userId: doc.createdById, documentId, type: "RETURNED", message: `«${doc.title}» батламж цуцлагдаж засварт буцлаа: ${comment}` },
         });
         break;
       }

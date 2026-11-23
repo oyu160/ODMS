@@ -59,9 +59,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
                 <div key={c.id}>
                   <div className="mb-1 text-xs font-semibold tracking-wider text-slate-500">{c.name.toUpperCase()}</div>
                   {c.types.map((t) => (
-                    <Link key={t.id} href={`/settings?type=${t.id}`} className={`flex justify-between rounded-lg px-3 py-2 text-sm ${current?.id === t.id ? "bg-navy-50 font-semibold" : "hover:bg-slate-50"} ${t.isActive ? "" : "text-slate-400"}`}>
+                    <Link key={t.id} href={`/settings?type=${t.id}`} className={`flex justify-between rounded-lg px-3 py-2 text-sm ${current?.id === t.id ? "bg-navy-50 font-semibold" : "hover:bg-slate-50"} ${t.isActive ? "" : "text-slate-500"}`}>
                       <span>{t.name}</span>
-                      <span className="text-xs text-slate-400">{t._count.documents}{!t.isActive && " · идэвхгүй"}</span>
+                      <span className="text-xs text-slate-500">{t._count.documents}{!t.isActive && " · идэвхгүй"}</span>
                     </Link>
                   ))}
                 </div>
@@ -101,7 +101,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
                   <thead className="border-b border-slate-100"><tr><th className="th px-1">№</th><th className="th">Талбарын нэр</th><th className="th">Код</th><th className="th">Өгөгдлийн төрөл</th><th className="th">Заавал эсэх</th><th className="th">Төлөв</th><th className="th"></th></tr></thead>
                   <tbody className="divide-y divide-slate-100">
                     {current.fields.map((f, i) => (
-                      <tr key={f.id} className={f.isActive ? "" : "text-slate-400"}>
+                      <tr key={f.id} className={f.isActive ? "" : "text-slate-500"}>
                         <td className="px-1 py-3 text-sm">
                           <span className="flex items-center gap-1">
                             {i + 1}
@@ -190,7 +190,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
                   <input name="pattern" defaultValue={r?.pattern} placeholder="Ж/{YY}-{SEQ:3}" aria-label="Дугаарын хэлбэр" required className="input font-mono" />
                   <select name="resetPeriod" defaultValue={r?.resetPeriod ?? "YEARLY"} aria-label="Тоологч тэглэх" className="input"><option value="YEARLY">Жил бүр</option><option value="NEVER">Хэзээ ч</option></select>
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="perDepartment" defaultChecked={r?.perDepartment} className="h-4 w-4" /><span className="lg:sr-only">Нэгж бүрээр тусдаа</span></label>
-                  <span className="font-mono text-sm">{r ? formatNumber(r.pattern, { typeCode: "A", deptCode: "ADM", year: new Date().getFullYear(), seq: 7 }) : <span className="font-sans text-slate-400">Шинэ дүрэм</span>}</span>
+                  <span className="font-mono text-sm">{r ? formatNumber(r.pattern, { typeCode: "A", deptCode: "ADM", year: new Date().getFullYear(), seq: 7 }) : <span className="font-sans text-slate-500">Шинэ дүрэм</span>}</span>
                   <span className="truncate text-sm text-slate-600" title={r?.types.map((t) => t.name).join(", ")}>{r?.types.map((t) => t.name).join(", ")}</span>
                   <SubmitButton className={r ? "btn-outline py-1.5" : "btn-primary py-1.5"} pendingText="…">{r ? "Хадгалах" : "Нэмэх"}</SubmitButton>
                 </form>
@@ -308,7 +308,7 @@ async function Routing({ types }: { types: Opt[] }) {
                 <div className="text-sm font-semibold">{r.name} {!r.isActive && <Pill>идэвхгүй</Pill>}</div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {cond(r).map((c) => <span key={c} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{c}</span>)}
-                  <span className="text-xs text-slate-400">→</span>
+                  <span className="text-xs text-slate-500">→</span>
                   <span className="rounded-md bg-navy-800 px-2 py-0.5 text-xs font-semibold text-white">{shortName(r.reviewer.employee)}</span>
                 </div>
               </div>

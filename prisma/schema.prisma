@@ -79,6 +79,7 @@ model User {
   assignmentsAsAssignee Assignment[]     @relation("AssignmentAssignee")
   assignmentsAssigned   Assignment[]     @relation("AssignmentAssignedBy")
   archives            Archive[]          @relation("ArchiveArchivedBy")
+  dispatches          Dispatch[]         @relation("DispatchSentBy")
   disposedArchives    Archive[]          @relation("ArchiveDisposedBy")
   auditLogs           AuditLog[]
   notifications       Notification[]
@@ -292,6 +293,7 @@ model Document {
   signatures      Signature[]
   assignments     Assignment[]
   archive         Archive?
+  dispatch        Dispatch?
   auditLogs       AuditLog[]
   notifications   Notification[]
 
@@ -449,6 +451,24 @@ model Assignment {
   @@index([assigneeUserId, status])
   @@index([dueDate])
   @@map("assignments")
+}
+
+/// Yawsan bichgiin ilgeelt: hezee, yamar helbereer, hend hurgesen (neg barimtad neg ilgeelt)
+model Dispatch {
+  id         String   @id @default(uuid()) @map("dispatch_id") @db.Uuid
+  documentId String   @unique @map("document_id") @db.Uuid
+  sentById   String   @map("sent_by") @db.Uuid
+  sentAt     DateTime @map("sent_at") @db.Date
+  method     String   @map("send_method") @db.VarChar(20) // HAND | POST | EMAIL | EDOC
+  recipient  String   @map("recipient") @db.VarChar(255)
+  receiptRef String?  @map("receipt_ref") @db.VarChar(150) // huleen awsan hun eswel huleen awagchiin burtgeliin dugaar
+  note       String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sentBy   User     @relation("DispatchSentBy", fields: [sentById], references: [id])
+
+  @@map("document_dispatches")
 }
 
 /// Husnegt 3.26. Arhiw

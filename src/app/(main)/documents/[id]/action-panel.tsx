@@ -3,7 +3,7 @@
 // Uildliin towchnuud: towch darahad tuhain uildliin tsonh (modal) neegdej,
 // shaardlagatai medeellee bugluud undsen towchiig darna.
 import { useActionState, useEffect, useState } from "react";
-import { ShieldCheck, Send, Undo2, UserPlus, Archive, CircleCheck, Ban, Inbox, FileCheck } from "lucide-react";
+import { ShieldCheck, Send, Undo2, UserPlus, Archive, CircleCheck, Ban, Inbox, FileCheck, Mail } from "lucide-react";
 import { runAction, type ActionState } from "./actions";
 import { Toast, Spinner } from "@/components/feedback";
 import { Modal, ModalFooter } from "@/components/modal";
@@ -16,6 +16,8 @@ type Props = {
   users?: Option[];
   departments?: Option[];
   defaultArchiveCategory?: string;
+  /** Yawsan bichgiin huleen awagch (talbariin utgaas) — ilgeeh tsonhond urid buglunu */
+  defaultRecipient?: string;
   compact?: boolean;
   /** Meta ugugdliin durmeer awtomataar songogdoh hyanagch (baiwal «Awtomataar» songolt haragdana) */
   autoReviewer?: { name: string; rule: string } | null;
@@ -24,9 +26,9 @@ type Props = {
   documentLabel?: string;
 };
 
-const PRIMARY = ["approve", "submit", "resubmit", "register", "register_incoming", "assign", "resolve", "archive"];
-const DANGER = new Set(["cancel"]);
-const COMMENT_REQUIRED = new Set(["return", "resolve", "cancel"]);
+const PRIMARY = ["approve", "submit", "resubmit", "register", "register_incoming", "send", "assign", "resolve", "archive"];
+const DANGER = new Set(["cancel", "revoke"]);
+const COMMENT_REQUIRED = new Set(["return", "resolve", "cancel", "revoke"]);
 /** Tsonhnii undsen towchnii ner — yuu bolohiig shuud helne */
 const CONFIRM: Record<string, string> = {
   approve: "Батлах ба гарын үсэг зурах",
@@ -36,16 +38,18 @@ const CONFIRM: Record<string, string> = {
   forward: "Шилжүүлэх",
   register: "Бүртгэх",
   register_incoming: "Бүртгэж дугаар олгох",
+  send: "Илгээсэн гэж бүртгэх",
   assign: "Хуваарилах",
   reassign: "Дахин хуваарилах",
   resolve: "Шийдвэрлэсэн гэж тэмдэглэх",
   archive: "Архивлах",
   cancel: "Баримтыг цуцлах",
+  revoke: "Батламжийг цуцлах",
 };
 const ICON: Record<string, React.ReactNode> = {
   approve: <ShieldCheck size={20} />, submit: <Send size={20} />, resubmit: <Send size={20} />, return: <Undo2 size={20} />, forward: <UserPlus size={20} />,
-  register: <FileCheck size={20} />, register_incoming: <Inbox size={20} />, assign: <UserPlus size={20} />, reassign: <UserPlus size={20} />,
-  resolve: <CircleCheck size={20} />, archive: <Archive size={20} />, cancel: <Ban size={20} />,
+  register: <FileCheck size={20} />, register_incoming: <Inbox size={20} />, send: <Mail size={20} />, assign: <UserPlus size={20} />, reassign: <UserPlus size={20} />,
+  resolve: <CircleCheck size={20} />, archive: <Archive size={20} />, cancel: <Ban size={20} />, revoke: <Ban size={20} />,
 };
 
 const HINT: Record<string, string> = {
@@ -53,17 +57,19 @@ const HINT: Record<string, string> = {
   resubmit: "Зассан баримтыг хянагч руу дахин илгээнэ.",
   approve: "Батлахад систем албан ёсны дугаар олгож, таны цахим гарын үсгээр баталгаажуулна.",
   return: "Баримт үүсгэгч рүү буцаж, тэр засаад дахин илгээнэ. Шалтгааныг тодорхой бичнэ үү.",
-  register: "Батлагдсан баримтыг бүртгэлд авна. Дараа нь хариуцагчид хуваарилах эсвэл архивлана.",
+  register: "Батлагдсан баримтыг бүртгэлд авна. Дотоод баримтыг хариуцагчид хуваарилна, явсан бичгийг хүлээн авагч руу илгээнэ.",
+  send: "Явсан бичгийг хүлээн авагч руу хэзээ, ямар хэлбэрээр хүргэснийг бүртгэнэ. Дараа нь архивлана.",
   register_incoming: "Ирсэн бичгийг бүртгэж, И/… дугаар олгоно.",
   assign: "Нэг ажилтан эсвэл нэг нэгжид хугацаатай хуваарилна (БД-09).",
   reassign: "Хариуцагч шилжсэн, ажлаас гарсан үед шинэ хариуцагч томилно (БД-11).",
   resolve: "Шийдвэрлэсэн үр дүнгээ бичнэ. Хуваарилсан хүнд мэдэгдэл очно.",
   archive: "Баримтыг архивт шилжүүлж, хадгалах хугацааг автоматаар тооцно.",
   cancel: "Цуцалсан баримтыг сэргээх боломжгүй. Шалтгааныг заавал бичнэ (БД-04).",
+  revoke: "Бүртгэгдэхээс өмнө алдаа илэрвэл батламжаа цуцалж, баримтыг үүсгэгч рүү засварт буцаана. Албан ёсны дугаар хадгалагдаж, дахин батлахад мөн дугаар үлдэнэ. Таны гарын үсэг устахгүй, «цуцлагдсан» гэж тэмдэглэгдэнэ.",
   forward: "Олон шатлалт хяналт: таны шат хаагдаж, сонгосон хянагчид баримт очно. Тэр батлах, буцаах эсвэл дахин шилжүүлнэ.",
 };
 
-export function ActionPanel({ documentId, actions, reviewers = [], users = [], departments = [], defaultArchiveCategory, autoReviewer, signer, documentLabel }: Props) {
+export function ActionPanel({ documentId, actions, reviewers = [], users = [], departments = [], defaultArchiveCategory, defaultRecipient, autoReviewer, signer, documentLabel }: Props) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(runAction, undefined);
   const [open, setOpen] = useState<{ code: string; label: string } | null>(null);
 
@@ -72,6 +78,7 @@ export function ActionPanel({ documentId, actions, reviewers = [], users = [], d
     if (state?.ok) setOpen(null);
   }, [state]);
 
+  const todayIso = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
   const sorted = [...actions].sort((a, b) => Number(DANGER.has(a.code)) - Number(DANGER.has(b.code)) || Number(!PRIMARY.includes(a.code)) - Number(!PRIMARY.includes(b.code)));
 
@@ -159,6 +166,35 @@ export function ActionPanel({ documentId, actions, reviewers = [], users = [], d
                     <input id="act-due" type="date" name="dueDate" required defaultValue={in7} className="input" />
                   </div>
                 </div>
+              )}
+
+              {open.code === "send" && (
+                <>
+                  <div>
+                    <label className="label" htmlFor="act-recipient">Хүлээн авагч <span className="text-red-600">*</span></label>
+                    <input id="act-recipient" name="recipient" required defaultValue={defaultRecipient} className="input" />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-[1fr_170px]">
+                    <div>
+                      <label className="label" htmlFor="act-method">Илгээсэн хэлбэр <span className="text-red-600">*</span></label>
+                      <select id="act-method" name="sendMethod" required className="input" defaultValue="">
+                        <option value="" disabled>— Сонгох —</option>
+                        <option value="HAND">Биечлэн гардуулсан</option>
+                        <option value="POST">Шуудангаар</option>
+                        <option value="EMAIL">Имэйлээр</option>
+                        <option value="EDOC">Цахим баримт солилцооны системээр</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="act-sent">Илгээсэн огноо <span className="text-red-600">*</span></label>
+                      <input id="act-sent" type="date" name="sentAt" required defaultValue={todayIso} max={todayIso} className="input" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="label" htmlFor="act-receipt">Хүлээн авсан хүн эсвэл бүртгэлийн дугаар <span className="font-normal text-slate-500">(заавал биш)</span></label>
+                    <input id="act-receipt" name="receiptRef" placeholder="Жишээ: Б.Сараа, бичиг хэрэг / ирсэн №1/245" className="input" />
+                  </div>
+                </>
               )}
 
               {open.code === "archive" && (

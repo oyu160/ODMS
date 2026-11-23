@@ -63,6 +63,7 @@ const STATUSES: [string, string, boolean][] = [
   ["RETURNED", "Засварт буцаасан", false],
   ["APPROVED", "Батлагдсан", false],
   ["REGISTERED", "Бүртгэгдсэн", false],
+  ["SENT", "Илгээсэн", false],
   ["ASSIGNED", "Хуваарилагдсан", false],
   ["RESOLVED", "Шийдвэрлэгдсэн", false],
   ["ARCHIVED", "Архивлагдсан", true],
@@ -73,10 +74,13 @@ const TRANSITIONS: [string, string, string, string][] = [
   ["DRAFT", "IN_REVIEW", "submit", "document.submit"],
   ["DRAFT", "REGISTERED", "register_incoming", "document.register"],
   ["IN_REVIEW", "APPROVED", "approve", "document.approve"],
+  ["APPROVED", "RETURNED", "revoke", "document.approve"], // batalsan hun burtgegdehees umnu batlamjaa tsutslah
   ["IN_REVIEW", "RETURNED", "return", "document.review"],
   ["RETURNED", "IN_REVIEW", "resubmit", "document.submit"],
   ["APPROVED", "REGISTERED", "register", "document.register"],
   ["REGISTERED", "ASSIGNED", "assign", "document.assign"],
+  ["REGISTERED", "SENT", "send", "document.register"], // zuwhun yawsan bichig (ruleViolation)
+  ["SENT", "ARCHIVED", "archive", "document.archive"],
   ["ASSIGNED", "ASSIGNED", "reassign", "document.assign"],
   ["ASSIGNED", "RESOLVED", "resolve", "document.resolve"],
   ["REGISTERED", "ARCHIVED", "archive", "document.archive"],
@@ -248,6 +252,7 @@ const TYPES: TypeSeed[] = [
 ];
 
 const ORGS = ["Засгийн газрын Хэрэгжүүлэгч агентлаг", "Төрийн албаны зөвлөл", "Үндэсний аудитын газар", "Сангийн яам", "Татварын ерөнхий газар", "Нийслэлийн Засаг даргын тамгын газар", "Үндэсний статистикийн хороо", "Шилэн дансны газар", "Мэдээлэл, харилцаа холбооны яам", "Хөдөлмөр, нийгмийн хамгааллын яам", "Нийгмийн даатгалын ерөнхий газар", "Улсын бүртгэлийн ерөнхий газар", "Монголбанк"];
+const SEND_LABELS: Record<string, string> = { HAND: "Биечлэн гардуулсан", POST: "Шуудангаар", EMAIL: "Имэйлээр", EDOC: "Цахим баримт солилцооны системээр" };
 const PARTIES = ["Номин трейд ХХК", "Юнител ХХК", "Мобиком ХХК", "Ди Си Эс ХХК", "Тэнгэр даатгал ХХК", "Голомт банк", "Оффис плас ХХК"];
 const RETURN_REASONS = ["Үндэслэлийг тодруулж, хуулийн заалтыг нэмнэ үү.", "Огноог хөдөлмөрийн гэрээтэй ижил болгоно уу.", "Хавсралтын хувилбар буруу байна.", "Гарчгийг албан бичгийн стандартад нийцүүлнэ үү.", "Санхүүгийн хэлтсийн санал шаардлагатай."];
 const RESULTS = ["Хариу хүргүүлсэн.", "Мэдээллийг бэлтгэж илгээсэн.", "Шаардлагатай арга хэмжээ авч хэрэгжүүлсэн.", "Танилцаж, холбогдох нэгжид үүрэг өгсөн.", "Саналыг нэгтгэн хүргүүлсэн."];
@@ -303,6 +308,7 @@ async function main() {
     prisma.signature.deleteMany(), // gariin usgiin hamgaalaltiin trigger (migration 20261115100000)
   ]);
   await prisma.archive.deleteMany();
+  await prisma.dispatch.deleteMany();
   await prisma.assignment.deleteMany();
   await prisma.approval.deleteMany();
   await prisma.documentRelation.deleteMany();
@@ -400,7 +406,9 @@ async function main() {
     type: string; title: string; creator: string; createdAt: number; direction: string; target: string;
     events: Ev[]; approvals: { reviewer: string; decision: ApprovalDecision; comment?: string; at?: number; step: number }[];
     assignments: { userCode?: string; dept?: string; by: string; at: number; due: number; status: string; done?: number; note?: string }[];
-    numberAt?: number; approvedAt?: number; registeredAt?: number; archive?: { by: string; at: number; years: number; location: string; disposal: string };
+    numberAt?: number; approvedAt?: number; registeredAt?: number;
+    dispatch?: { by: string; at: number; method: string; recipient: string; receiptRef?: string; ev: Ev };
+    archive?: { by: string; at: number; years: number; location: string; disposal: string };
     fieldValues: Record<string, string>; versions: number; summary: string;
   };
   const plans: Plan[] = [];
@@ -424,7 +432,9 @@ async function main() {
     const age = Math.pow(rnd(), 1.15) * 360 + 0.2;
     const createdAt = NOW - age * DAY - between(0, 8) * 3600_000;
     const creator = t.flow === "incoming" ? pick(recordsOfficers) : tCode === "OUTGOING" ? pick(["E002", "E009", "E008", "E011"]) : pick(creatorsReview);
-    const target = targetFor(age, t.flow);
+    // Yawsan bichig huwaarilagdahgui: burtgesnii daraa huleen awagch ruu ilgeegdene
+    const target0 = targetFor(age, t.flow);
+    const target = tCode === "OUTGOING" && ["ASSIGNED", "RESOLVED"].includes(target0) ? "SENT" : target0;
     const p: Plan = {
       type: tCode, title: decorate(pick(t.titles), createdAt), creator, createdAt, direction: t.flow === "incoming" ? "INCOMING" : tCode === "OUTGOING" ? "OUTGOING" : "INTERNAL", target,
       events: [{ t: createdAt, user: creator, action: "CREATE", to: "DRAFT" }], approvals: [], assignments: [], fieldValues: {}, versions: 1, summary: "",
@@ -474,8 +484,17 @@ async function main() {
       }
     }
 
+    // Yawsan bichgiin ilgeelt
+    if (tCode === "OUTGOING" && ["SENT", "ARCHIVED"].includes(target)) {
+      const at = step(0.5, 30);
+      const method = weighted([["HAND", 3], ["POST", 1], ["EMAIL", 2], ["EDOC", 4]]);
+      const ev: Ev = { t: at, user: pick(recordsOfficers), action: "SEND", to: "SENT" };
+      p.dispatch = { by: ev.user, at, method, recipient: "", receiptRef: method === "HAND" ? pick(["Бичиг хэргийн ажилтан", "Тамгын газар", "Хүлээн авах хэсэг"]) : method === "EDOC" ? `№${Math.floor(between(1, 9))}/${Math.floor(between(100, 999))}` : undefined, ev };
+      p.events.push(ev);
+    }
+
     // Huwaarilalt ba shiidwerlelt
-    const needsAssign = ["ASSIGNED", "RESOLVED"].includes(target) || (target === "ARCHIVED" && (t.flow === "incoming" || rnd() < 0.4));
+    const needsAssign = tCode !== "OUTGOING" && (["ASSIGNED", "RESOLVED"].includes(target) || (target === "ARCHIVED" && (t.flow === "incoming" || rnd() < 0.4)));
     if (needsAssign) {
       const by = t.flow === "incoming" || rnd() < 0.6 ? pick(recordsOfficers) : "E003";
       const at = step(1, 30);
@@ -507,6 +526,8 @@ async function main() {
 
     // Talbariin utga
     for (const f of t.fields) {
+      // Hariu bichgiin dugaariig irsen bichigtei holbohdoo bodit dugaaraar ni buglunu (doorh «Holbootoi barimt»)
+      if (f.name === "reply_to") continue;
       let v = "";
       if (f.dataType === "employee") v = emp[pick(PEOPLE.slice(0, 20).map((x) => x[0]))].id;
       else if (f.dataType === "select") v = pick(f.options!);
@@ -519,6 +540,10 @@ async function main() {
       else if (f.name === "position") v = pick(["Нягтлан бодогч", "Мэргэжилтэн", "Ахлах мэргэжилтэн", "Хэлтсийн дарга"]);
       else v = pick(["Бүх ажилтан", "Комисс: 3 гишүүн", "А/045", "Санал болгож буй шийдвэрийг дэмжих"]);
       p.fieldValues[f.name] = v;
+    }
+    if (p.dispatch) {
+      p.dispatch.recipient = p.fieldValues.recipient_org;
+      p.dispatch.ev.value = { recipient: p.dispatch.recipient, method: SEND_LABELS[p.dispatch.method], sentAt: iso(p.dispatch.at) };
     }
     if (p.fieldValues.employee) {
       const e = Object.values(emp).find((x) => x.id === p.fieldValues.employee);
@@ -538,12 +563,21 @@ async function main() {
     const at = NOW - (archivedAgo - 0) * DAY - (tCode === "OUTGOING" ? -40 * DAY : 0);
     const createdAt = at - 30 * DAY;
     const t = typeRow[tCode].seed;
+    const fieldValues = Object.fromEntries(t.fields.filter((f) => f.isRequired).map((f) => [f.name, f.dataType === "text" ? pick(tCode === "CONTRACT" ? PARTIES : ORGS) : iso(createdAt)]));
+    const out = tCode === "OUTGOING";
+    const sendEv: Ev = { t: createdAt + 2 * DAY, user: "E002", action: "SEND", to: "SENT", value: out ? { recipient: fieldValues.recipient_org, method: SEND_LABELS.HAND, sentAt: iso(createdAt + 2 * DAY) } : undefined };
     plans.push({
       type: tCode, title, creator: "E002", createdAt, direction: tCode === "INCOMING" ? "INCOMING" : tCode === "OUTGOING" ? "OUTGOING" : "INTERNAL", target: "ARCHIVED",
-      events: [{ t: createdAt, user: "E002", action: "CREATE", to: "DRAFT" }, { t: createdAt + DAY, user: "E002", action: "REGISTER_INCOMING", to: "REGISTERED" }, { t: at, user: "E002", action: "ARCHIVE", to: "ARCHIVED" }],
+      events: [
+        { t: createdAt, user: "E002", action: "CREATE", to: "DRAFT" },
+        { t: createdAt + DAY, user: "E002", action: out ? "REGISTER" : "REGISTER_INCOMING", to: "REGISTERED" },
+        ...(out ? [sendEv] : []),
+        { t: at, user: "E002", action: "ARCHIVE", to: "ARCHIVED" },
+      ],
       approvals: [], assignments: [], numberAt: createdAt + DAY, registeredAt: createdAt + DAY,
+      dispatch: out ? { by: "E002", at: sendEv.t, method: "HAND", recipient: fieldValues.recipient_org, receiptRef: "Бичиг хэргийн ажилтан", ev: sendEv } : undefined,
       archive: { by: "E002", at, years: 10, location: "Хуучин архив, хайрцаг 3", disposal: "DESTROY" },
-      fieldValues: Object.fromEntries(t.fields.filter((f) => f.isRequired).map((f) => [f.name, f.dataType === "text" ? pick(tCode === "CONTRACT" ? PARTIES : ORGS) : iso(createdAt)])),
+      fieldValues,
       versions: 1, summary: `${title} — архивын баримт.`,
     });
   }
@@ -628,6 +662,11 @@ async function main() {
         },
       });
     }
+    if (p.dispatch) {
+      await prisma.dispatch.create({
+        data: { documentId: doc.id, sentById: U(p.dispatch.by), sentAt: dateOnly(p.dispatch.at), method: p.dispatch.method, recipient: p.dispatch.recipient, receiptRef: p.dispatch.receiptRef ?? null, createdAt: new Date(p.dispatch.at) },
+      });
+    }
     if (p.archive) {
       const until = new Date(p.archive.at);
       until.setUTCFullYear(until.getUTCFullYear() + p.archive.years);
@@ -656,11 +695,33 @@ async function main() {
     if (p.target === "RETURNED") await prisma.notification.create({ data: { userId: U(p.creator), documentId: doc.id, type: "RETURNED", message: `«${p.title}» засварт буцлаа`, createdAt: new Date(p.events.at(-1)!.t) } });
   }
 
-  // Holbootoi barimt: hariu bichgiig irsen bichigtei holbono
-  const incomingDocs = await prisma.document.findMany({ where: { direction: "INCOMING", documentNumber: { not: null } }, take: 15 });
-  const outgoingDocs = await prisma.document.findMany({ where: { direction: "OUTGOING", documentNumber: { not: null } }, take: 15 });
-  for (let i = 0; i < Math.min(incomingDocs.length, outgoingDocs.length, 8); i++) {
-    await prisma.documentRelation.create({ data: { sourceDocumentId: outgoingDocs[i].id, targetDocumentId: incomingDocs[i].id, relationType: "Хариу", createdById: U("E002") } });
+  // Holbootoi barimt: hariu bichgiig umnu irsen bichigtei holbono. Hariu bichgiin dugaar, huleen awagch ni
+  // irsen bichgiin dugaar, ilgeegchtei taarna (hariu ilgeesen bol ilgeeltiin huleen awagch ch adil)
+  const replyField = typeRow.OUTGOING.fields.reply_to;
+  const recipientField = typeRow.OUTGOING.fields.recipient_org;
+  const incomingDocs = await prisma.document.findMany({
+    where: { direction: "INCOMING", documentNumber: { not: null } },
+    include: { fieldValues: { include: { field: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  const outgoingDocs = await prisma.document.findMany({
+    where: { direction: "OUTGOING", documentNumber: { not: null }, OR: [{ title: { startsWith: "Хариу" } }, { title: { startsWith: "Санал хүргүүлэх" } }, { title: { startsWith: "Мэдээлэл хүргүүлэх" } }] },
+    orderBy: { createdAt: "asc" },
+  });
+  const used = new Set<string>();
+  let replies = 0;
+  for (const o of outgoingDocs) {
+    const inc = incomingDocs.filter((d) => !used.has(d.id) && d.createdAt < o.createdAt && o.createdAt.getTime() - d.createdAt.getTime() < 45 * DAY).at(-1);
+    if (!inc) continue;
+    used.add(inc.id);
+    const sender = inc.fieldValues.find((v) => v.field.name === "sender_org")?.valueText;
+    await prisma.documentRelation.create({ data: { sourceDocumentId: o.id, targetDocumentId: inc.id, relationType: "Хариу", createdById: U("E002"), createdAt: o.createdAt } });
+    await prisma.documentFieldValue.create({ data: { documentId: o.id, fieldId: replyField, valueText: inc.documentNumber! } });
+    if (sender) {
+      await prisma.documentFieldValue.updateMany({ where: { documentId: o.id, fieldId: recipientField }, data: { valueText: sender } });
+      await prisma.dispatch.updateMany({ where: { documentId: o.id }, data: { recipient: sender } });
+    }
+    if (++replies >= 30) break;
   }
 
   // Toologchdiig bodit utgatai ni taaruulah (daraagiin dugaar zuw urgeljilne)

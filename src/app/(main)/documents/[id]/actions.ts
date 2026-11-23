@@ -31,6 +31,10 @@ export async function runAction(_prev: ActionState, formData: FormData): Promise
       archiveCategory: s(formData, "archiveCategory"),
       storageLocation: s(formData, "storageLocation"),
       disposalAction: s(formData, "disposalAction"),
+      sentAt: s(formData, "sentAt"),
+      sendMethod: s(formData, "sendMethod"),
+      recipient: s(formData, "recipient"),
+      receiptRef: s(formData, "receiptRef"),
       password: typeof formData.get("password") === "string" ? String(formData.get("password")) : undefined,
     });
     revalidatePath("/", "layout");
@@ -39,7 +43,9 @@ export async function runAction(_prev: ActionState, formData: FormData): Promise
         ? `Баталж, цахим гарын үсгээр баталгаажууллаа. Албан ёсны дугаар: ${doc.documentNumber}`
         : action === "register_incoming"
           ? `Амжилттай. Албан ёсны дугаар: ${doc.documentNumber}`
-          : "Амжилттай хадгалагдлаа";
+          : action === "send"
+            ? "Илгээлтийг бүртгэлээ. Одоо архивлах боломжтой"
+            : "Амжилттай хадгалагдлаа";
     return { ok: msg };
   } catch (e) {
     if (e instanceof WorkflowError) return { error: e.message };

@@ -36,7 +36,7 @@ export default async function RolesPage() {
           <thead className="border-b border-slate-200 bg-slate-50/60">
             <tr>
               <th className="th">Эрх</th>
-              {roles.map((r) => <th key={r.id} className="th text-center">{r.name}<div className="font-normal text-slate-400">{r._count.users} хэрэглэгч</div></th>)}
+              {roles.map((r) => <th key={r.id} className="th text-center">{r.name}<div className="font-normal text-slate-500">{r._count.users} хэрэглэгч</div></th>)}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

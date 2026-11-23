@@ -67,7 +67,7 @@ export default async function UsersPage({ searchParams }: { searchParams: SP }) 
             <thead className="border-b border-slate-200 bg-slate-50/60"><tr><th className="th">Ажилтан</th><th className="th">Нэвтрэх нэр</th><th className="th">Нэгж</th><th className="th">Үүрэг</th><th className="th">Сүүлд нэвтэрсэн</th><th className="th">Төлөв</th><th className="th">Үйлдэл</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
               {users.map((u) => (
-                <tr key={u.id} className={u.isActive ? "" : "bg-slate-50 text-slate-400"}>
+                <tr key={u.id} className={u.isActive ? "" : "bg-slate-50 text-slate-500"}>
                   <td className="td">
                     <div className="flex items-center gap-3">
                       <Avatar text={initials(u.employee)} size={32} src={avatarUrl(u)} />

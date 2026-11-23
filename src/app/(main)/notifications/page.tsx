@@ -15,6 +15,7 @@ const TYPE: Record<string, { label: string; tone: "amber" | "teal" | "orange" | 
   FORWARDED: { label: "Шилжүүлсэн", tone: "navy" },
   ASSIGNED: { label: "Хуваарилалт", tone: "violet" },
   RESOLVED: { label: "Шийдвэрлэгдсэн", tone: "green" },
+  SENT: { label: "Илгээсэн", tone: "teal" },
   REMINDER: { label: "Сануулга", tone: "amber" },
   OVERDUE: { label: "Хугацаа хэтэрсэн", tone: "red" },
   REVIEWER_EDIT: { label: "Хянагчийн засвар", tone: "navy" },

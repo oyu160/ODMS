@@ -21,7 +21,7 @@ export function Toast({ message, tone = "success" }: { message?: string; tone?: 
     <div role="status" className="toast-in fixed bottom-6 right-6 z-50 flex max-w-sm items-start gap-3 rounded-xl border bg-white px-4 py-3 shadow-xl ring-1 ring-black/5" style={{ borderColor: ok ? "#bbf7d0" : "#fecaca" }}>
       {ok ? <CircleCheck size={20} className="mt-0.5 shrink-0 text-green-600" /> : <CircleAlert size={20} className="mt-0.5 shrink-0 text-red-600" />}
       <span className="text-sm text-slate-800">{shown}</span>
-      <button type="button" onClick={() => setShown(undefined)} className="ml-1 text-slate-400 hover:text-slate-700"><X size={16} /></button>
+      <button type="button" onClick={() => setShown(undefined)} className="ml-1 text-slate-500 hover:text-slate-700"><X size={16} /></button>
     </div>
   );
 }

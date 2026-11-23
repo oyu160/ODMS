@@ -36,3 +36,20 @@ test("Цуцлах: үүсгэгч эсвэл бүх баримт харах э�
   assert.ok(await ruleViolation(db, user("other"), doc, "cancel"));
   assert.equal(await ruleViolation(db, user("boss", ["document.view_all"]), doc, "cancel"), null);
 });
+
+test("Явсан бичиг хуваарилагдахгүй, илгээгдсэний дараа архивлагдана", async () => {
+  const out = { ...doc, direction: "OUTGOING" };
+  const at = (code: string) => ({ ...(db as object), documentStatus: { findUnique: async () => ({ code }) } }) as never;
+  assert.equal(await ruleViolation(db, user("records"), out, "send"), null);
+  assert.ok(await ruleViolation(db, user("records"), doc, "send"));
+  assert.ok(await ruleViolation(db, user("records"), out, "assign"));
+  assert.equal(await ruleViolation(db, user("records"), doc, "assign"), null);
+  assert.ok(await ruleViolation(at("REGISTERED"), user("records"), out, "archive"));
+  assert.equal(await ruleViolation(at("SENT"), user("records"), out, "archive"), null);
+});
+
+test("Батламжийг зөвхөн баталсан хүн цуцална", async () => {
+  const withApprover = { ...(db as object), approval: { findFirst: async () => ({ reviewerId: "reviewer" }) } } as never;
+  assert.equal(await ruleViolation(withApprover, user("reviewer", ["document.approve"]), doc, "revoke"), null);
+  assert.ok(await ruleViolation(withApprover, user("other", ["document.approve"]), doc, "revoke"));
+});

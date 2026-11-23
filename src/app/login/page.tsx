@@ -10,24 +10,30 @@ export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined);
 
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="hidden flex-col justify-between bg-navy-800 p-12 text-white lg:flex">
+    <main className="grid min-h-screen bg-white lg:grid-cols-2">
+      {/* B+: zuun tal tsagaan, baruun tal hureetei kart — haraanii jin tentsweertei, gol towch gantshan */}
+      <section className="hidden flex-col justify-between border-r border-slate-200 p-12 lg:flex">
         <div className="flex items-center gap-3">
-          <Logo size={44} tone="light" />
-          <span className="text-sm font-medium text-white/80">{ORG_NAME}</span>
+          <Logo size={44} />
+          <span className="text-lg font-semibold text-slate-900">{ORG_NAME}</span>
         </div>
         <div>
-          <h1 className="text-4xl font-bold leading-tight">Баримт бичгийн<br />удирдлагын систем</h1>
-          <p className="mt-4 max-w-md text-white/70">Баримтыг үүсгэх, хянах, батлах, бүртгэх, хуваарилах, архивлах бүх үе шатыг нэг дор хөтөлнө.</p>
+          <h1 className="text-[40px] font-bold leading-tight tracking-tight text-slate-900">Баримт бүр<br />зөв хүнд,<br />зөв хугацаанд.</h1>
+          <p className="mt-4 max-w-md text-lg leading-relaxed text-slate-600">Баримтыг үүсгэх, хянах, батлах, бүртгэх, илгээх, архивлах бүх үе шатыг нэг дор хөтөлнө.</p>
+          <ol aria-label="Баримтын урсгал" className="mt-8 flex flex-wrap gap-1.5 text-xs">
+            {["Ноорог", "Хяналт", "Батлах", "Бүртгэх", "Хуваарилах / Илгээх", "Архив"].map((s) => (
+              <li key={s} className="rounded-lg border border-navy-100 bg-white px-3 py-1.5 text-slate-700">{s}</li>
+            ))}
+          </ol>
         </div>
-        <div className="text-xs text-white/50">Зөвхөн байгууллагын дотоод хэрэглэгчдэд зориулав</div>
+        <div className="text-xs text-slate-500">Зөвхөн байгууллагын дотоод хэрэглэгчдэд зориулав</div>
       </section>
 
-      <section className="flex items-center justify-center bg-slate-50 px-6">
-        <form action={action} className="w-full max-w-sm space-y-5">
+      <section className="flex items-center justify-center px-6 py-12">
+        <form action={action} className="w-full max-w-sm space-y-5 rounded-2xl border border-navy-100 bg-white p-8 sm:p-9">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Нэвтрэх</h2>
-            <p className="mt-1 text-sm text-slate-500">Байгууллагын хэрэглэгчийн нэр, нууц үгээ оруулна уу</p>
+            <h2 className="text-lg font-bold text-slate-900">Нэвтрэх</h2>
+            <p className="mt-1 text-sm text-slate-600">Байгууллагын хэрэглэгчийн нэр, нууц үгээ оруулна уу</p>
           </div>
 
           <div>

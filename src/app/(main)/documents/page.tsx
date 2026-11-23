@@ -19,7 +19,7 @@ function DueChip({ due }: { due?: Date | null }) {
     : left === 0 ? ["Өнөөдөр дуусна", "bg-amber-50 text-amber-800 ring-amber-200"]
     : left <= 3 ? [`${left} хоног үлдсэн`, "bg-amber-50 text-amber-800 ring-amber-200"]
     : [`${left} хоног үлдсэн`, "bg-slate-50 text-slate-600 ring-slate-200"];
-  return <div className={`mt-1 inline-block whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${cls}`}>{text}</div>;
+  return <div className={`mt-1 inline-block whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}`}>{text}</div>;
 }
 const PAGE_SIZE = 10;
 
@@ -34,6 +34,7 @@ const VIEWS: { key: string; label: string; status?: string; mine?: string; creat
   { key: "review", label: "Хяналтад", status: "IN_REVIEW" },
   { key: "approved", label: "Батлагдсан", status: "APPROVED" },
   { key: "registered", label: "Бүртгэгдсэн", status: "REGISTERED" },
+  { key: "sent", label: "Илгээсэн", status: "SENT" },
   { key: "assigned", label: "Хуваарилагдсан", status: "ASSIGNED" },
   { key: "resolved", label: "Шийдвэрлэгдсэн", status: "RESOLVED" },
   { key: "archived", label: "Архивлагдсан", status: "ARCHIVED" },
@@ -138,7 +139,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
             <label className="label" htmlFor="f-q">Түлхүүр үг</label>
             <div className="relative">
               <input id="f-q" name="q" defaultValue={f.q} placeholder="Дугаар, гарчиг, агуулгаар…" className="input pr-9" />
-              <Search size={16} aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
             </div>
           </div>
           <button className="btn-primary">Шүүх</button>
@@ -180,7 +181,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
             <legend className="label">Огноо</legend>
             <div className="flex items-center gap-1.5">
               <input type="date" name="from" defaultValue={f.from} aria-label="Эхлэх огноо" className="input px-2" />
-              <span className="text-slate-400" aria-hidden>—</span>
+              <span className="text-slate-500" aria-hidden>—</span>
               <input type="date" name="to" defaultValue={f.to} aria-label="Дуусах огноо" className="input px-2" />
             </div>
           </fieldset>
@@ -228,7 +229,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
                     <td className="td font-medium"><Link href={`/documents/${d.id}`} className="link">{d.title}</Link></td>
                     <td className="td text-slate-600">{d.documentType.name}</td>
                     <td className="td text-slate-600">{DIRECTION_LABELS[d.direction]}</td>
-                    <td className="td text-slate-600"><div className="whitespace-nowrap">{shortName(d.createdBy.employee)}</div>{d.createdBy.employee.positionName && <div className="text-xs text-slate-400">{d.createdBy.employee.positionName}</div>}</td>
+                    <td className="td text-slate-600"><div className="whitespace-nowrap">{shortName(d.createdBy.employee)}</div>{d.createdBy.employee.positionName && <div className="text-xs text-slate-500">{d.createdBy.employee.positionName}</div>}</td>
                     <td className="td whitespace-nowrap text-slate-600">{fmtDate(d.documentDate ?? d.createdAt)}</td>
                     <td className="td"><StatusBadge code={d.status.code} name={d.status.name} /><DueChip due={d.assignments[0]?.dueDate} /></td>
                     <td className="td">

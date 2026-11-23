@@ -24,7 +24,7 @@ export function PageHeader({
             </span>
           ))}
         </nav>
-        <h1 className="text-2xl font-bold sm:text-[28px] leading-tight tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{title}</h1>
         {subtitle && <div className="mt-1 text-sm text-slate-500">{subtitle}</div>}
       </div>
       {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
@@ -53,7 +53,7 @@ export function StatCard({ label, value, hint, tone = "default", icon, href }: {
     <>
       <div className="flex items-center justify-between text-sm text-slate-500">
         <span>{label}</span>
-        {icon ? <span className={danger ? "text-red-600" : "text-slate-400"}>{icon}</span> : href ? <ArrowUpRight size={16} className="text-slate-400" /> : null}
+        {icon ? <span className={danger ? "text-red-600" : "text-slate-500"}>{icon}</span> : href ? <ArrowUpRight size={16} className="text-slate-500" /> : null}
       </div>
       <div className={`mt-2 text-3xl font-bold ${danger ? "text-red-700" : "text-slate-900"}`}>{value}</div>
       {hint && <div className={`mt-1 text-xs ${danger ? "text-red-700" : "text-slate-500"}`}>{hint}</div>}
@@ -69,6 +69,7 @@ const STATUS_STYLE: Record<string, string> = {
   RETURNED: "bg-orange-100 text-orange-800",
   APPROVED: "bg-teal-100 text-teal-800",
   REGISTERED: "bg-blue-100 text-blue-800",
+  SENT: "bg-cyan-100 text-cyan-800",
   ASSIGNED: "bg-violet-100 text-violet-800",
   RESOLVED: "bg-green-100 text-green-800",
   ARCHIVED: "bg-slate-200 text-slate-700",
@@ -81,6 +82,7 @@ export const STATUS_COLOR: Record<string, string> = {
   RETURNED: "#ea580c",
   APPROVED: "#0d9488",
   REGISTERED: "#2563eb",
+  SENT: "#0891b2",
   ASSIGNED: "#7c3aed",
   RESOLVED: "#16a34a",
   ARCHIVED: "#475569",
@@ -180,7 +182,7 @@ export function SortTh({ label, active, dir, href, className = "" }: { label: st
     <th className={`th ${className}`} aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}>
       <Link href={href} className={`inline-flex items-center gap-1 rounded hover:text-slate-900 ${active ? "text-slate-900" : ""}`}>
         {label}
-        <Icon size={13} aria-hidden className={active ? "text-navy-700" : "text-slate-400"} />
+        <Icon size={13} aria-hidden className={active ? "text-navy-700" : "text-slate-500"} />
       </Link>
     </th>
   );

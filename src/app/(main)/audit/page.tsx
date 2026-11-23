@@ -87,10 +87,10 @@ export default async function AuditPage({ searchParams }: { searchParams: SP }) 
                         <span className="text-slate-600">{ENTITY_LABELS[l.entityType] ?? l.entityType}</span>
                       )}
                     </td>
-                    <td className="td">{l.newStatus ? <StatusBadge code={l.newStatus.code} name={l.newStatus.name} /> : <span className="text-slate-400">—</span>}</td>
+                    <td className="td">{l.newStatus ? <StatusBadge code={l.newStatus.code} name={l.newStatus.name} /> : <span className="text-slate-500">—</span>}</td>
                     <td className="td max-w-md">
                       {details.length === 0 ? (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-slate-500">—</span>
                       ) : (
                         <dl className="space-y-0.5 text-xs">
                           {details.map((d, i) => (

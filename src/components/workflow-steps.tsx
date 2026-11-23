@@ -2,12 +2,15 @@
 import { Check, ArrowRight, Ban, Hourglass, Minus } from "lucide-react";
 
 const REVIEW_FLOW = ["DRAFT", "IN_REVIEW", "APPROVED", "REGISTERED", "ASSIGNED", "RESOLVED", "ARCHIVED"];
+// Yawsan bichig dotood hariutsagchid huwaarilagdahgui: burtgesnii daraa huleen awagch ruu ilgeegdene
+const OUTGOING_FLOW = ["DRAFT", "IN_REVIEW", "APPROVED", "REGISTERED", "SENT", "ARCHIVED"];
 const INCOMING_FLOW = ["DRAFT", "REGISTERED", "ASSIGNED", "RESOLVED", "ARCHIVED"];
 const LABEL: Record<string, string> = {
   DRAFT: "Ноорог",
   IN_REVIEW: "Хяналт",
   APPROVED: "Батлагдсан",
   REGISTERED: "Бүртгэгдсэн",
+  SENT: "Илгээсэн",
   ASSIGNED: "Хуваарилагдсан",
   RESOLVED: "Шийдвэрлэгдсэн",
   ARCHIVED: "Архив",
@@ -21,7 +24,7 @@ export function WorkflowSteps({ status, direction, visited }: { status: string; 
         <Ban size={16} /> Энэ баримт цуцлагдсан тул цаашид үйлдэл хийгдэхгүй.
       </div>
     );
-  const flow = direction === "INCOMING" ? INCOMING_FLOW : REVIEW_FLOW;
+  const flow = direction === "INCOMING" ? INCOMING_FLOW : direction === "OUTGOING" ? OUTGOING_FLOW : REVIEW_FLOW;
   const at = status === "RETURNED" ? flow.indexOf("IN_REVIEW") : flow.indexOf(status);
 
   return (
@@ -37,7 +40,7 @@ export function WorkflowSteps({ status, direction, visited }: { status: string; 
           <li key={s} className="flex items-center">
             <span
               className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                returned ? "bg-orange-100 text-orange-800 ring-2 ring-orange-300" : current ? "bg-navy-800 text-white ring-4 ring-navy-100" : skipped ? "border border-dashed border-slate-300 bg-white text-slate-400 line-through" : done ? "bg-green-50 text-green-800" : "bg-slate-100 text-slate-400"
+                returned ? "bg-orange-100 text-orange-800 ring-2 ring-orange-300" : current ? "bg-white text-navy-800 ring-2 ring-navy-800" : skipped ? "border border-dashed border-slate-300 bg-white text-slate-500 line-through" : done ? "bg-green-50 text-green-800" : "bg-slate-100 text-slate-500"
               }`}
               title={skipped ? "Энэ шатыг алгассан" : undefined}
             >

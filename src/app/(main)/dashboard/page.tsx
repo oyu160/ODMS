@@ -47,14 +47,16 @@ export default async function DashboardPage() {
 
   // «Minii hiih ajil»: odoo ene hereglegchiin uildel huleej bui zuils
   const rec = can(user, "document.register");
-  const [myActive, myOverdue, myReturned, myDraft, toRegister, toAssign, toArchive] = await Promise.all([
+  const [myActive, myOverdue, myReturned, myDraft, toRegister, toAssign, toSend, toArchive, sentToArchive] = await Promise.all([
     prisma.assignment.count({ where: { status: "ACTIVE", OR: [{ assigneeUserId: user.id }, { assigneeDepartmentId: user.departmentId }] } }),
     prisma.assignment.count({ where: { status: "ACTIVE", dueDate: { lt: today }, OR: [{ assigneeUserId: user.id }, { assigneeDepartmentId: user.departmentId }] } }),
     prisma.document.count({ where: { createdById: user.id, isDeleted: false, status: { code: "RETURNED" } } }),
     prisma.document.count({ where: { createdById: user.id, isDeleted: false, status: { code: "DRAFT" } } }),
     rec ? prisma.document.count({ where: { isDeleted: false, status: { code: "APPROVED" } } }) : 0,
-    rec ? prisma.document.count({ where: { isDeleted: false, status: { code: "REGISTERED" } } }) : 0,
+    rec ? prisma.document.count({ where: { isDeleted: false, direction: { not: "OUTGOING" }, status: { code: "REGISTERED" } } }) : 0,
+    rec ? prisma.document.count({ where: { isDeleted: false, direction: "OUTGOING", status: { code: "REGISTERED" } } }) : 0,
     can(user, "document.archive") ? prisma.document.count({ where: { isDeleted: false, status: { code: "RESOLVED" } } }) : 0,
+    can(user, "document.archive") ? prisma.document.count({ where: { isDeleted: false, status: { code: "SENT" } } }) : 0,
   ]);
   // «Minii hiih ajil»: tuluwiin ungutei, hetersen ajil ulaanaar todorno
   const todo = [
@@ -65,7 +67,9 @@ export default async function DashboardPage() {
     { n: can(user, "document.create") ? myDraft : 0, title: "Ноорог", label: "хадгалсан, илгээгээгүй", action: "Үргэлжлүүлэх", href: "/documents?status=DRAFT&mine=1", tone: "draft" },
     { n: toRegister, title: "Бүртгэх", label: "батлагдсан баримт", action: "Бүртгэх", href: "/documents?status=APPROVED", tone: "approved" },
     { n: toAssign, title: "Хуваарилах", label: "бүртгэгдсэн баримт", action: "Хуваарилах", href: "/documents?status=REGISTERED", tone: "registered" },
+    { n: toSend, title: "Илгээх", label: "бүртгэгдсэн явсан бичиг", action: "Илгээх", href: "/documents?status=REGISTERED&direction=OUTGOING", tone: "registered" },
     { n: toArchive, title: "Архивлах", label: "шийдвэрлэгдсэн баримт", action: "Архивлах", href: "/documents?status=RESOLVED", tone: "draft" },
+    { n: sentToArchive, title: "Архивлах", label: "илгээсэн явсан бичиг", action: "Архивлах", href: "/documents?status=SENT", tone: "draft" },
   ].filter((t) => t.n > 0);
   const todoTotal = todo.reduce((a, t) => a + t.n, 0);
   const TONE: Record<string, { box: string; num: string }> = {
@@ -148,8 +152,8 @@ export default async function DashboardPage() {
           <GroupedBars
             labels={months.map((m) => `${Number(m.slice(5))}-р сар`)}
             series={[
-              { name: "Бүртгэгдсэн", color: "#1e3a5f", values: bucket(registered.map((r) => r.registeredAt)) },
-              { name: "Шийдвэрлэгдсэн", color: "#9fb3cc", values: bucket(resolved.map((r) => r.completedAt)) },
+              { name: "Бүртгэгдсэн", color: "#115e59", values: bucket(registered.map((r) => r.registeredAt)) },
+              { name: "Шийдвэрлэгдсэн", color: "#a7d7cf", values: bucket(resolved.map((r) => r.completedAt)) },
             ]}
           />
         </Card>
@@ -184,7 +188,7 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <p className="mt-5 text-xs text-slate-400">Харагдах мэдээлэл таны үүрэг, хэлтсийн эрхээр хязгаарлагдана.</p>
+      <p className="mt-5 text-xs text-slate-500">Харагдах мэдээлэл таны үүрэг, хэлтсийн эрхээр хязгаарлагдана.</p>
     </div>
   );
 }

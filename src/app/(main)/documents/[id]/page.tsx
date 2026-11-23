@@ -5,7 +5,7 @@ import { Download, Pencil, File as FileIcon, ShieldCheck, ShieldAlert, X } from 
 import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { documentScope } from "@/lib/access";
-import { availableActions, AUDIT_LABELS } from "@/lib/workflow";
+import { availableActions, AUDIT_LABELS, SEND_METHODS } from "@/lib/workflow";
 import { CONF_LABELS, DIRECTION_LABELS, ASSIGNMENT_LABELS, DECISION_LABELS, fmtDate, fmtDateTime, fmtShort, shortName, personLabel, fileSize, startOfToday, daysBetween, describeAuditValue, RELATION_TYPES, RELATION_INVERSE } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, Tabs, Pill, STATUS_COLOR } from "@/components/ui";
 import { ActionPanel } from "./action-panel";
@@ -41,6 +41,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
       relationsFrom: { include: { target: { include: { status: true } } } },
       relationsTo: { include: { source: { include: { status: true } } } },
       archive: { include: { archivedBy: { include: { employee: true } } } },
+      dispatch: { include: { sentBy: { include: { employee: true } } } },
       auditLogs: { include: { user: { include: { employee: true } }, newStatus: true }, orderBy: { createdAt: "desc" } },
     },
   });
@@ -87,7 +88,9 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
 
   // Tsahim gariin usgiin shalgalt: aguulga uurchlugduugui, gariin useg jinhene eseh
   const signatures = doc.approvedAt ? await verifyDocumentSignatures(doc.id) : [];
-  const sigOk = signatures.length > 0 && signatures.every((x) => x.status === "VALID");
+  // Tsutslagdsan gariin useg ni huchingui bolowch aldaa bish — idewhtei gariin usgiig shalgana
+  const activeSigs = signatures.filter((x) => x.status !== "REVOKED");
+  const sigOk = activeSigs.length > 0 && activeSigs.every((x) => x.status === "VALID");
 
   const editable = doc.createdById === user.id && ["DRAFT", "RETURNED"].includes(doc.status.code);
   // FSh-22: barimt bichgiin ajiltan eswel uusgegch hamaaral nemne
@@ -106,12 +109,18 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
   const activeAssign = doc.assignments.find((a) => a.status === "ACTIVE");
   const creatorName = shortName(doc.createdBy.employee);
   const assigneeName = activeAssign ? (activeAssign.assigneeUser ? shortName(activeAssign.assigneeUser.employee) : `${activeAssign.assigneeDepartment?.name} (нэгж)`) : "";
+  const outgoing = doc.direction === "OUTGOING";
+  const recipientOrg = doc.fieldValues.find((v) => v.field.name === "recipient_org")?.valueText;
+  const replyTo = doc.fieldValues.find((v) => v.field.name === "reply_to")?.valueText;
   const next: Record<string, string | null> = {
     DRAFT: doc.direction === "INCOMING" ? "Баримт бичгийн ажилтан ирсэн бичгийг бүртгэж дугаар олгоно." : `${creatorName} баримтаа бөглөж хянагч сонгоод хяналтад илгээнэ.`,
     IN_REVIEW: `${pendingReview ? shortName(pendingReview.reviewer.employee) : "Хянагч"} хянаж, батлах эсвэл засварт буцаана.`,
     RETURNED: `${creatorName} хянагчийн тайлбарын дагуу засаад дахин илгээнэ.`,
     APPROVED: "Баримт бичгийн ажилтан батлагдсан баримтыг бүртгэнэ.",
-    REGISTERED: "Баримт бичгийн ажилтан хариуцагчид хуваарилна, эсвэл шууд архивлана.",
+    REGISTERED: outgoing
+      ? `Баримт бичгийн ажилтан бичгийг ${recipientOrg ? `${recipientOrg}-д ` : "хүлээн авагч руу "}илгээж, илгээлтийг бүртгэнэ.`
+      : "Баримт бичгийн ажилтан хариуцагчид хуваарилна, эсвэл шууд архивлана.",
+    SENT: "Хүлээн авагч руу илгээгдсэн. Баримт бичгийн ажилтан архивлана.",
     ASSIGNED: `${assigneeName} ${activeAssign?.dueDate ? fmtDate(activeAssign.dueDate) + "-ний дотор" : ""} шийдвэрлэнэ.`,
     RESOLVED: "Баримт бичгийн ажилтан архивлана.",
     ARCHIVED: null,
@@ -127,7 +136,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
   ];
 
   const info: [string, React.ReactNode][] = [
-    ["Албан ёсны дугаар", doc.documentNumber ? <b>{doc.documentNumber}</b> : <i className="text-slate-400">Батлагдсаны дараа олгоно</i>],
+    ["Албан ёсны дугаар", doc.documentNumber ? <b>{doc.documentNumber}</b> : <i className="text-slate-500">Батлагдсаны дараа олгоно</i>],
     ["Ангилал", doc.documentType.category.name],
     ["Чиглэл", DIRECTION_LABELS[doc.direction]],
     ...doc.fieldValues.map((v) => [v.field.label, showValue(v.field.dataType, v.valueText)] as [string, React.ReactNode]),
@@ -147,7 +156,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
             {doc.documentNumber ? `${doc.documentNumber} · ` : ""}
             {doc.internalNumber} (дотоод дугаар) · {doc.documentType.name} · Хувилбар {doc.currentVersionNo} ·
             <StatusBadge code={doc.status.code} name={doc.status.name} />
-            {signatures.length > 0 &&
+            {activeSigs.length > 0 &&
               (sigOk ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-800 ring-1 ring-green-200"><ShieldCheck size={12} /> Цахим гарын үсгээр баталгаажсан</span>
               ) : (
@@ -193,16 +202,18 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
                   ))}
                 </dl>
                 <div className="mt-5 rounded-xl bg-slate-100 p-4">
-                  <div className="rounded border border-slate-200 bg-white px-8 py-7 font-serif text-[13px] leading-relaxed text-slate-800">
+                  <div className="rounded border border-slate-200 bg-white px-8 py-7 font-serif text-sm leading-relaxed text-slate-800">
                     <p className="text-center font-bold uppercase">{ORG_NAME}</p>
                     <p className="text-center font-bold uppercase">{doc.documentType.name}</p>
                     <div className="mt-3 flex justify-between text-xs">
                       <span>{fmtDate(doc.documentDate)}</span>
-                      <span>Дугаар {doc.documentNumber ?? <i className="text-slate-400">[батлагдсаны дараа]</i>}</span>
+                      <span>Дугаар {doc.documentNumber ?? <i className="text-slate-500">[батлагдсаны дараа]</i>}</span>
                       <span>Улаанбаатар хот</span>
                     </div>
+                    {outgoing && recipientOrg && <p className="mt-4 text-right font-bold uppercase">{recipientOrg}</p>}
+                    {outgoing && replyTo && <p className="mt-2 text-xs">Танай {replyTo} тоот албан бичгийн хариу</p>}
                     <p className="mt-4 text-center font-bold">{doc.title}</p>
-                    <p className="mt-3 whitespace-pre-wrap">{doc.summary || <i className="text-slate-400">Агуулга оруулаагүй</i>}</p>
+                    <p className="mt-3 whitespace-pre-wrap">{doc.summary || <i className="text-slate-500">Агуулга оруулаагүй</i>}</p>
                   </div>
                 </div>
               </Card>
@@ -244,6 +255,25 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
                       })}
                     </tbody>
                   </table>
+                </Card>
+              )}
+
+              {outgoing && (
+                <Card title="Илгээлтийн мэдээлэл">
+                  {doc.dispatch ? (
+                    <dl className="grid grid-cols-[180px_1fr] gap-y-2 text-sm">
+                      <dt className="text-slate-500">Хүлээн авагч</dt><dd className="font-medium">{doc.dispatch.recipient}</dd>
+                      <dt className="text-slate-500">Илгээсэн огноо</dt><dd>{fmtDate(doc.dispatch.sentAt)}</dd>
+                      <dt className="text-slate-500">Хэлбэр</dt><dd>{SEND_METHODS[doc.dispatch.method] ?? doc.dispatch.method}</dd>
+                      <dt className="text-slate-500">Хүлээн авсан</dt><dd>{doc.dispatch.receiptRef ?? "—"}</dd>
+                      <dt className="text-slate-500">Илгээсэн ажилтан</dt><dd>{shortName(doc.dispatch.sentBy.employee)}</dd>
+                      {doc.dispatch.note && <><dt className="text-slate-500">Тайлбар</dt><dd>{doc.dispatch.note}</dd></>}
+                    </dl>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {["REGISTERED"].includes(doc.status.code) ? "Бүртгэгдсэн, хүлээн авагч руу хараахан илгээгээгүй." : doc.status.code === "ARCHIVED" || doc.status.code === "CANCELLED" ? "Илгээлтийн бүртгэл байхгүй." : "Батлагдаж бүртгэгдсэний дараа илгээнэ."}
+                    </p>
+                  )}
                 </Card>
               )}
 
@@ -313,6 +343,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
               users={users.map((u) => ({ id: u.id, name: `${shortName(u.employee)} — ${u.employee.department.name}` }))}
               departments={departments.map((d) => ({ id: d.id, name: d.name }))}
               defaultArchiveCategory={doc.documentType.name}
+              defaultRecipient={recipientOrg}
               autoReviewer={autoRule && autoReviewer ? { name: `${shortName(autoReviewer.employee)} — ${autoReviewer.employee.department.name}`, rule: autoRule.name } : null}
               signer={`${user.fullName}${user.roles[0] ? ` · ${user.roles[0].name}` : ""}`}
               documentLabel={`«${doc.title}» · ${doc.documentNumber ?? doc.internalNumber}`}
@@ -351,12 +382,12 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
             <Card title="Цахим гарын үсэг">
               <ul className="space-y-3">
                 {signatures.map((x) => (
-                  <li key={x.id} className={`rounded-lg border p-3 text-sm ${x.status === "VALID" ? "border-green-200 bg-green-50/60" : "border-red-200 bg-red-50"}`}>
+                  <li key={x.id} className={`rounded-lg border p-3 text-sm ${x.status === "VALID" ? "border-green-200 bg-green-50/60" : x.status === "REVOKED" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-red-200 bg-red-50"}`}>
                     <div className="flex items-center gap-2 font-semibold">
-                      {x.status === "VALID" ? <ShieldCheck size={16} className="text-green-700" /> : <ShieldAlert size={16} className="text-red-700" />}
+                      {x.status === "VALID" ? <ShieldCheck size={16} className="text-green-700" /> : <ShieldAlert size={16} className={x.status === "REVOKED" ? "text-slate-500" : "text-red-700"} />}
                       {x.signerName}
                     </div>
-                    <div className={`mt-1 text-xs ${x.status === "VALID" ? "text-green-800" : "text-red-700"}`}>{x.message}</div>
+                    <div className={`mt-1 text-xs ${x.status === "VALID" ? "text-green-800" : x.status === "REVOKED" ? "text-slate-500" : "text-red-700"}`}>{x.message}</div>
                     <div className="mt-1 text-xs text-slate-500">{fmtDateTime(x.signedAt)} · түлхүүр {x.fingerprint}</div>
                   </li>
                 ))}
@@ -418,7 +449,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
                     <ConfirmButton
                       action={removeRelation}
                       fields={{ relationId: r.id, documentId: doc.id }}
-                      className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                      className="rounded p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
                       title="Хамаарлыг хасах уу?"
                       description={`«${r.type}» хамаарал хасагдана. Баримтууд өөрсдөө хэвээр үлдэх ба хасалт аудитад бүртгэгдэнэ.`}
                       confirmLabel="Хасах"
@@ -431,7 +462,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
             </ul>
           </Card>
 
-          {can(user, "audit.view") && <p className="text-xs text-slate-400">Баримтын ID: {doc.id}</p>}
+          {can(user, "audit.view") && <p className="text-xs text-slate-500">Баримтын ID: {doc.id}</p>}
         </aside>
       </div>
     </div>
