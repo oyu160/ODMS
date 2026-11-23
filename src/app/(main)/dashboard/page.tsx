@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Download, Plus, Clock3, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +16,9 @@ function monthKey(d: Date) {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  // Ajlin urgald oroltsdoggui hereglegch (jish: Admin) tsesend ene huudasgui tul jagsaalt ruu shiljuulne
+  const hasWorkRole = can(user, "document.create") || can(user, "document.resolve") || can(user, "document.review");
+  if (!hasWorkRole) redirect("/documents");
   const scope = documentScope(user);
   const today = startOfToday();
   const now = new Date();
@@ -57,8 +61,8 @@ export default async function DashboardPage() {
     { n: myReviews, title: "Хянах", label: "таны хяналт хүлээж буй баримт", action: "Хянах", href: "/reviews", tone: "review" },
     { n: myOverdue, title: "Хугацаа хэтэрсэн", label: "танд хуваарилагдсан", action: "Шийдвэрлэх", href: "/assignments?tab=mine&due=overdue", tone: "danger" },
     { n: myActive - myOverdue, title: "Шийдвэрлэх", label: "танд хуваарилагдсан баримт", action: "Шийдвэрлэх", href: "/assignments?tab=mine&status=ACTIVE", tone: "assigned" },
-    { n: myReturned, title: "Засварт буцсан", label: "таны баримт", action: "Засах", href: "/documents?status=RETURNED&mine=1", tone: "returned" },
-    { n: myDraft, title: "Ноорог", label: "хадгалсан, илгээгээгүй", action: "Үргэлжлүүлэх", href: "/documents?status=DRAFT&mine=1", tone: "draft" },
+    { n: can(user, "document.create") ? myReturned : 0, title: "Засварт буцсан", label: "таны баримт", action: "Засах", href: "/documents?status=RETURNED&mine=1", tone: "returned" },
+    { n: can(user, "document.create") ? myDraft : 0, title: "Ноорог", label: "хадгалсан, илгээгээгүй", action: "Үргэлжлүүлэх", href: "/documents?status=DRAFT&mine=1", tone: "draft" },
     { n: toRegister, title: "Бүртгэх", label: "батлагдсан баримт", action: "Бүртгэх", href: "/documents?status=APPROVED", tone: "approved" },
     { n: toAssign, title: "Хуваарилах", label: "бүртгэгдсэн баримт", action: "Хуваарилах", href: "/documents?status=REGISTERED", tone: "registered" },
     { n: toArchive, title: "Архивлах", label: "шийдвэрлэгдсэн баримт", action: "Архивлах", href: "/documents?status=RESOLVED", tone: "draft" },
