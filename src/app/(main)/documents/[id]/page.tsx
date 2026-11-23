@@ -164,7 +164,7 @@ export default async function DocumentDetailPage({ params, searchParams }: { par
       />
 
       <div className="card mb-5 p-4">
-        <WorkflowSteps status={doc.status.code} direction={doc.direction} />
+        <WorkflowSteps status={doc.status.code} direction={doc.direction} visited={statusLogs.map((l) => l.newStatus!.code)} />
         <NextStep text={next[doc.status.code] ?? null} mine={myTurn} />
       </div>
 

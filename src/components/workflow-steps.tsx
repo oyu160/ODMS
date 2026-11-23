@@ -1,5 +1,5 @@
 // Barimt ursgaliin ali shatand baigaag haruulah alhamiin mur + «Daraagiin alham» tailbar
-import { Check, ArrowRight, Ban, Hourglass } from "lucide-react";
+import { Check, ArrowRight, Ban, Hourglass, Minus } from "lucide-react";
 
 const REVIEW_FLOW = ["DRAFT", "IN_REVIEW", "APPROVED", "REGISTERED", "ASSIGNED", "RESOLVED", "ARCHIVED"];
 const INCOMING_FLOW = ["DRAFT", "REGISTERED", "ASSIGNED", "RESOLVED", "ARCHIVED"];
@@ -13,7 +13,8 @@ const LABEL: Record<string, string> = {
   ARCHIVED: "Архив",
 };
 
-export function WorkflowSteps({ status, direction }: { status: string; direction: string }) {
+/** visited: barimtiin uneheer damjsan tuluwuud (tuluwiin tuuhees). Damjaagui shatiig «algassan» gej haruulna */
+export function WorkflowSteps({ status, direction, visited }: { status: string; direction: string; visited?: string[] }) {
   if (status === "CANCELLED")
     return (
       <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -26,17 +27,21 @@ export function WorkflowSteps({ status, direction }: { status: string; direction
   return (
     <ol className="flex flex-wrap items-center gap-y-2">
       {flow.map((s, i) => {
-        const done = i < at || status === "ARCHIVED";
+        const passed = i < at || status === "ARCHIVED";
+        // Jish: huwaarilaltgui shuud arhiwlasan bol «Huwaarilagdsan», «Shiidwerlegdsen» shat algasagdana
+        const skipped = passed && !!visited && s !== "DRAFT" && !visited.includes(s);
+        const done = passed && !skipped;
         const current = i === at && status !== "ARCHIVED";
         const returned = current && status === "RETURNED";
         return (
           <li key={s} className="flex items-center">
             <span
               className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                returned ? "bg-orange-100 text-orange-800 ring-2 ring-orange-300" : current ? "bg-navy-800 text-white ring-4 ring-navy-100" : done ? "bg-green-50 text-green-800" : "bg-slate-100 text-slate-400"
+                returned ? "bg-orange-100 text-orange-800 ring-2 ring-orange-300" : current ? "bg-navy-800 text-white ring-4 ring-navy-100" : skipped ? "border border-dashed border-slate-300 bg-white text-slate-400 line-through" : done ? "bg-green-50 text-green-800" : "bg-slate-100 text-slate-400"
               }`}
+              title={skipped ? "Энэ шатыг алгассан" : undefined}
             >
-              {done ? <Check size={13} /> : current ? <Hourglass size={13} /> : <span className="w-[13px] text-center">{i + 1}</span>}
+              {done ? <Check size={13} /> : current ? <Hourglass size={13} /> : skipped ? <Minus size={13} /> : <span className="w-[13px] text-center">{i + 1}</span>}
               {returned ? "Засварт буцсан" : LABEL[s]}
             </span>
             {i < flow.length - 1 && <ArrowRight size={14} className={`mx-1.5 ${i < at ? "text-green-500" : "text-slate-300"}`} />}

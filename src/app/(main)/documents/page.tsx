@@ -29,9 +29,14 @@ type SP = Promise<Record<string, string | undefined>>;
 const VIEWS: { key: string; label: string; status?: string; mine?: string; creatorOnly?: boolean }[] = [
   { key: "all", label: "Бүгд" },
   { key: "mine", label: "Миний үүсгэсэн", mine: "1", creatorOnly: true },
-  { key: "review", label: "Хяналтад", status: "IN_REVIEW" },
-  { key: "returned", label: "Засварт буцсан", status: "RETURNED", mine: "1", creatorOnly: true },
   { key: "draft", label: "Ноорог", status: "DRAFT", mine: "1", creatorOnly: true },
+  { key: "returned", label: "Засварт буцсан", status: "RETURNED", mine: "1", creatorOnly: true },
+  { key: "review", label: "Хяналтад", status: "IN_REVIEW" },
+  { key: "approved", label: "Батлагдсан", status: "APPROVED" },
+  { key: "registered", label: "Бүртгэгдсэн", status: "REGISTERED" },
+  { key: "assigned", label: "Хуваарилагдсан", status: "ASSIGNED" },
+  { key: "resolved", label: "Шийдвэрлэгдсэн", status: "RESOLVED" },
+  { key: "archived", label: "Архивлагдсан", status: "ARCHIVED" },
 ];
 
 export default async function DocumentsPage({ searchParams }: { searchParams: SP }) {
@@ -47,6 +52,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
   const activeView = views.find((v) => v.status === f.status && v.mine === f.mine)?.key ?? "";
 
   const manager = can(user, "document.assign");
+  // Tab-aar songoson tuluw, hawtsaar songoson chiglel ni deed hesegt haragddag tul end toolohgui
+  const tabStatus = views.some((v) => v.status && v.status === f.status);
+  const advanced = [f.type, tabStatus ? undefined : f.status, f.assignee, f.from, f.to].filter(Boolean).length;
   const [total, docs, statuses, types, viewCounts, users, departments] = await Promise.all([
     prisma.document.count({ where }),
     prisma.document.findMany({
@@ -101,7 +109,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
       <PageHeader
         crumbs={f.direction ? [["Баримт бичиг", "/documents"], [FOLDER_TITLES[f.direction] ?? "Баримт бичиг"]] : [["Баримт бичиг"]]}
         title={f.direction ? FOLDER_TITLES[f.direction] ?? "Баримт бичиг" : "Баримт бичиг"}
-        subtitle="Таны харах эрхтэй бүх баримт. Нууцлалын түвшингээр шүүгдсэн."
+        subtitle={can(user, "document.view_all") ? "Байгууллагын бүх баримт" : "Таны харах эрхтэй баримт. Нууц, дотоод баримт зөвхөн хамааралтай ажилтанд харагдана."}
         actions={
           <>
             {can(user, "document.register") && (
@@ -114,25 +122,30 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
 
       <Tabs
         active={activeView}
-        tabs={views.map((v, i) => ({
+        tabs={views.map((v, i) => ({ v, n: viewCounts[i] })).filter(({ v, n }) => n > 0 || v.key === "all" || v.key === activeView).map(({ v, n }) => ({
           key: v.key,
-          label: <>{v.label} <span className="font-normal text-slate-500">· {viewCounts[i]}</span></>,
+          label: <>{v.label} <span className="font-normal text-slate-500">· {n}</span></>,
           href: makeHref("/documents", { ...base, sort: f.sort, dir: f.dir }, { status: v.status, mine: v.mine }),
         }))}
       />
 
-      <form className="card mb-5 space-y-4 p-5" role="search" aria-label="Баримт шүүх">
+      <form className="card mb-5 p-4" role="search" aria-label="Баримт шүүх">
         {f.mine && <input type="hidden" name="mine" value={f.mine} />}
         {f.sort && <input type="hidden" name="sort" value={f.sort} />}
         {f.dir && <input type="hidden" name="dir" value={f.dir} />}
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr] xl:items-end">
-          <div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-0 flex-1">
             <label className="label" htmlFor="f-q">Түлхүүр үг</label>
             <div className="relative">
               <input id="f-q" name="q" defaultValue={f.q} placeholder="Дугаар, гарчиг, агуулгаар…" className="input pr-9" />
               <Search size={16} aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
+          <button className="btn-primary">Шүүх</button>
+        </div>
+        <details className="mt-3" open={advanced > 0}>
+          <summary className="cursor-pointer select-none text-sm font-semibold text-navy-700">Нарийвчилсан шүүлтүүр{advanced > 0 ? ` (${advanced})` : ""}</summary>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.3fr_1.6fr] xl:items-end">
           <div>
             <label className="label" htmlFor="f-type">Төрөл</label>
             <select id="f-type" name="type" defaultValue={f.type ?? ""} className="input">
@@ -154,8 +167,6 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
               {Object.entries(DIRECTION_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.4fr_1.6fr_auto] xl:items-end">
           <div>
             <label className="label" htmlFor="f-who">Хариуцагч</label>
             <select id="f-who" name="assignee" defaultValue={f.assignee ?? ""} className="input">
@@ -173,10 +184,10 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
               <input type="date" name="to" defaultValue={f.to} aria-label="Дуусах огноо" className="input px-2" />
             </div>
           </fieldset>
-          <button className="btn-primary">Шүүх</button>
-        </div>
+          </div>
+        </details>
         {chips.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
             <span className="text-xs text-slate-500">Идэвхтэй шүүлтүүр:</span>
             {chips.map((c) => <FilterChip key={c.label} label={c.label} href={c.href} />)}
             <Link href="/documents" className="text-xs font-semibold text-navy-700 hover:underline">Бүгдийг арилгах</Link>
