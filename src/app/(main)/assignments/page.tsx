@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { forbidden } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,8 @@ export default async function AssignmentsPage({ searchParams }: { searchParams: 
   const user = await requireUser();
   const sp = await searchParams;
   const manager = can(user, "document.assign");
+  // Huwaarilaltad oroltsdoggui hereglegch (jish: Admin) ene huudsiig harahgui
+  if (!manager && !can(user, "document.resolve")) forbidden();
   const tab = sp.tab ?? (manager ? "all" : "mine");
   const page = Math.max(1, Number(sp.page) || 1);
   const today = startOfToday();

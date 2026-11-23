@@ -120,8 +120,9 @@ export async function availableActions(user: CurrentUser, doc: DocLite) {
     if (result.some((r) => r.code === t.actionCode)) continue;
     // Shoshgogui (heregjuuleltgui) uildliig towch bolgoj haruulahgui, jish: hasagdsan "revoke"
     if (!ACTION_LABELS[t.actionCode]) continue;
-    // resolve ni erhees gadna hariutsagch eseheer shiidegdene
-    if (t.actionCode !== "resolve" && !can(user, t.permission.code)) continue;
+    // Erhgui bol towch haragdahgui. resolve-d nemeed hariutsagch eseh ruleViolation-d shalgagdana
+    // (Admin document.resolve erhgui tul negjid ni huwaarilsan barimtiig shiidwerlehgui)
+    if (!can(user, t.permission.code)) continue;
     if (await ruleViolation(prisma, user, doc, t.actionCode)) continue;
     result.push({ code: t.actionCode, label: ACTION_LABELS[t.actionCode] });
   }
@@ -190,7 +191,7 @@ export async function performAction(user: CurrentUser, documentId: string, actio
 
     const tr = await findTransition(tx, doc, action);
     if (!tr) throw new WorkflowError("Одоогийн төлөвөөс энэ үйлдлийг хийх боломжгүй");
-    if (action !== "resolve" && !can(user, tr.permission.code)) throw new WorkflowError("Танд энэ үйлдлийг хийх эрх байхгүй");
+    if (!can(user, tr.permission.code)) throw new WorkflowError("Танд энэ үйлдлийг хийх эрх байхгүй");
     const violation = await ruleViolation(tx, user, doc, action);
     if (violation) throw new WorkflowError(violation);
 
