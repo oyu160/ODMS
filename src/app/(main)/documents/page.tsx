@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Search, Download, Inbox, Pencil } from "lucide-react";
+import { Plus, Search, Download, Inbox, Pencil, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser, can } from "@/lib/auth";
 import { buildOrderBy, buildWhere, readFilter, type DocFilter, type SortKey } from "@/lib/document-filters";
@@ -46,6 +46,10 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
   const f = readFilter(sp);
   const page = Math.max(1, Number(sp.page) || 1);
   const where = buildWhere(user, f);
+  const [incomingType, outgoingType] = await Promise.all([
+    prisma.documentType.findFirst({ where: { code: "INCOMING", isActive: true }, select: { id: true } }),
+    prisma.documentType.findFirst({ where: { code: "OUTGOING", isActive: true }, select: { id: true } }),
+  ]);
 
   // Tab buriin too ni busad shuultuuriig (tulhuur ug, turul, ognoo) hadgalna
   const base: DocFilter = { q: f.q, type: f.type, direction: f.direction, from: f.from, to: f.to, assignee: f.assignee };
@@ -110,14 +114,27 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
       <PageHeader
         crumbs={f.direction ? [["Баримт бичиг", "/documents"], [FOLDER_TITLES[f.direction] ?? "Баримт бичиг"]] : [["Баримт бичиг"]]}
         title={f.direction ? FOLDER_TITLES[f.direction] ?? "Баримт бичиг" : "Баримт бичиг"}
-        subtitle={can(user, "document.view_all") ? "Байгууллагын бүх баримт" : "Таны харах эрхтэй баримт. Нууц, дотоод баримт зөвхөн хамааралтай ажилтанд харагдана."}
+        subtitle={can(user, "document.view_all") ? "Байгууллагын бүх баримт" : f.direction === "INCOMING" ? "Танд болон танай нэгжид хуваарилагдсан ирсэн бичиг" : "Таны харах эрхтэй баримт. Нууц, дотоод баримт зөвхөн хамааралтай ажилтанд харагдана."}
         actions={
-          <>
-            {can(user, "document.register") && (
-              <Link href="/documents/new?direction=INCOMING" className="btn-outline"><Inbox size={16} /> Ирсэн бичиг бүртгэх</Link>
-            )}
-            {can(user, "document.create") && <Link href="/documents/new" className="btn-primary"><Plus size={16} /> Баримт үүсгэх</Link>}
-          </>
+          // Hawtas buriin uildel: irsen — zuwhun burtgeh erhtei, yawsan — yawsan bichgiin turluur, dotood — dotood baimtaar
+          f.direction === "INCOMING" ? (
+            can(user, "document.register") && incomingType ? (
+              <Link href={`/documents/new?type=${incomingType.id}&direction=INCOMING`} className="btn-primary"><Inbox size={16} /> Ирсэн бичиг бүртгэх</Link>
+            ) : null
+          ) : f.direction === "OUTGOING" ? (
+            can(user, "document.create") && outgoingType ? (
+              <Link href={`/documents/new?type=${outgoingType.id}&direction=OUTGOING`} className="btn-primary"><Send size={16} /> Явсан бичиг үүсгэх</Link>
+            ) : null
+          ) : f.direction === "INTERNAL" ? (
+            can(user, "document.create") ? <Link href="/documents/new?direction=INTERNAL" className="btn-primary"><Plus size={16} /> Дотоод баримт үүсгэх</Link> : null
+          ) : (
+            <>
+              {can(user, "document.register") && incomingType && (
+                <Link href={`/documents/new?type=${incomingType.id}&direction=INCOMING`} className="btn-outline"><Inbox size={16} /> Ирсэн бичиг бүртгэх</Link>
+              )}
+              {can(user, "document.create") && <Link href="/documents/new" className="btn-primary"><Plus size={16} /> Баримт үүсгэх</Link>}
+            </>
+          )
         }
       />
 

@@ -3,6 +3,8 @@
 //   NORMAL       — erh buhii buh ajiltan harna
 //   INTERNAL     — hariutsah negjiin ajiltan bolon barimtad oroltsogch harna
 //   CONFIDENTIAL — zuwhun barimtad oroltsogch (uusgegch, hyanagch, hariutsagch) bolon document.view_all erhtei hereglegch
+// Irsen bichig baiguullagiin ner deer irj, barimt bichgiin ajiltan huwaarilna — tuunii tuld nuutslalaas uur
+// zuwhun huwaarilagdsan ajiltan, negj (oroltsogch) bolon document.view_all erhtei hereglegch harna.
 import type { Prisma } from "@prisma/client";
 import type { CurrentUser } from "./auth";
 import { can } from "./permissions";
@@ -18,7 +20,7 @@ export function documentScope(user: CurrentUser): Prisma.DocumentWhereInput {
     { approvals: { some: { reviewerId: user.id } } },
     { assignments: { some: { OR: [{ assigneeUserId: user.id }, ...(user.departmentId ? [{ assigneeDepartmentId: user.departmentId }] : [])] } } },
   ];
-  const published: Prisma.DocumentWhereInput = { status: { code: { notIn: WORKING } } };
+  const published: Prisma.DocumentWhereInput = { status: { code: { notIn: WORKING } }, direction: { not: "INCOMING" } };
 
   return {
     isDeleted: false,

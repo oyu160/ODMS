@@ -2,7 +2,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { documentScope } from "@/lib/access";
-import type { CurrentUser } from "@/lib/auth";
+import { can, type CurrentUser } from "@/lib/auth";
 import { shortName, initials } from "@/lib/format";
 import type { FormType } from "./document-form";
 
@@ -56,5 +56,6 @@ export async function loadFormData(user: CurrentUser, typeId: string) {
       .filter((r) => reviewers.some((u) => u.id === r.reviewerId))
       .map((r) => ({ id: r.id, name: r.name, documentTypeId: r.documentTypeId, confidentiality: r.confidentiality, direction: r.direction, departmentId: r.departmentId, fieldId: r.fieldId, fieldValue: r.fieldValue, reviewerId: r.reviewerId, priority: r.priority })),
     me: { id: user.id, departmentId: user.departmentId },
+    canRegister: can(user, "document.register"),
   };
 }

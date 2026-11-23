@@ -19,3 +19,13 @@ test("Энгийн хэрэглэгч: Нууц баримтыг зөвхөн о
   assert.ok(!scope.includes("CONFIDENTIAL"), "Нууц баримтад оролцогчоос өөр нөхцөлөөр хандахгүй");
   assert.ok(scope.includes('"createdById":"u1"'));
 });
+
+test("Ирсэн бичгийг зөвхөн хуваарилагдсан ажилтан, нэгж харна", () => {
+  const scope = documentScope(user()) as { OR: Record<string, unknown>[] };
+  // Нийтэд нээлттэй (Энгийн, Дотоод) нөхцөл бүр ирсэн бичгийг хасна
+  const open = scope.OR.filter((c) => JSON.stringify(c).includes("confidentiality"));
+  assert.equal(open.length, 2);
+  for (const c of open) assert.ok(JSON.stringify(c).includes('"direction":{"not":"INCOMING"}'));
+  // Хуваарилалтаар (ажилтан эсвэл нэгж) харах нөхцөл хэвээр
+  assert.ok(JSON.stringify(scope).includes('"assigneeDepartmentId":"dep-hr"'));
+});

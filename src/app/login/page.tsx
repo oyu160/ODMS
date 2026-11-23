@@ -20,11 +20,6 @@ export default function LoginPage() {
         <div>
           <h1 className="text-[40px] font-bold leading-tight tracking-tight text-slate-900">Баримт бүр<br />зөв хүнд,<br />зөв хугацаанд.</h1>
           <p className="mt-4 max-w-md text-lg leading-relaxed text-slate-600">Баримтыг үүсгэх, хянах, батлах, бүртгэх, илгээх, архивлах бүх үе шатыг нэг дор хөтөлнө.</p>
-          <ol aria-label="Баримтын урсгал" className="mt-8 flex flex-wrap gap-1.5 text-xs">
-            {["Ноорог", "Хяналт", "Батлах", "Бүртгэх", "Хуваарилах / Илгээх", "Архив"].map((s) => (
-              <li key={s} className="rounded-lg border border-navy-100 bg-white px-3 py-1.5 text-slate-700">{s}</li>
-            ))}
-          </ol>
         </div>
         <div className="text-xs text-slate-500">Зөвхөн байгууллагын дотоод хэрэглэгчдэд зориулав</div>
       </section>

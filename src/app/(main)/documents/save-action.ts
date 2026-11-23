@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, can } from "@/lib/auth";
 import { issueInternalNumber } from "@/lib/numbering";
 import { saveFile } from "@/lib/storage";
 import { writeAudit } from "@/lib/audit";
@@ -59,6 +59,9 @@ export async function saveDocument(_prev: SaveState, formData: FormData): Promis
 
   const type = await prisma.documentType.findUnique({ where: { id: v.documentTypeId }, include: { fields: { where: { isActive: true } } } });
   if (!type || !type.isActive) return { error: "Баримтын төрөл олдсонгүй" };
+  // Irsen bichgiig zuwhun barimt bichgiin ajiltan (document.register) burtgene — busad ni noorog ch uusgehgui
+  if ((v.direction === "INCOMING" || type.code === "INCOMING") && !can(user, "document.register"))
+    return { error: "Ирсэн бичгийг зөвхөн баримт бичгийн ажилтан бүртгэнэ" };
 
   // Turluus hamaarah talbar — BD-02: buh dutuu/buruu talbariig neg dor tsugluulj, talbar buriin door haruulna
   const values: { fieldId: string; valueText: string }[] = [];

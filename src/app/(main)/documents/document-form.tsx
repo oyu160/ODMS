@@ -32,10 +32,12 @@ type Props = {
   related: { id: string; label: string }[];
   rules?: RuleLike[];
   me?: { id: string; departmentId: string };
+  /** Irsen bichig burtgeh erh (document.register) */
+  canRegister?: boolean;
   initial: Initial;
 };
 
-export function DocumentForm({ type, employees, departments, reviewers, related, rules = [], me, initial }: Props) {
+export function DocumentForm({ type, employees, departments, reviewers, related, rules = [], me, canRegister = false, initial }: Props) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveDocument, undefined);
   const [files, setFiles] = useState<File[]>([]);
   // Serwerees irsen talbar buriin aldaa. Hereglegch tuhain talbariig zasmagts aldaa ni arilna.
@@ -187,7 +189,7 @@ export function DocumentForm({ type, employees, departments, reviewers, related,
                 <select name="direction" value={direction} onChange={(e) => setDirection(e.target.value)} className="input">
                   <option value="INTERNAL">Дотоод</option>
                   <option value="OUTGOING">Явсан</option>
-                  <option value="INCOMING">Ирсэн</option>
+                  {(canRegister || direction === "INCOMING") && <option value="INCOMING">Ирсэн</option>}
                 </select>
               </div>
               <div>

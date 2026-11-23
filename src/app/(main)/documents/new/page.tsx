@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, can } from "@/lib/auth";
+import { forbidden } from "next/navigation";
 import { PageHeader } from "@/components/ui";
 import { DocumentForm } from "../document-form";
 import { loadFormData } from "../form-data";
@@ -13,13 +14,17 @@ type SP = Promise<{ type?: string; direction?: string }>;
 export default async function NewDocumentPage({ searchParams }: { searchParams: SP }) {
   const user = await requirePermission("document.create");
   const sp = await searchParams;
+  const canRegister = can(user, "document.register");
+  if (sp.direction === "INCOMING" && !canRegister) forbidden();
+  // Dotood hawtasnaas orwol irsen/yawsan bichgiin turul haragdahgui; burtgeh erhgui bol irsen bichig haragdahgui
+  const hiddenTypes = [...(canRegister ? [] : ["INCOMING"]), ...(sp.direction === "INTERNAL" ? ["INCOMING", "OUTGOING"] : [])];
 
   // 1-r alham: turul songoh
   if (!sp.type) {
     const cats = await prisma.documentCategory.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
-      include: { types: { where: { isActive: true }, orderBy: { name: "asc" }, include: { _count: { select: { fields: true } } } } },
+      include: { types: { where: { isActive: true, code: { notIn: hiddenTypes } }, orderBy: { name: "asc" }, include: { _count: { select: { fields: true } } } } },
     });
     const dirQ = sp.direction ? `&direction=${sp.direction}` : "";
     return (
@@ -49,6 +54,7 @@ export default async function NewDocumentPage({ searchParams }: { searchParams: 
 
   const data = await loadFormData(user, sp.type);
   if (!data) return <p>Баримтын төрөл олдсонгүй</p>;
+  if (data.type.code === "INCOMING" && !canRegister) forbidden();
   const direction = sp.direction ?? (data.type.code === "INCOMING" ? "INCOMING" : data.type.code === "OUTGOING" ? "OUTGOING" : "INTERNAL");
 
   return (
