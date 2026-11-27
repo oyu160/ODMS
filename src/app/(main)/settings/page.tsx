@@ -71,7 +71,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
 
           <div className="space-y-5">
             <Card title={isNew ? "Шинэ төрөл" : `${current?.name ?? ""} · ерөнхий тохиргоо`}>
-              <form action={saveType} className="grid gap-4 md:grid-cols-3">
+              <form key={current?.id ?? "new"} action={saveType} className="grid gap-4 md:grid-cols-3">
                 <input type="hidden" name="id" value={current?.id ?? ""} />
                 <div><label className="label">Төрлийн нэр</label><input name="name" defaultValue={current?.name} required className="input" /></div>
                 <div><label className="label">Код</label><input name="code" defaultValue={current?.code} required className="input font-mono" /></div>

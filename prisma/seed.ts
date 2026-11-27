@@ -554,12 +554,16 @@ async function main() {
   }
 
   // Huuchin arhiw (hadgalah hugatsaa duussan / duusah gej bui) — arhiwiin hyanaltiig haruulah
-  const legacy: [string, string, number][] = [
-    ["INCOMING", "Мэдээлэл ирүүлэх тухай (2016)", 3650 + 200],
-    ["OUTGOING", "Тайлан хүргүүлэх тухай (2016)", 3650 + 20],
-    ["CONTRACT", "Хангамжийн гэрээ (2015)", 3650 + 400],
+  // [turul, garchig, hed honogiin umnu arhiwlasan, hugatsaa duusahad hiih]
+  const legacy: [string, string, number, string][] = [
+    ["INCOMING", "Мэдээлэл ирүүлэх тухай (2016)", 3650 + 200, "DESTROY"],
+    ["OUTGOING", "Тайлан хүргүүлэх тухай (2016)", 3650 + 20, "DESTROY"],
+    ["CONTRACT", "Хангамжийн гэрээ (2015)", 3650 + 400, "DESTROY"],
+    ["ACT", "Эд хөрөнгө актлах тухай (2015)", 3650 + 75, "DESTROY"],
+    ["MEMO", "Сургалтад хамрагдах тухай (2020)", 1825 + 30, "DESTROY"],
+    ["RULE", "Албан томилолтын журам (2015)", 3650 + 12, "TRANSFER"],
   ];
-  for (const [tCode, title, archivedAgo] of legacy) {
+  for (const [tCode, title, archivedAgo, disposal] of legacy) {
     const at = NOW - (archivedAgo - 0) * DAY - (tCode === "OUTGOING" ? -40 * DAY : 0);
     const createdAt = at - 30 * DAY;
     const t = typeRow[tCode].seed;
@@ -570,15 +574,39 @@ async function main() {
       type: tCode, title, creator: "E002", createdAt, direction: tCode === "INCOMING" ? "INCOMING" : tCode === "OUTGOING" ? "OUTGOING" : "INTERNAL", target: "ARCHIVED",
       events: [
         { t: createdAt, user: "E002", action: "CREATE", to: "DRAFT" },
-        { t: createdAt + DAY, user: "E002", action: out ? "REGISTER" : "REGISTER_INCOMING", to: "REGISTERED" },
+        { t: createdAt + DAY, user: "E002", action: tCode === "INCOMING" ? "REGISTER_INCOMING" : "REGISTER", to: "REGISTERED" },
         ...(out ? [sendEv] : []),
         { t: at, user: "E002", action: "ARCHIVE", to: "ARCHIVED" },
       ],
       approvals: [], assignments: [], numberAt: createdAt + DAY, registeredAt: createdAt + DAY,
       dispatch: out ? { by: "E002", at: sendEv.t, method: "HAND", recipient: fieldValues.recipient_org, receiptRef: "Бичиг хэргийн ажилтан", ev: sendEv } : undefined,
-      archive: { by: "E002", at, years: 10, location: "Хуучин архив, хайрцаг 3", disposal: "DESTROY" },
+      archive: { by: "E002", at, years: t.years, location: "Хуучин архив, хайрцаг 3", disposal },
       fieldValues,
       versions: 1, summary: `${title} — архивын баримт.`,
+    });
+  }
+
+  // Demo: B.Suhbatiin (HN-iin albanii darga) hyanaltad huleegdej bui barimtuud — batlah, butsaah, shiljuulehiig haruulna
+  const sukhbatQueue: [string, string, number, Record<string, string>][] = [
+    ["ORDER_B", "", 2.1, { order_basis: "Хөдөлмөрийн тухай хуулийн 48 дугаар зүйл", employee: emp.E008.id, order_kind: "Томилох", position: "Ахлах мэргэжилтэн", effective_date: iso(NOW + 5 * DAY) }],
+    ["ORDER_B", "", 1.2, { order_basis: "Байгууллагын дүрмийн 5.3", employee: emp.E005.id, order_kind: "Ээлжийн амралт олгох", effective_date: iso(NOW + 7 * DAY) }],
+    ["CERT", "Ажил эрхэлж буйг тодорхойлох", 0.9, { employee: emp.E016.id, purpose: "Банк" }],
+    ["ORDER_A", "Хүний нөөцийн бодлого шинэчлэх ажлын хэсэг байгуулах тухай", 0.15, { order_basis: "Байгууллагын дүрмийн 5.3", effective_date: iso(NOW + 3 * DAY) }],
+    ["MEMO", "Сургалтад хамрагдах тухай", 5.3, { proposal: "Хүний нөөцийн 3 ажилтныг цахим баримт бичгийн сургалтад хамруулах" }],
+  ];
+  for (const [tCode, baseTitle, ago, fieldValues] of sukhbatQueue) {
+    const createdAt = NOW - ago * DAY;
+    const t = typeRow[tCode].seed;
+    const e = fieldValues.employee ? Object.values(emp).find((x) => x.id === fieldValues.employee) : undefined;
+    const title = tCode === "ORDER_B" ? `${fieldValues.order_kind} тухай (${e!.name})` : e ? `${baseTitle} (${e.name})` : baseTitle;
+    plans.push({
+      type: tCode, title, creator: "E004", createdAt, direction: "INTERNAL", target: "IN_REVIEW",
+      events: [
+        { t: createdAt, user: "E004", action: "CREATE", to: "DRAFT" },
+        { t: createdAt + 3600_000, user: "E004", action: "SUBMIT", to: "IN_REVIEW" },
+      ],
+      approvals: [{ reviewer: "E006", decision: "PENDING", step: 1 }], assignments: [],
+      fieldValues, versions: 1, summary: `${title} — ${t.name.toLowerCase()}. Холбогдох нэгжүүдэд танилцуулж, хэрэгжилтийг хангуулна.`,
     });
   }
 
